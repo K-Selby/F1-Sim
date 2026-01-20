@@ -1,0 +1,930 @@
+{
+  "2021": {
+    "Mercedes": {
+      "drivers": [
+        {
+          "name": "HAM",
+          "number": 44
+        },
+        {
+          "name": "BOT",
+          "number": 77
+        }
+      ],
+      "performance": {
+        "pace_offset": -0.831,
+        "degradation_factor": 1.04,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Red Bull Racing": {
+      "drivers": [
+        {
+          "name": "VER",
+          "number": 33
+        },
+        {
+          "name": "PER",
+          "number": 11
+        }
+      ],
+      "performance": {
+        "pace_offset": -1.473,
+        "degradation_factor": 1.04,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "McLaren": {
+      "drivers": [
+        {
+          "name": "NOR",
+          "number": 4
+        },
+        {
+          "name": "RIC",
+          "number": 3
+        }
+      ],
+      "performance": {
+        "pace_offset": -0.195,
+        "degradation_factor": 1.04,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Ferrari": {
+      "drivers": [
+        {
+          "name": "LEC",
+          "number": 16
+        },
+        {
+          "name": "SAI",
+          "number": 55
+        }
+      ],
+      "performance": {
+        "pace_offset": -0.231,
+        "degradation_factor": 1.04,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "AlphaTauri": {
+      "drivers": [
+        {
+          "name": "TSU",
+          "number": 22
+        },
+        {
+          "name": "GAS",
+          "number": 10
+        }
+      ],
+      "performance": {
+        "pace_offset": 0.382,
+        "degradation_factor": 1.06,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Aston Martin": {
+      "drivers": [
+        {
+          "name": "STR",
+          "number": 18
+        },
+        {
+          "name": "VET",
+          "number": 5
+        }
+      ],
+      "performance": {
+        "pace_offset": 0.193,
+        "degradation_factor": 1.05,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Alfa Romeo Racing": {
+      "drivers": [
+        {
+          "name": "RAI",
+          "number": 7
+        },
+        {
+          "name": "GIO",
+          "number": 99
+        },
+        {
+          "name": "KUB",
+          "number": 88
+        }
+      ],
+      "performance": {
+        "pace_offset": 0.336,
+        "degradation_factor": 1.05,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Alpine": {
+      "drivers": [
+        {
+          "name": "OCO",
+          "number": 31
+        },
+        {
+          "name": "ALO",
+          "number": 14
+        }
+      ],
+      "performance": {
+        "pace_offset": -0.133,
+        "degradation_factor": 1.05,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Williams": {
+      "drivers": [
+        {
+          "name": "RUS",
+          "number": 63
+        },
+        {
+          "name": "LAT",
+          "number": 6
+        }
+      ],
+      "performance": {
+        "pace_offset": 0.868,
+        "degradation_factor": 1.06,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Haas F1 Team": {
+      "drivers": [
+        {
+          "name": "MSC",
+          "number": 47
+        },
+        {
+          "name": "MAZ",
+          "number": 9
+        }
+      ],
+      "performance": {
+        "pace_offset": 1.271,
+        "degradation_factor": 1.06,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    }
+  },
+  "2022": {
+    "Red Bull Racing": {
+      "drivers": [
+        {
+          "name": "VER",
+          "number": 1
+        },
+        {
+          "name": "PER",
+          "number": 11
+        }
+      ],
+      "performance": {
+        "pace_offset": -0.264,
+        "degradation_factor": 1.07,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "AlphaTauri": {
+      "drivers": [
+        {
+          "name": "GAS",
+          "number": 10
+        },
+        {
+          "name": "TSU",
+          "number": 22
+        }
+      ],
+      "performance": {
+        "pace_offset": 0.407,
+        "degradation_factor": 1.07,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Alpine": {
+      "drivers": [
+        {
+          "name": "ALO",
+          "number": 14
+        },
+        {
+          "name": "OCO",
+          "number": 31
+        }
+      ],
+      "performance": {
+        "pace_offset": -0.046,
+        "degradation_factor": 1.06,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Ferrari": {
+      "drivers": [
+        {
+          "name": "LEC",
+          "number": 16
+        },
+        {
+          "name": "SAI",
+          "number": 55
+        }
+      ],
+      "performance": {
+        "pace_offset": -1.707,
+        "degradation_factor": 1.07,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Aston Martin": {
+      "drivers": [
+        {
+          "name": "STR",
+          "number": 18
+        },
+        {
+          "name": "HUL",
+          "number": 27
+        },
+        {
+          "name": "VET",
+          "number": 5
+        }
+      ],
+      "performance": {
+        "pace_offset": 0.615,
+        "degradation_factor": 1.08,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Haas F1 Team": {
+      "drivers": [
+        {
+          "name": "MAG",
+          "number": 20
+        },
+        {
+          "name": "MSC",
+          "number": 47
+        }
+      ],
+      "performance": {
+        "pace_offset": 1.579,
+        "degradation_factor": 1.09,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Williams": {
+      "drivers": [
+        {
+          "name": "ALB",
+          "number": 23
+        },
+        {
+          "name": "LAT",
+          "number": 6
+        },
+        {
+          "name": "DEV",
+          "number": 45
+        }
+      ],
+      "performance": {
+        "pace_offset": 0.274,
+        "degradation_factor": 1.09,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Alfa Romeo": {
+      "drivers": [
+        {
+          "name": "ZHO",
+          "number": 24
+        },
+        {
+          "name": "BOT",
+          "number": 77
+        }
+      ],
+      "performance": {
+        "pace_offset": -0.867,
+        "degradation_factor": 1.05,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "McLaren": {
+      "drivers": [
+        {
+          "name": "RIC",
+          "number": 3
+        },
+        {
+          "name": "NOR",
+          "number": 4
+        }
+      ],
+      "performance": {
+        "pace_offset": 0.952,
+        "degradation_factor": 1.07,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Mercedes": {
+      "drivers": [
+        {
+          "name": "HAM",
+          "number": 44
+        },
+        {
+          "name": "RUS",
+          "number": 63
+        }
+      ],
+      "performance": {
+        "pace_offset": -1.037,
+        "degradation_factor": 1.06,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    }
+  },
+  "2023": {
+    "Red Bull Racing": {
+      "drivers": [
+        {
+          "name": "VER",
+          "number": 1
+        },
+        {
+          "name": "PER",
+          "number": 11
+        }
+      ],
+      "performance": {
+        "pace_offset": -0.844,
+        "degradation_factor": 1.04,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Alpine": {
+      "drivers": [
+        {
+          "name": "GAS",
+          "number": 10
+        },
+        {
+          "name": "OCO",
+          "number": 31
+        }
+      ],
+      "performance": {
+        "pace_offset": -0.262,
+        "degradation_factor": 1.05,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Aston Martin": {
+      "drivers": [
+        {
+          "name": "ALO",
+          "number": 14
+        },
+        {
+          "name": "STR",
+          "number": 18
+        }
+      ],
+      "performance": {
+        "pace_offset": -0.599,
+        "degradation_factor": 1.04,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Ferrari": {
+      "drivers": [
+        {
+          "name": "LEC",
+          "number": 16
+        },
+        {
+          "name": "SAI",
+          "number": 55
+        }
+      ],
+      "performance": {
+        "pace_offset": -0.061,
+        "degradation_factor": 1.04,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Williams": {
+      "drivers": [
+        {
+          "name": "SAR",
+          "number": 2
+        },
+        {
+          "name": "ALB",
+          "number": 23
+        }
+      ],
+      "performance": {
+        "pace_offset": 1.215,
+        "degradation_factor": 1.07,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Haas F1 Team": {
+      "drivers": [
+        {
+          "name": "MAG",
+          "number": 20
+        },
+        {
+          "name": "HUL",
+          "number": 27
+        }
+      ],
+      "performance": {
+        "pace_offset": 1.462,
+        "degradation_factor": 1.07,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "AlphaTauri": {
+      "drivers": [
+        {
+          "name": "DEV",
+          "number": 21
+        },
+        {
+          "name": "TSU",
+          "number": 22
+        },
+        {
+          "name": "RIC",
+          "number": 3
+        },
+        {
+          "name": "LAW",
+          "number": 40
+        }
+      ],
+      "performance": {
+        "pace_offset": -0.165,
+        "degradation_factor": 1.05,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Alfa Romeo": {
+      "drivers": [
+        {
+          "name": "ZHO",
+          "number": 24
+        },
+        {
+          "name": "BOT",
+          "number": 77
+        }
+      ],
+      "performance": {
+        "pace_offset": 0.699,
+        "degradation_factor": 1.06,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "McLaren": {
+      "drivers": [
+        {
+          "name": "NOR",
+          "number": 4
+        },
+        {
+          "name": "PIA",
+          "number": 81
+        }
+      ],
+      "performance": {
+        "pace_offset": -1.207,
+        "degradation_factor": 1.05,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Mercedes": {
+      "drivers": [
+        {
+          "name": "HAM",
+          "number": 44
+        },
+        {
+          "name": "RUS",
+          "number": 63
+        }
+      ],
+      "performance": {
+        "pace_offset": -0.107,
+        "degradation_factor": 1.05,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    }
+  },
+  "2024": {
+    "Red Bull Racing": {
+      "drivers": [
+        {
+          "name": "VER",
+          "number": 1
+        },
+        {
+          "name": "PER",
+          "number": 11
+        }
+      ],
+      "performance": {
+        "pace_offset": -0.285,
+        "degradation_factor": 1.06,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Ferrari": {
+      "drivers": [
+        {
+          "name": "SAI",
+          "number": 55
+        },
+        {
+          "name": "LEC",
+          "number": 16
+        },
+        {
+          "name": "BEA",
+          "number": 38
+        }
+      ],
+      "performance": {
+        "pace_offset": -0.587,
+        "degradation_factor": 1.04,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Mercedes": {
+      "drivers": [
+        {
+          "name": "RUS",
+          "number": 63
+        },
+        {
+          "name": "HAM",
+          "number": 44
+        }
+      ],
+      "performance": {
+        "pace_offset": -0.822,
+        "degradation_factor": 1.05,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "McLaren": {
+      "drivers": [
+        {
+          "name": "NOR",
+          "number": 4
+        },
+        {
+          "name": "PIA",
+          "number": 81
+        }
+      ],
+      "performance": {
+        "pace_offset": -0.892,
+        "degradation_factor": 1.06,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Aston Martin": {
+      "drivers": [
+        {
+          "name": "ALO",
+          "number": 14
+        },
+        {
+          "name": "STR",
+          "number": 18
+        }
+      ],
+      "performance": {
+        "pace_offset": 0.366,
+        "degradation_factor": 1.07,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Kick Sauber": {
+      "drivers": [
+        {
+          "name": "ZHO",
+          "number": 24
+        },
+        {
+          "name": "BOT",
+          "number": 77
+        }
+      ],
+      "performance": {
+        "pace_offset": 0.289,
+        "degradation_factor": 1.07,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Haas F1 Team": {
+      "drivers": [
+        {
+          "name": "MAG",
+          "number": 20
+        },
+        {
+          "name": "HUL",
+          "number": 27
+        },
+        {
+          "name": "BEA",
+          "number": 50
+        }
+      ],
+      "performance": {
+        "pace_offset": 0.927,
+        "degradation_factor": 1.06,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "RB": {
+      "drivers": [
+        {
+          "name": "RIC",
+          "number": 3
+        },
+        {
+          "name": "TSU",
+          "number": 22
+        },
+        {
+          "name": "LAW",
+          "number": 30
+        }
+      ],
+      "performance": {
+        "pace_offset": 0.025,
+        "degradation_factor": 1.05,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Williams": {
+      "drivers": [
+        {
+          "name": "ALB",
+          "number": 23
+        },
+        {
+          "name": "SAR",
+          "number": 2
+        },
+        {
+          "name": "COL",
+          "number": 43
+        }
+      ],
+      "performance": {
+        "pace_offset": 0.767,
+        "degradation_factor": 1.07,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    },
+    "Alpine": {
+      "drivers": [
+        {
+          "name": "OCO",
+          "number": 31
+        },
+        {
+          "name": "GAS",
+          "number": 10
+        },
+        {
+          "name": "DOO",
+          "number": 61
+        }
+      ],
+      "performance": {
+        "pace_offset": 0.483,
+        "degradation_factor": 1.05,
+        "pit_execution_std": 1.0
+      },
+      "strategy_profile": {
+        "risk_tolerance": 0.5,
+        "undercut_bias": 0.5,
+        "overcut_bias": 0.5
+      }
+    }
+  }
+}
