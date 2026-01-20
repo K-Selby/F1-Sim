@@ -1,0 +1,16 @@
+{
+  "description": "Pit stop time loss models derived from FastF1 race data",
+  "source": "FastF1 race sessions (2021\u20132024)",
+  "models": {
+    "NORMAL": {
+      "mean": NaN,
+      "std_dev": NaN,
+      "samples": 0
+    },
+    "SC_VSC": {
+      "mean": NaN,
+      "std_dev": NaN,
+      "samples": 0
+    }
+  }
+}

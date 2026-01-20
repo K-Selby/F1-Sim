@@ -1,0 +1,56 @@
+{
+  "description": "Tyre degradation models fitted from FastF1 race data",
+  "source": "FastF1 (2021-2024 race sessions)",
+  "tyres": {
+    "MEDIUM": {
+      "model": "quadratic",
+      "coefficients": {
+        "a": 100.57911491233071,
+        "b": -1.0280210192950407,
+        "c": 0.014337271508855621
+      },
+      "data_points": 34636,
+      "valid_years": "2021-2024"
+    },
+    "HARD": {
+      "model": "quadratic",
+      "coefficients": {
+        "a": 96.68518789656846,
+        "b": -0.6609093387310851,
+        "c": 0.008060728993750673
+      },
+      "data_points": 40111,
+      "valid_years": "2021-2024"
+    },
+    "SOFT": {
+      "model": "quadratic",
+      "coefficients": {
+        "a": 102.73769556958727,
+        "b": -1.3608145861730143,
+        "c": 0.02170701271580601
+      },
+      "data_points": 12693,
+      "valid_years": "2021-2024"
+    },
+    "WET": {
+      "model": "quadratic",
+      "coefficients": {
+        "a": 144.6516665039449,
+        "b": -7.875728869720501,
+        "c": 0.29947678524026283
+      },
+      "data_points": 421,
+      "valid_years": "2021-2024"
+    },
+    "INTERMEDIATE": {
+      "model": "quadratic",
+      "coefficients": {
+        "a": 114.79231387656898,
+        "b": -1.907665621140046,
+        "c": 0.041260166837454586
+      },
+      "data_points": 4618,
+      "valid_years": "2021-2024"
+    }
+  }
+}
