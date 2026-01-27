@@ -1,69 +1,48 @@
 {
-  "description": "Tyre degradation delta models by Pirelli compound (C1-C5, Inter, Wet). Deltas are baselined per driver-stint.",
-  "source": "FastF1 + Pirelli compound allocations (2021-2024)",
+  "description": "Temporary tyre degradation model for simulator v0.x. Hand-tuned, compound-based (C1–C5, Inter, Wet). Warm-up, peak, and degradation only.",
+  "source": "Synthetic placeholder (to be replaced with calibrated data)",
   "tyres": {
-    "C4": {
-      "model": "quadratic_delta_stint_baselined",
-      "coefficients": {
-        "linear": -0.22573322677433927,
-        "quadratic": 0.0032671329298511026
-      },
-      "data_points": 12565,
-      "valid_years": "2021-2024"
-    },
-    "C3": {
-      "model": "quadratic_delta_stint_baselined",
-      "coefficients": {
-        "linear": -0.15217615426480904,
-        "quadratic": 0.002307129885870823
-      },
-      "data_points": 31460,
-      "valid_years": "2021-2024"
+    "C1": {
+      "warmup_laps": 3,
+      "warmup_penalty": 0.8,
+      "peak_life": 8,
+      "deg_per_lap": 0.05
     },
     "C2": {
-      "model": "quadratic_delta_stint_baselined",
-      "coefficients": {
-        "linear": -0.09998068588900848,
-        "quadratic": 0.0016141947504548207
-      },
-      "data_points": 16172,
-      "valid_years": "2021-2024"
+      "warmup_laps": 3,
+      "warmup_penalty": 1.0,
+      "peak_life": 7,
+      "deg_per_lap": 0.07
     },
-    "INTERMEDIATE": {
-      "model": "quadratic_delta_stint_baselined",
-      "coefficients": {
-        "linear": -1.2171200601081733,
-        "quadratic": 0.025189415492496328
-      },
-      "data_points": 3720,
-      "valid_years": "2021-2024"
+    "C3": {
+      "warmup_laps": 4,
+      "warmup_penalty": 1.3,
+      "peak_life": 6,
+      "deg_per_lap": 0.10
     },
-    "WET": {
-      "model": "quadratic_delta_stint_baselined",
-      "coefficients": {
-        "linear": -2.4712786814776497,
-        "quadratic": 0.07634199312627284
-      },
-      "data_points": 270,
-      "valid_years": "2021-2024"
+    "C4": {
+      "warmup_laps": 4,
+      "warmup_penalty": 1.7,
+      "peak_life": 5,
+      "deg_per_lap": 0.14
     },
     "C5": {
-      "model": "quadratic_delta_stint_baselined",
-      "coefficients": {
-        "linear": -0.10155803035086484,
-        "quadratic": 0.002597446061183049
-      },
-      "data_points": 1253,
-      "valid_years": "2021-2024"
+      "warmup_laps": 5,
+      "warmup_penalty": 2.2,
+      "peak_life": 4,
+      "deg_per_lap": 0.20
     },
-    "C1": {
-      "model": "quadratic_delta_stint_baselined",
-      "coefficients": {
-        "linear": -0.10301523103353985,
-        "quadratic": 0.0017242256174099105
-      },
-      "data_points": 5477,
-      "valid_years": "2021-2024"
+    "INTERMEDIATE": {
+      "warmup_laps": 4,
+      "warmup_penalty": 2.5,
+      "peak_life": 10,
+      "deg_per_lap": 0.12
+    },
+    "WET": {
+      "warmup_laps": 5,
+      "warmup_penalty": 4.0,
+      "peak_life": 12,
+      "deg_per_lap": 0.18
     }
   }
 }
