@@ -1,0 +1,651 @@
+{
+  "description": "Tyre compund allocation or each season and circuit",
+  "source": "Pirelli, The Racing Spot, Emotions & Numbers(2021-2024 race sessions)",
+  "season": {
+    "2021": {
+      "Bahrain Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Emilia Romagna Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Portuguese Grand Prix": {
+        "compounds": {
+          "SOFT": "C3",
+          "MEDIUM": "C2",          
+          "HARD": "C1"
+        }
+      },
+      "Spanish Grand Prix": {
+        "compounds": {
+          "SOFT": "C3",
+          "MEDIUM": "C2",
+          "HARD": "C1"
+        }
+      },
+      "Monaco Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "Azerbaijan Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "French Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Styrian Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Austrian Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "British Grand Prix": {
+        "compounds": {
+          "SOFT": "C3",
+          "MEDIUM": "C2",
+          "HARD": "C1"
+        }
+      },
+      "Hungarian Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Belgian Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Dutch Grand Prix": {
+        "compounds": {
+          "SOFT": "C3",
+          "MEDIUM": "C2",
+          "HARD": "C1"
+        }
+      },
+      "Italian Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Russian Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "Turkish Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "United States Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Mexican Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Sao Paulo Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Qatar Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Saudi Arabian Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Abu Dhabi Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      }
+    },
+    "2022": {
+      "Bahrain Grand Prix": {
+        "compounds": {
+          "SOFT": "C3",
+          "MEDIUM": "C2",
+          "HARD": "C1"
+        }
+      },
+      "Saudi Arabian Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Australian Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "Emilia Romagna Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Miami Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",          
+          "HARD": "C2"
+        }
+      },
+      "Spanish Grand Prix": {
+        "compounds": {
+          "SOFT": "C3",
+          "MEDIUM": "C2",
+          "HARD": "C1"
+        }
+      },
+      "Monaco Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "Azerbaijan Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "Canadian Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "British Grand Prix": {
+        "compounds": {
+          "SOFT": "C3",
+          "MEDIUM": "C2",
+          "HARD": "C1"
+        }
+      },
+      "Austrian Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "French Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Hungarian Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Belgian Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Dutch Grand Prix": {
+        "compounds": {
+          "SOFT": "C3",
+          "MEDIUM": "C2",
+          "HARD": "C1"
+        }
+      },
+      "Italian Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Singapore Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "Japanese Grand Prix": {
+        "compounds": {
+          "SOFT": "C3",
+          "MEDIUM": "C2",
+          "HARD": "C1"
+        }
+      },
+      "United States Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Mexican Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Sao Paulo Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Abu Dhabi Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      }
+    },
+    "2023": {
+      "Bahrain Grand Prix": {
+        "compounds": {
+          "SOFT": "C3",
+          "MEDIUM": "C2",
+          "HARD": "C1"
+        }
+      },
+      "Saudi Arabian Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Australian Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Azerbaijan Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "Miami Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",          
+          "HARD": "C2"
+        }
+      },
+      "Emilia Romagna Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "Monaco Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "Spanish Grand Prix": {
+        "compounds": {
+          "SOFT": "C3",
+          "MEDIUM": "C2",
+          "HARD": "C1"
+        }
+      },
+      "Canadian Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "Austrian Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "British Grand Prix": {
+        "compounds": {
+          "SOFT": "C3",
+          "MEDIUM": "C2",
+          "HARD": "C1"
+        }
+      },
+      "Hungarian Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "Belgian Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Dutch Grand Prix": {
+        "compounds": {
+          "SOFT": "C3",
+          "MEDIUM": "C2",
+          "HARD": "C1"
+        }
+      },
+      "Italian Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "Singapore Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "Japanese Grand Prix": {
+        "compounds": {
+          "SOFT": "C3",
+          "MEDIUM": "C2",
+          "HARD": "C1"
+        }
+      },
+      "Qatar Grand Prix": {
+        "compounds": {
+          "SOFT": "C3",
+          "MEDIUM": "C2",
+          "HARD": "C1"
+        }
+      },
+      "United States Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Mexican Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "Sao Paulo Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Las Vegas Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "Abu Dhabi Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      }
+    },
+    "2024": {
+      "Bahrain Grand Prix": {
+        "compounds": {
+          "SOFT": "C3",
+          "MEDIUM": "C2",
+          "HARD": "C1"
+        }
+      },
+      "Saudi Arabian Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Australian Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "Japanese Grand Prix": {
+        "compounds": {
+          "SOFT": "C3",
+          "MEDIUM": "C2",
+          "HARD": "C1"
+        }
+      },
+      "Chinese Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Miami Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",          
+          "HARD": "C2"
+        }
+      },
+      "Emilia Romagna Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "Monaco Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "Canadian Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "Spanish Grand Prix": {
+        "compounds": {
+          "SOFT": "C3",
+          "MEDIUM": "C2",
+          "HARD": "C1"
+        }
+      },
+      "Austrian Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "British Grand Prix": {
+        "compounds": {
+          "SOFT": "C3",
+          "MEDIUM": "C2",
+          "HARD": "C1"
+        }
+      },
+      "Hungarian Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "Belgian Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Dutch Grand Prix": {
+        "compounds": {
+          "SOFT": "C3",
+          "MEDIUM": "C2",
+          "HARD": "C1"
+        }
+      },
+      "Italian Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "Azerbaijan Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "Singapore Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "United States Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Mexican Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "Sao Paulo Grand Prix": {
+        "compounds": {
+          "SOFT": "C4",
+          "MEDIUM": "C3",
+          "HARD": "C2"
+        }
+      },
+      "Las Vegas Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      },
+      "Qatar Grand Prix": {
+        "compounds": {
+          "SOFT": "C3",
+          "MEDIUM": "C2",
+          "HARD": "C1"
+        }
+      },
+      "Abu Dhabi Grand Prix": {
+        "compounds": {
+          "SOFT": "C5",
+          "MEDIUM": "C4",
+          "HARD": "C3"
+        }
+      }
+    }
+  }
+}

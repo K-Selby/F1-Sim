@@ -1,35 +1,35 @@
 {
-  "description": "Tyre degradation models fitted from FastF1 race data",
-  "source": "FastF1 (2021-2024 race sessions)",
+  "description": "Tyre degradation models by Pirelli compound (C1\u2013C5, Inter, Wet)",
+  "source": "FastF1 + Pirelli compound allocations (2021\u20132024)",
   "tyres": {
-    "MEDIUM": {
+    "C3": {
       "model": "quadratic",
       "coefficients": {
-        "a": 100.57911491233071,
-        "b": -1.0280210192950407,
-        "c": 0.014337271508855621
+        "a": 99.34895733374083,
+        "b": -0.9131600710759015,
+        "c": 0.011388657202496632
       },
-      "data_points": 34636,
+      "data_points": 37238,
       "valid_years": "2021-2024"
     },
-    "HARD": {
+    "C2": {
       "model": "quadratic",
       "coefficients": {
-        "a": 96.68518789656846,
-        "b": -0.6609093387310851,
-        "c": 0.008060728993750673
+        "a": 99.30447606324486,
+        "b": -0.6748374349593255,
+        "c": 0.010138486618826636
       },
-      "data_points": 40111,
+      "data_points": 18855,
       "valid_years": "2021-2024"
     },
-    "SOFT": {
+    "C4": {
       "model": "quadratic",
       "coefficients": {
-        "a": 102.73769556958727,
-        "b": -1.3608145861730143,
-        "c": 0.02170701271580601
+        "a": 101.4973223122319,
+        "b": -1.2513701980997636,
+        "c": 0.016923961321397715
       },
-      "data_points": 12693,
+      "data_points": 15208,
       "valid_years": "2021-2024"
     },
     "WET": {
@@ -45,11 +45,31 @@
     "INTERMEDIATE": {
       "model": "quadratic",
       "coefficients": {
-        "a": 114.79231387656898,
-        "b": -1.907665621140046,
-        "c": 0.041260166837454586
+        "a": 114.14726599908512,
+        "b": -1.8327849405901269,
+        "c": 0.03948756981201898
       },
-      "data_points": 4618,
+      "data_points": 4586,
+      "valid_years": "2021-2024"
+    },
+    "C5": {
+      "model": "quadratic",
+      "coefficients": {
+        "a": 104.7034901339766,
+        "b": -0.9893823367775575,
+        "c": 0.00805546320583856
+      },
+      "data_points": 1630,
+      "valid_years": "2021-2024"
+    },
+    "C1": {
+      "model": "quadratic",
+      "coefficients": {
+        "a": 97.86044732203771,
+        "b": -0.6412035734776445,
+        "c": 0.003919362954877121
+      },
+      "data_points": 6565,
       "valid_years": "2021-2024"
     }
   }
