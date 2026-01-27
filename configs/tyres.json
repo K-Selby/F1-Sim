@@ -1,75 +1,68 @@
 {
-  "description": "Tyre degradation models by Pirelli compound (C1\u2013C5, Inter, Wet)",
-  "source": "FastF1 + Pirelli compound allocations (2021\u20132024)",
+  "description": "Tyre degradation delta models by Pirelli compound (C1-C5, Inter, Wet). Deltas are baselined per driver-stint.",
+  "source": "FastF1 + Pirelli compound allocations (2021-2024)",
   "tyres": {
-    "C3": {
-      "model": "quadratic",
+    "C4": {
+      "model": "quadratic_delta_stint_baselined",
       "coefficients": {
-        "a": 99.34895733374083,
-        "b": -0.9131600710759015,
-        "c": 0.011388657202496632
+        "linear": -0.22573322677433927,
+        "quadratic": 0.0032671329298511026
       },
-      "data_points": 37238,
+      "data_points": 12565,
+      "valid_years": "2021-2024"
+    },
+    "C3": {
+      "model": "quadratic_delta_stint_baselined",
+      "coefficients": {
+        "linear": -0.15217615426480904,
+        "quadratic": 0.002307129885870823
+      },
+      "data_points": 31460,
       "valid_years": "2021-2024"
     },
     "C2": {
-      "model": "quadratic",
+      "model": "quadratic_delta_stint_baselined",
       "coefficients": {
-        "a": 99.30447606324486,
-        "b": -0.6748374349593255,
-        "c": 0.010138486618826636
+        "linear": -0.09998068588900848,
+        "quadratic": 0.0016141947504548207
       },
-      "data_points": 18855,
-      "valid_years": "2021-2024"
-    },
-    "C4": {
-      "model": "quadratic",
-      "coefficients": {
-        "a": 101.4973223122319,
-        "b": -1.2513701980997636,
-        "c": 0.016923961321397715
-      },
-      "data_points": 15208,
-      "valid_years": "2021-2024"
-    },
-    "WET": {
-      "model": "quadratic",
-      "coefficients": {
-        "a": 144.6516665039449,
-        "b": -7.875728869720501,
-        "c": 0.29947678524026283
-      },
-      "data_points": 421,
+      "data_points": 16172,
       "valid_years": "2021-2024"
     },
     "INTERMEDIATE": {
-      "model": "quadratic",
+      "model": "quadratic_delta_stint_baselined",
       "coefficients": {
-        "a": 114.14726599908512,
-        "b": -1.8327849405901269,
-        "c": 0.03948756981201898
+        "linear": -1.2171200601081733,
+        "quadratic": 0.025189415492496328
       },
-      "data_points": 4586,
+      "data_points": 3720,
+      "valid_years": "2021-2024"
+    },
+    "WET": {
+      "model": "quadratic_delta_stint_baselined",
+      "coefficients": {
+        "linear": -2.4712786814776497,
+        "quadratic": 0.07634199312627284
+      },
+      "data_points": 270,
       "valid_years": "2021-2024"
     },
     "C5": {
-      "model": "quadratic",
+      "model": "quadratic_delta_stint_baselined",
       "coefficients": {
-        "a": 104.7034901339766,
-        "b": -0.9893823367775575,
-        "c": 0.00805546320583856
+        "linear": -0.10155803035086484,
+        "quadratic": 0.002597446061183049
       },
-      "data_points": 1630,
+      "data_points": 1253,
       "valid_years": "2021-2024"
     },
     "C1": {
-      "model": "quadratic",
+      "model": "quadratic_delta_stint_baselined",
       "coefficients": {
-        "a": 97.86044732203771,
-        "b": -0.6412035734776445,
-        "c": 0.003919362954877121
+        "linear": -0.10301523103353985,
+        "quadratic": 0.0017242256174099105
       },
-      "data_points": 6565,
+      "data_points": 5477,
       "valid_years": "2021-2024"
     }
   }

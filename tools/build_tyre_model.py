@@ -4,10 +4,7 @@ from collections import defaultdict
 
 import fastf1
 import numpy as np
-
-# ----------------------------
-# Configuration
-# ----------------------------
+import pandas as pd
 
 YEARS = range(2021, 2025)
 
@@ -40,10 +37,6 @@ CACHE_DIR = Path("data/fastf1_cache")
 TYRE_COMPOUND_FILE = Path("configs/tyre_compounds.json")
 OUTPUT_FILE = Path("configs/tyres.json")
 
-# ----------------------------
-# Setup
-# ----------------------------
-
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
 
@@ -52,20 +45,10 @@ fastf1.Cache.enable_cache(str(CACHE_DIR))
 with open(TYRE_COMPOUND_FILE, "r") as f:
     tyre_compound_map = json.load(f)["season"]
 
-# ----------------------------
-# Data containers
-# ----------------------------
-
-# compound -> list of (tyre_life, lap_time_seconds)
+# compound -> list of (tyre_life, lap_delta_seconds)
 tyre_data = defaultdict(list)
 
-# ----------------------------
-# Extraction
-# ----------------------------
-
 for year in YEARS:
-    print(f"\n=== Processing season {year} ===")
-
     season_map = tyre_compound_map.get(str(year), {})
 
     for race in RACES:
@@ -75,84 +58,97 @@ for year in YEARS:
         try:
             session = fastf1.get_session(year, race, "R")
             session.load(laps=True, telemetry=False, weather=False)
-
             laps = session.laps
             if laps.empty:
                 continue
 
+            # Keep only usable laps
             laps = laps[
-                (laps["LapTime"].notna()) &
-                (laps["Compound"].notna()) &
-                (laps["TyreLife"].notna()) &
-                (~laps["Deleted"])
-            ]
+                laps["LapTime"].notna()
+                & laps["Compound"].notna()
+                & laps["TyreLife"].notna()
+                & (~laps["Deleted"])
+            ].copy()
+
+            # Remove pit in/out laps (easy, high impact)
+            if "PitInTime" in laps.columns:
+                laps = laps[laps["PitInTime"].isna()]
+            if "PitOutTime" in laps.columns:
+                laps = laps[laps["PitOutTime"].isna()]
 
             compound_mapping = season_map[race]["compounds"]
 
-            for _, lap in laps.iterrows():
-                base_compound = lap["Compound"]
+            # Map compounds to C1–C5 / INTERMEDIATE / WET
+            def map_compound(row):
+                c = row["Compound"]
+                if c in ["SOFT", "MEDIUM", "HARD"]:
+                    return compound_mapping.get(c)
+                if c in ["INTERMEDIATE", "WET"]:
+                    return c
+                return None
 
-                # Handle dry compounds via Pirelli mapping
-                if base_compound in ["SOFT", "MEDIUM", "HARD"]:
-                    if base_compound not in compound_mapping:
-                        continue
-                    compound = compound_mapping[base_compound]
+            laps["PirelliCompound"] = laps.apply(map_compound, axis=1)
+            laps = laps[laps["PirelliCompound"].notna()].copy()
 
-                # Handle wet tyres directly
-                elif base_compound in ["INTERMEDIATE", "WET"]:
-                    compound = base_compound
+            # Group by driver + stint (stint = same tyre set)
+            if "Driver" not in laps.columns or "Stint" not in laps.columns:
+                continue
 
-                else:
+            for (driver, stint), stint_laps in laps.groupby(["Driver", "Stint"]):
+                if len(stint_laps) < 5:
                     continue
 
-                tyre_life = int(lap["TyreLife"])
-                lap_time = lap["LapTime"].total_seconds()
+                compound = stint_laps["PirelliCompound"].iloc[0]
 
-                tyre_data[compound].append((tyre_life, lap_time))
+                # Sort in running order
+                stint_laps = stint_laps.sort_values("LapNumber")
+
+                # Ignore first 2 laps of the stint (warm-up/out-lap effects)
+                core = stint_laps.iloc[2:].copy()
+                if len(core) < 3:
+                    continue
+
+                lap_times = core["LapTime"].dt.total_seconds().to_numpy()
+                tyre_life = core["TyreLife"].astype(int).to_numpy()
+
+                # Baseline = best lap inside this stint core (simple + robust enough)
+                baseline = np.min(lap_times)
+                lap_delta = lap_times - baseline
+
+                for life, d in zip(tyre_life, lap_delta):
+                    tyre_data[compound].append((int(life), float(d)))
 
         except Exception:
             continue
 
-# ----------------------------
-# Build tyre models
-# ----------------------------
-
+# Fit models
 tyre_models = {}
-
 for compound, samples in tyre_data.items():
-    if len(samples) < 100:
-        continue
+    life = np.array([s[0] for s in samples], dtype=float)
+    delta = np.array([s[1] for s in samples], dtype=float)
 
-    life = np.array([s[0] for s in samples])
-    lap_time = np.array([s[1] for s in samples])
-
-    # Quadratic degradation model
-    coeffs = np.polyfit(life, lap_time, deg=2)
+    # Quadratic delta fit: delta = q*life^2 + l*life + const
+    q, l, c0 = np.polyfit(life, delta, deg=2)
 
     tyre_models[compound] = {
-        "model": "quadratic",
+        "model": "quadratic_delta_stint_baselined",
         "coefficients": {
-            "a": float(coeffs[2]),
-            "b": float(coeffs[1]),
-            "c": float(coeffs[0]),
+            "linear": float(l),
+            "quadratic": float(q),
         },
         "data_points": int(len(samples)),
         "valid_years": "2021-2024",
     }
 
-# ----------------------------
-# Write output
-# ----------------------------
-
 with open(OUTPUT_FILE, "w") as f:
     json.dump(
         {
-            "description": "Tyre degradation models by Pirelli compound (C1–C5, Inter, Wet)",
-            "source": "FastF1 + Pirelli compound allocations (2021–2024)",
+            "description": "Tyre degradation delta models by Pirelli compound (C1-C5, Inter, Wet). Deltas are baselined per driver-stint.",
+            "source": "FastF1 + Pirelli compound allocations (2021-2024)",
             "tyres": tyre_models,
         },
         f,
         indent=2,
     )
 
-print(f"\nDone. Tyre model written to: {OUTPUT_FILE}")
+print(f"Done. Tyre model written to: {OUTPUT_FILE}")
