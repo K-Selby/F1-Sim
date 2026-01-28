@@ -27,31 +27,17 @@ circuit = circuits[CIRCUIT]
 total_laps = circuit["total_laps"]
 base_lap_time = circuit["base_lap_time"]
 pit_loss = circuit["pit_loss"]
-track_deg_multiplier = circuit.get("track_deg_multiplier", 1.0)
 
 # ----------------------------
-# Tyre helper
+# Tyre model
 # ----------------------------
 
 def tyre_delta(tyre, life):
-    t = tyres[tyre]
-
-    warmup_laps = t["warmup_laps"]
-    warmup_penalty = t["warmup_penalty"]
-    peak_life = t["peak_life"]
-    deg_per_lap = t["deg_per_lap"] * track_deg_multiplier
-
-    # Warm-up phase
-    if life < warmup_laps:
-        return warmup_penalty * (1 - life / warmup_laps)
-
-    # Peak performance window
-    if life <= peak_life:
-        return 0.0
-
-    # Degradation phase
-    deg_laps = life - peak_life
-    return deg_laps * deg_per_lap
+    coeffs = tyres[tyre]["coefficients"]
+    return (
+        coeffs["linear"] * life +
+        coeffs["quadratic"] * (life ** 2)
+    )
 
 # ----------------------------
 # Simulation
@@ -73,12 +59,13 @@ for lap in range(1, total_laps + 1):
         tyre_life = 0
         print(f"Lap {lap:02d}: PIT STOP (+{pit_loss:.2f}s)")
 
+    # Lap time
     delta = tyre_delta(tyre, tyre_life)
     lap_time = base_lap_time + delta
     total_time += lap_time
 
     print(
-        f"Lap {lap:02d} | Tyre: {tyre:>12} | "
+        f"Lap {lap:02d} | Tyre: {tyre:>2} | "
         f"Life: {tyre_life:02d} | "
         f"Lap time: {lap_time:.2f}s | "
         f"Total: {total_time:.2f}s"

@@ -1,48 +1,55 @@
 {
-  "description": "Temporary tyre degradation model for simulator v0.x. Hand-tuned, compound-based (C1–C5, Inter, Wet). Warm-up, peak, and degradation only.",
+  "description": "Temporary quadratic tyre degradation model for simulator v0.7. Hand-tuned per compound (C1–C5, Inter, Wet).",
   "source": "Synthetic placeholder (to be replaced with calibrated data)",
   "tyres": {
     "C1": {
-      "warmup_laps": 3,
-      "warmup_penalty": 0.8,
-      "peak_life": 8,
-      "deg_per_lap": 0.05
+      "model": "quadratic",
+      "coefficients": {
+        "linear": 0.02,
+        "quadratic": 0.0015
+      }
     },
     "C2": {
-      "warmup_laps": 3,
-      "warmup_penalty": 1.0,
-      "peak_life": 7,
-      "deg_per_lap": 0.07
+      "model": "quadratic",
+      "coefficients": {
+        "linear": 0.03,
+        "quadratic": 0.0025
+      }
     },
     "C3": {
-      "warmup_laps": 4,
-      "warmup_penalty": 1.3,
-      "peak_life": 6,
-      "deg_per_lap": 0.10
+      "model": "quadratic",
+      "coefficients": {
+        "linear": 0.05,
+        "quadratic": 0.004
+      }
     },
     "C4": {
-      "warmup_laps": 4,
-      "warmup_penalty": 1.7,
-      "peak_life": 5,
-      "deg_per_lap": 0.14
+      "model": "quadratic",
+      "coefficients": {
+        "linear": 0.08,
+        "quadratic": 0.007
+      }
     },
     "C5": {
-      "warmup_laps": 5,
-      "warmup_penalty": 2.2,
-      "peak_life": 4,
-      "deg_per_lap": 0.20
+      "model": "quadratic",
+      "coefficients": {
+        "linear": 0.12,
+        "quadratic": 0.011
+      }
     },
     "INTERMEDIATE": {
-      "warmup_laps": 4,
-      "warmup_penalty": 2.5,
-      "peak_life": 10,
-      "deg_per_lap": 0.12
+      "model": "quadratic",
+      "coefficients": {
+        "linear": 0.06,
+        "quadratic": 0.005
+      }
     },
     "WET": {
-      "warmup_laps": 5,
-      "warmup_penalty": 4.0,
-      "peak_life": 12,
-      "deg_per_lap": 0.18
+      "model": "quadratic",
+      "coefficients": {
+        "linear": 0.10,
+        "quadratic": 0.009
+      }
     }
   }
 }
