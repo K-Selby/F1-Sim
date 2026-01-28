@@ -3,7 +3,7 @@
     "total_laps": 57,
     "base_lap_time": 97.85,
     "lap_time_std": 1.39,
-    "track_deg_multiplier": 1.0,
+    "track_deg_multiplier": 1.35,
     "pit_loss": 25.59,
     "sc_probability": 0.5,
     "vsc_probability": 0.75,

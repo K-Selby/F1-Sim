@@ -1,55 +1,55 @@
 {
-  "description": "Temporary quadratic tyre degradation model for simulator v0.7. Hand-tuned per compound (C1–C5, Inter, Wet).",
-  "source": "Synthetic placeholder (to be replaced with calibrated data)",
+  "description": "Temporary compound-based tyre model for simulator v0.8 with warm-up improvement, peak window, and accelerating quadratic degradation.",
+  "source": "Hand-tuned placeholder (physics-informed, to be calibrated later)",
   "tyres": {
     "C1": {
-      "model": "quadratic",
-      "coefficients": {
-        "linear": 0.02,
-        "quadratic": 0.0015
-      }
+      "warmup_laps": 3,
+      "warmup_start_penalty": 0.5,
+      "peak_life": 11,
+      "deg_linear": 0.03,
+      "deg_quadratic": 0.0015
     },
     "C2": {
-      "model": "quadratic",
-      "coefficients": {
-        "linear": 0.03,
-        "quadratic": 0.0025
-      }
+      "warmup_laps": 3,
+      "warmup_start_penalty": 0.7,
+      "peak_life": 9,
+      "deg_linear": 0.05,
+      "deg_quadratic": 0.0025
     },
     "C3": {
-      "model": "quadratic",
-      "coefficients": {
-        "linear": 0.05,
-        "quadratic": 0.004
-      }
+      "warmup_laps": 4,
+      "warmup_start_penalty": 1.0,
+      "peak_life": 7,
+      "deg_linear": 0.08,
+      "deg_quadratic": 0.0045
     },
     "C4": {
-      "model": "quadratic",
-      "coefficients": {
-        "linear": 0.08,
-        "quadratic": 0.007
-      }
+      "warmup_laps": 4,
+      "warmup_start_penalty": 1.4,
+      "peak_life": 6,
+      "deg_linear": 0.12,
+      "deg_quadratic": 0.0075
     },
     "C5": {
-      "model": "quadratic",
-      "coefficients": {
-        "linear": 0.12,
-        "quadratic": 0.011
-      }
+      "warmup_laps": 5,
+      "warmup_start_penalty": 1.9,
+      "peak_life": 5,
+      "deg_linear": 0.17,
+      "deg_quadratic": 0.0115
     },
     "INTERMEDIATE": {
-      "model": "quadratic",
-      "coefficients": {
-        "linear": 0.06,
-        "quadratic": 0.005
-      }
+      "warmup_laps": 4,
+      "warmup_start_penalty": 2.3,
+      "peak_life": 12,
+      "deg_linear": 0.09,
+      "deg_quadratic": 0.0035
     },
     "WET": {
-      "model": "quadratic",
-      "coefficients": {
-        "linear": 0.10,
-        "quadratic": 0.009
-      }
+      "warmup_laps": 5,
+      "warmup_start_penalty": 3.8,
+      "peak_life": 14,
+      "deg_linear": 0.13,
+      "deg_quadratic": 0.0055
     }
   }
 }
