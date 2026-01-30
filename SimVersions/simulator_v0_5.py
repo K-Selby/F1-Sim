@@ -1,4 +1,9 @@
 from __future__ import annotations
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]  # F1-Sim
+sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.sim.Race_Manager import Race_Manager
 
