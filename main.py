@@ -1,39 +1,44 @@
-from __future__ import annotations
+# main.py
 
-from pathlib import Path
+import json
 
 from src.sim.RaceManager import RaceManager, CircuitSpec
-from src.io.loaders import load_json  # assuming you have this already
 
 
-def main() -> None:
-    project_root = Path(__file__).resolve().parent  # .../F1-Sim
+def load_json(path: str):
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
 
-    circuits_json = load_json(str(project_root / "configs" / "circuits.json"), default={})
-    teams_json = load_json(str(project_root / "configs" / "teams.json"), default={})
-    tyres_json = load_json(str(project_root / "configs" / "tyres.json"), default={})
 
-    # Pick a circuit entry
-    circuit_id = "bahrain_2021"
-    c = circuits_json.get(circuit_id, {})
+def main():
+    # Load configs
+    circuits = load_json("configs/circuits.json")
+    teams = load_json("configs/teams.json")
+    tyres = load_json("configs/tyres.json")
+    tyre_compounds = load_json("configs/tyre_compounds.json")
 
+    season = "2021"
+    circuit_name = "Bahrain Grand Prix"
+
+    c = circuits[circuit_name]
     circuit = CircuitSpec(
-        name=str(c.get("name", "Bahrain Grand Prix")),
-        base_lap_time=float(c.get("base_lap_time", 96.0)),
-        track_deg_multiplier=float(c.get("track_deg_multiplier", 1.0)),
+        name=circuit_name,
+        total_laps=int(c["total_laps"]),
+        base_lap_time=float(c["base_lap_time"]),
+        track_deg_multiplier=float(c["track_deg_multiplier"]),
+        pit_loss=float(c["pit_loss"]),
     )
 
     rm = RaceManager(
         circuit=circuit,
-        teams_json=teams_json,
-        tyres_json=tyres_json,
-        start_compound="MEDIUM",
+        teams_json=teams,
+        tyres_json=tyres,
+        tyre_compounds_json=tyre_compounds,
+        season=season,
+        circuit_name=circuit_name,
     )
 
-    # Minimal proof it runs end-to-end:
-    lap_times = rm.step_lap()
-    print(f"Simulated 1 lap for {len(lap_times)} cars.")
-    print(lap_times[:5])
+    rm.run_race()
 
 
 if __name__ == "__main__":

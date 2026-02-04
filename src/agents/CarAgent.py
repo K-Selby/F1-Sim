@@ -1,24 +1,34 @@
-from __future__ import annotations
+# src/agents/CarAgent.py
 
+from __future__ import annotations
 from dataclasses import dataclass
-from typing import Optional
 
 from src.models.TyreModel import TyreModel, TyreState
 
 
-@dataclass
+@dataclass(frozen=True)
 class CarCalibration:
     """
-    Team-calibrated parameters used by the car each lap.
+    Fixed performance values for a car.
+    For now these come from the team (same for both cars).
     """
-    mu_team: float   # baseline pace offset (seconds)
-    k_team: float    # tyre management scaling factor
+    mu_team: float   # pace offset in seconds (negative = faster)
+    k_team: float    # how hard this car is on its tyres
 
 
 class CarAgent:
     """
-    CarAgent holds tyre STATE (compound + age) and uses the shared TyreModel to compute wear/pace,
-    matching the design's separation: state on agent, model shared and calibrated.
+    A single car in the race.
+
+    What this class does:
+    - Keeps track of its own tyres
+    - Calculates its own lap time in clean air
+    - Ages its tyres each lap
+
+    What this class does NOT do:
+    - Strategy decisions
+    - Overtaking or traffic
+    - Knowing about other cars
     """
 
     def __init__(
@@ -31,46 +41,61 @@ class CarAgent:
     ):
         self.car_id = car_id
         self.team_id = team_id
-
-        self.mu_team = float(calibration.mu_team)
-        self.k_team = float(calibration.k_team)
-
+        self.calibration = calibration
         self.tyre_state = tyre_state
         self.tyre_model = tyre_model
 
-        # Optional (if/when you wire in traffic + commands)
-        self.pace_command: Optional[str] = None
-        self.last_lap_time: Optional[float] = None
-
-    @property
-    def tyre_compound(self) -> str:
-        return self.tyre_state.compound
-
-    @property
-    def tyre_age(self) -> int:
-        return int(self.tyre_state.age_laps)
-
-    def update_tyre_wear(self) -> None:
+    # ---------------------------------------------------------
+    # Tyres
+    # ---------------------------------------------------------
+    def update_tyre_wear(self, laps: int = 1) -> None:
         """
-        Per-lap tyre ageing (stint age increments by 1 lap).
+        Increase tyre age by the given number of laps.
         """
-        self.tyre_model.advance(self.tyre_state, laps=1)
+        self.tyre_state.age_laps += laps
 
+    # ---------------------------------------------------------
+    # Lap time
+    # ---------------------------------------------------------
     def estimate_clean_air_lap_time(
         self,
         base_lap_time: float,
         track_deg_multiplier: float,
     ) -> float:
         """
-        Clean-air estimate using:
-        base_lap_time + mu_team + tyre_delta(...)
+        Calculate lap time assuming no traffic or battles.
         """
-        tyre_delta = self.tyre_model.lap_delta(
-            compound=self.tyre_state.compound,
-            life=self.tyre_state.age_laps,
+        tyre_penalty = self.tyre_model.lap_delta(
+            tyre_state=self.tyre_state,
             track_deg_multiplier=track_deg_multiplier,
-            k_team=self.k_team,
+            team_deg_factor=self.calibration.k_team,
         )
-        lap_time = float(base_lap_time) + self.mu_team + tyre_delta
-        self.last_lap_time = lap_time
+
+        lap_time = (
+            base_lap_time
+            + self.calibration.mu_team
+            + tyre_penalty
+        )
+
+        return max(0.0, lap_time)
+
+    # ---------------------------------------------------------
+    # One lap step
+    # ---------------------------------------------------------
+    def step_lap(
+        self,
+        base_lap_time: float,
+        track_deg_multiplier: float,
+    ) -> float:
+        """
+        Run one lap:
+        - get lap time
+        - age the tyres
+        """
+        lap_time = self.estimate_clean_air_lap_time(
+            base_lap_time=base_lap_time,
+            track_deg_multiplier=track_deg_multiplier,
+        )
+
+        self.update_tyre_wear(laps=1)
         return lap_time
