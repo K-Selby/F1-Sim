@@ -3,83 +3,74 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
 
-from src.sim.TyreModel import TyreModel
+from src.models.TyreModel import TyreModel, TyreState
 
 
 @dataclass
-class Strategy:
-    start_compound: str  # e.g. "C3"
-    pit_lap: int         # e.g. 20
-    end_compound: str    # e.g. "C2"
+class CarCalibration:
+    """
+    Team-calibrated parameters used by the car each lap.
+    """
+    mu_team: float   # baseline pace offset (seconds)
+    k_team: float    # tyre management scaling factor
 
 
 class CarAgent:
+    """
+    CarAgent holds tyre STATE (compound + age) and uses the shared TyreModel to compute wear/pace,
+    matching the design's separation: state on agent, model shared and calibrated.
+    """
+
     def __init__(
         self,
-        driver_code: str,
-        team_name: str,
-        pace_offset: float,
-        degradation_factor: float,
-        pit_execution_std: float,
+        car_id: str,
+        team_id: str,
+        calibration: CarCalibration,
+        tyre_state: TyreState,
         tyre_model: TyreModel,
-        strategy: Strategy,
     ):
-        self.driver_code = driver_code
-        self.team_name = team_name
-        self.pace_offset = float(pace_offset)
-        self.degradation_factor = float(degradation_factor)
-        self.pit_execution_std = float(pit_execution_std)
+        self.car_id = car_id
+        self.team_id = team_id
 
+        self.mu_team = float(calibration.mu_team)
+        self.k_team = float(calibration.k_team)
+
+        self.tyre_state = tyre_state
         self.tyre_model = tyre_model
-        self.strategy = strategy
 
-        self.compound = strategy.start_compound
-        self.tyre_life = 0
+        # Optional (if/when you wire in traffic + commands)
+        self.pace_command: Optional[str] = None
+        self.last_lap_time: Optional[float] = None
 
-        self.total_time = 0.0
-        self.lap_times: list[float] = []
-        self.pitted = False
+    @property
+    def tyre_compound(self) -> str:
+        return self.tyre_state.compound
 
-    def maybe_pit(self, lap: int, pit_loss: float, pit_noise: float) -> Optional[float]:
+    @property
+    def tyre_age(self) -> int:
+        return int(self.tyre_state.age_laps)
+
+    def update_tyre_wear(self) -> None:
         """
-        If pitting this lap, apply pit time and reset tyres.
-        Returns pit_delta if pit happened.
+        Per-lap tyre ageing (stint age increments by 1 lap).
         """
-        if (not self.pitted) and lap == self.strategy.pit_lap:
-            self.pitted = True
-            self.total_time += (pit_loss + pit_noise)
-            self.compound = self.strategy.end_compound
-            self.tyre_life = 0
-            return pit_loss + pit_noise
-        return None
+        self.tyre_model.advance(self.tyre_state, laps=1)
 
-    def do_lap(
+    def estimate_clean_air_lap_time(
         self,
-        lap: int,
         base_lap_time: float,
-        lap_time_noise: float,
         track_deg_multiplier: float,
-        start_lap_penalty: float = 0.0,
     ) -> float:
         """
-        Simulate one lap for this car, return lap time.
+        Clean-air estimate using:
+        base_lap_time + mu_team + tyre_delta(...)
         """
-        delta = self.tyre_model.lap_delta(
-            compound=self.compound,
-            life=self.tyre_life,
+        tyre_delta = self.tyre_model.lap_delta(
+            compound=self.tyre_state.compound,
+            life=self.tyre_state.age_laps,
             track_deg_multiplier=track_deg_multiplier,
-            team_deg_factor=self.degradation_factor,
+            k_team=self.k_team,
         )
-
-        lap_time = base_lap_time + self.pace_offset + delta + lap_time_noise
-
-        if lap == 1:
-            lap_time += start_lap_penalty
-
-        # Safety clamp
-        lap_time = max(1.0, lap_time)
-
-        self.total_time += lap_time
-        self.lap_times.append(lap_time)
-        self.tyre_life += 1
+        lap_time = float(base_lap_time) + self.mu_team + tyre_delta
+        self.last_lap_time = lap_time
         return lap_time

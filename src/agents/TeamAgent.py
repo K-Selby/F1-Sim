@@ -1,42 +1,34 @@
+# src/agents/TeamAgent.py
 from __future__ import annotations
-
 from dataclasses import dataclass
+from typing import Dict, List, Tuple
+from src.agents.CarAgent import CarAgent
+from src.models.TyreModel import TyreModel
 
 
 @dataclass
-class TeamPerformance:
-    pace_offset: float
-    degradation_factor: float
-    pit_execution_std: float
+class TeamAgent:
+    team_name: str
+    cars: List[CarAgent]
 
+    def decide_pits_fixed_strategy(
+        self,
+        current_lap: int,
+        pit_lap: int,
+        strategy: Tuple[str, str],
+        compound_map: Dict[str, str]
+    ) -> List[CarAgent]:
+        """
+        Simple v0 strategy: everyone pits on a fixed lap, switching from strategy[0] to strategy[1].
+        Returns the list of cars that will pit.
+        """
+        if current_lap != pit_lap:
+            return []
 
-@dataclass
-class StrategyProfile:
-    risk_tolerance: float = 0.5
-    undercut_bias: float = 0.5
-    overcut_bias: float = 0.5
+        # switch to second stint compound
+        next_compound = compound_map.get(strategy[1], compound_map.get("HARD", "C2"))
 
+        for car in self.cars:
+            car.tyre = TyreModel(compound_code=next_compound, age_laps=0)
 
-class Team_Agent:
-    """
-    Minimal team agent for MVP:
-    - Holds performance parameters (pace_offset, degradation_factor, pit_execution_std)
-    - No decision-making yet (strategy is fixed globally in v0.5)
-    """
-
-    def __init__(self, name: str, performance: TeamPerformance, strategy: StrategyProfile | None = None):
-        self.name = name
-        self.performance = performance
-        self.strategy = strategy or StrategyProfile()
-
-    @property
-    def pace_offset(self) -> float:
-        return float(self.performance.pace_offset)
-
-    @property
-    def degradation_factor(self) -> float:
-        return float(self.performance.degradation_factor)
-
-    @property
-    def pit_execution_std(self) -> float:
-        return float(self.performance.pit_execution_std)
+        return list(self.cars)
