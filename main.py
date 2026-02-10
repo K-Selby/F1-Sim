@@ -1,8 +1,6 @@
-# main.py
-
 import json
 
-from src.sim.RaceManager import RaceManager, CircuitSpec
+from src.sim.RaceManager import RaceManager
 
 
 def load_json(path: str):
@@ -11,34 +9,21 @@ def load_json(path: str):
 
 
 def main():
-    # Load configs
     circuits = load_json("configs/circuits.json")
-    teams = load_json("configs/teams.json")
+    teams = load_json("configs/teams.json")["2021"]
     tyres = load_json("configs/tyres.json")
-    tyre_compounds = load_json("configs/tyre_compounds.json")
 
-    season = "2021"
-    circuit_name = "Bahrain Grand Prix"
-
-    c = circuits[circuit_name]
-    circuit = CircuitSpec(
-        name=circuit_name,
-        total_laps=int(c["total_laps"]),
-        base_lap_time=float(c["base_lap_time"]),
-        track_deg_multiplier=float(c["track_deg_multiplier"]),
-        pit_loss=float(c["pit_loss"]),
-    )
+    circuit = circuits["Bahrain Grand Prix"]
 
     rm = RaceManager(
-        circuit=circuit,
+        base_lap_time=circuit["base_lap_time"],
+        track_deg_multiplier=circuit["track_deg_multiplier"],
+        total_laps=circuit["total_laps"],
         teams_json=teams,
         tyres_json=tyres,
-        tyre_compounds_json=tyre_compounds,
-        season=season,
-        circuit_name=circuit_name,
     )
 
-    rm.run_race()
+    rm.run()
 
 
 if __name__ == "__main__":
