@@ -1,29 +1,25 @@
-import json
+# main.py
 
 from src.sim.RaceManager import RaceManager
 
 
-def load_json(path: str):
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
 def main():
-    circuits = load_json("configs/circuits.json")
-    teams = load_json("configs/teams.json")["2021"]
-    tyres = load_json("configs/tyres.json")
+    """
+    Entry point for the MAS-based race simulation.
 
-    circuit = circuits["Bahrain Grand Prix"]
+    main.py is intentionally thin:
+    - It wires everything together
+    - It does NOT contain race logic
+    - All decisions live inside agents
+    """
 
-    rm = RaceManager(
-        base_lap_time=circuit["base_lap_time"],
-        track_deg_multiplier=circuit["track_deg_multiplier"],
-        total_laps=circuit["total_laps"],
-        teams_json=teams,
-        tyres_json=tyres,
-    )
+    ###rm = RaceManager(
+        #total_laps=57,            # example: Bahrain
+        #base_lap_time=96.0,       # baseline clean-air lap
+        #track_deg_multiplier=1.0  # global degradation scaling
+   ## ##)
 
-    rm.run()
+    #rm.run()
 
 
 if __name__ == "__main__":
