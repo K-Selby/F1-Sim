@@ -19,5 +19,6 @@ box_hover = (28, 34, 45)
 red_box = (200, 40, 40)
 blue = (40, 90, 200)   # Blue
 green = (40, 170, 90)    # Green
+purple = (128, 0, 128)
 
 font_name = "data/UI/F1_Fonts/Formula1/Formula1-Bold.ttf"

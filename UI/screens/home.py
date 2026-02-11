@@ -11,7 +11,7 @@ class Home:
         self.home_title_text = "F1 Simulations"
         self.home_subtitle_text = "Choose Your Race Simulator"
         self.logo_image = pygame.image.load("data/UI/Images/F1_Logo.png")
-        self.play_image = pygame.image.load("data/UI/Images/play_circle.png")
+        self.race_image = pygame.image.load("data/UI/Images/race.png")
         self.replay_image = pygame.image.load("data/UI/Images/replay_circle.png")
         self.seed_image = pygame.image.load("data/UI/Images/globe_circle.png")
         self.cards = []
@@ -44,7 +44,13 @@ class Home:
             "Run deterministic seeded simulations."
         ]
 
-        colours = [red, blue, green]
+        modes = [
+            "CustomRace",
+            "RaceReplays",
+            "SeededRaces"
+        ]
+
+        colours = [red, blue, purple]
 
         for i in range(3):
             base_rect = pygame.Rect(start_x + i * (card_width + spacing), y, card_width, card_height    )
@@ -54,6 +60,7 @@ class Home:
                 "rect": base_rect.copy(),
                 "title": titles[i],
                 "desc": descriptions[i],
+                "mode": modes[i],
                 "hover": False,
                 "color": box_colour,
                 "hover_colour": colours[i],
@@ -123,7 +130,7 @@ class Home:
         # Draw Cards
         card_title_font = pygame.font.Font(font_name, int(self.screen_y/39.5357142857))
         card_text_font = pygame.font.Font(font_name, int(self.screen_y/73.8))
-        play_image = pygame.transform.scale(self.play_image, (self.screen_x/28.5, self.screen_y/18.45))
+        race_image = pygame.transform.scale(self.race_image, (self.screen_x/28.5, self.screen_y/18.45))
         replay_image = pygame.transform.scale(self.replay_image, (self.screen_x/28.5, self.screen_y/18.45))
         seed_image = pygame.transform.scale(self.seed_image, (self.screen_x/28.5, self.screen_y/18.45))
         
@@ -156,7 +163,7 @@ class Home:
             self.screen.blit(title_surface, title_rect)
             self.screen.blit(desc_surface, desc_rect)
 
-        self.screen.blit(play_image, (self.screen_x/8.9763779528, self.screen_y/2.9))
+        self.screen.blit(race_image, (self.screen_x/8.9763779528, self.screen_y/2.9))
         self.screen.blit(replay_image, (self.screen_x/2.6057142857, self.screen_y/2.9))
         self.screen.blit(seed_image, (self.screen_x/1.5244038333, self.screen_y/2.9))
         
@@ -201,8 +208,7 @@ class Home:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 for card in self.cards:
                     if card["rect"].collidepoint(mouse_pos):
-                        print(f"{card['title']} clicked")
-                        # Placeholder — will connect later
+                        self.s_Mode = card["mode"]
         
         self.render()
         pygame.display.flip()

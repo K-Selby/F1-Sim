@@ -1,5 +1,5 @@
 # screens/welcome.py
-from turtle import distance
+
 from API.imports import *
 
 # Create Title screen
