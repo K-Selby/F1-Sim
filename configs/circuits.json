@@ -120,6 +120,17 @@
     "sc_duration_mean": 2.0,
     "overtake_difficulty": 0.89
   },
+  "Belgian Grand Prix": {
+    "total_laps": 44,
+    "base_lap_time": 112.19,
+    "lap_time_std": 1.52,
+    "track_deg_multiplier": 1.0,
+    "pit_loss": 19.06,
+    "sc_probability": 0.33,
+    "vsc_probability": 0.0,
+    "sc_duration_mean": 3.0,
+    "overtake_difficulty": 0.79
+  },
   "Dutch Grand Prix": {
     "total_laps": 72,
     "base_lap_time": 77.01,
@@ -186,7 +197,7 @@
     "sc_duration_mean": 4.67,
     "overtake_difficulty": 0.92
   },
-  "Sao Paulo Grand Prix": {
+  "São Paulo Grand Prix": {
     "total_laps": 70,
     "base_lap_time": 78.1,
     "lap_time_std": 1.35,
@@ -262,17 +273,6 @@
     "vsc_probability": 0.67,
     "sc_duration_mean": 8.33,
     "overtake_difficulty": 0.92
-  },
-  "Belgian Grand Prix": {
-    "total_laps": 44,
-    "base_lap_time": 112.19,
-    "lap_time_std": 1.52,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 19.06,
-    "sc_probability": 0.33,
-    "vsc_probability": 0.0,
-    "sc_duration_mean": 3.0,
-    "overtake_difficulty": 0.79
   },
   "Singapore Grand Prix": {
     "total_laps": 61,

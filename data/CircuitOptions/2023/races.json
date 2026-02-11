@@ -1,0 +1,181 @@
+{
+    "Season": 2023,
+    "Races": [
+        {
+            "Round": 1,
+            "Grand_Prix": "Bahrain Grand Prix",
+            "Track_Name": "Bahrain International Circuit",
+            "Country": "Bahrain",
+            "Track_Image": "data/CircuitDiagarms/Bahrain/Bahrain_Circuit.webp.avif",
+            "Flag": "🇧🇭"
+        },
+        {
+            "Round": 2,
+            "Grand_Prix": "Saudi Arabian Grand Prix",
+            "Track_Name": "Jeddah Corniche Circuit",
+            "Country": "Saudi Arabia",
+            "Track_Image": "data/CircuitDiagarms/Saudi_Arabian/Saudi_Arabian_Circuit.webp.avif",
+            "Flag": "🇸🇦"
+        },
+        {
+            "Round": 3,
+            "Grand_Prix": "Australian Grand Prix",
+            "Track_Name": "Albert Park Circuit",
+            "Country": "Australia",
+            "Track_Image": "data/CircuitDiagarms/Australian/Australia_Circuit.webp.avif",
+            "Flag": "🇦🇺"
+        },
+        {
+            "Round": 4,
+            "Grand_Prix": "Azerbaijan Grand Prix",
+            "Track_Name": "Baku City Circuit",
+            "Country": "Azerbaijan",
+            "Track_Image": "data/CircuitDiagarms/Azerbaijan/Baku_Circuit.webp.avif",
+            "Flag": "🇦🇿"
+        },
+        {
+            "Round": 5,
+            "Grand_Prix": "Miami Grand Prix",
+            "Track_Name": "Miami International Autodrome",
+            "Country": "United States",
+            "Track_Image": "data/CircuitDiagarms/Miami/Miami_Circuit.webp.avif",
+            "Flag": "🇺🇸"
+        },
+        {
+            "Round": 6,
+            "Grand_Prix": "Monaco Grand Prix",
+            "Track_Name": "Circuit de Monaco",
+            "Country": "Monaco",
+            "Track_Image": "data/CircuitDiagarms/Monaco/Monaco_Circuit.webp.avif",
+            "Flag": "🇲🇨"
+        },
+        {
+            "Round": 7,
+            "Grand_Prix": "Spanish Grand Prix",
+            "Track_Name": "Circuit de Barcelona-Catalunya",
+            "Country": "Spain",
+            "Track_Image": "data/CircuitDiagarms/Spanish/Spanish_Circuit.webp.avif",
+            "Flag": "🇪🇸"
+        },
+        {
+            "Round": 8,
+            "Grand_Prix": "Canadian Grand Prix",
+            "Track_Name": "Circuit Gilles Villeneuve",
+            "Country": "Canada",
+            "Track_Image": "data/CircuitDiagarms/Canadian/Canadian_Circuit.webp.avif",
+            "Flag": "🇨🇦"
+        },
+        {
+            "Round": 9,
+            "Grand_Prix": "Austrian Grand Prix",
+            "Track_Name": "Red Bull Ring",
+            "Country": "Austria",
+            "Track_Image": "data/CircuitDiagarms/Austrian/Austria_Circuit.webp.avif",
+            "Flag": "🇦🇹"
+        },
+        {
+            "Round": 10,
+            "Grand_Prix": "British Grand Prix",
+            "Track_Name": "Silverstone Circuit",
+            "Country": "United Kingdom",
+            "Track_Image": "data/CircuitDiagarms/British/Great_Britain_Circuit.webp.avif",
+            "Flag": "🇬🇧"
+        },
+        {
+            "Round": 11,
+            "Grand_Prix": "Hungarian Grand Prix",
+            "Track_Name": "Hungaroring",
+            "Country": "Hungary",
+            "Track_Image": "data/CircuitDiagarms/Hungarian/Hungary_Circuit.webp.avif",
+            "Flag": "🇭🇺"
+        },
+        {
+            "Round": 12,
+            "Grand_Prix": "Belgian Grand Prix",
+            "Track_Name": "Circuit de Spa-Francorchamps",
+            "Country": "Belgium",
+            "Track_Image": "data/CircuitDiagarms/Belgian/Belgium_Circuit.webp.avif",
+            "Flag": "🇧🇪"
+        },
+        {
+            "Round": 13,
+            "Grand_Prix": "Dutch Grand Prix",
+            "Track_Name": "Circuit Zandvoort",
+            "Country": "Netherlands",
+            "Track_Image": "data/CircuitDiagarms/Dutch/Netherlands_Circuit.webp.avif",
+            "Flag": "🇳🇱"
+        },
+        {
+            "Round": 14,
+            "Grand_Prix": "Italian Grand Prix",
+            "Track_Name": "Autodromo Nazionale Monza",
+            "Country": "Italy",
+            "Track_Image": "data/CircuitDiagarms/Italian/Italy_Circuit.webp.avif",
+            "Flag": "🇮🇹"
+        },
+        {
+            "Round": 15,
+            "Grand_Prix": "Singapore Grand Prix",
+            "Track_Name": "Marina Bay Street Circuit",
+            "Country": "Singapore",
+            "Track_Image": "data/CircuitDiagarms/Singapore/Singapore_Circuit.webp.avif",
+            "Flag": "🇸🇬"
+        },
+        {
+            "Round": 16,
+            "Grand_Prix": "Japanese Grand Prix",
+            "Track_Name": "Suzuka International Racing Course",
+            "Country": "Japan",
+            "Track_Image": "data/CircuitDiagarms/Japanese/Japan_Circuit.webp.avif",
+            "Flag": "🇯🇵"
+        },
+        {
+            "Round": 17,
+            "Grand_Prix": "Qatar Grand Prix",
+            "Track_Name": "Lusail International Circuit",
+            "Country": "Qatar",
+            "Track_Image": "data/CircuitDiagarms/Qatar/Qatar_Circuit.webp.avif",
+            "Flag": "🇶🇦"
+        },
+        {
+            "Round": 18,
+            "Grand_Prix": "United States Grand Prix",
+            "Track_Name": "Circuit of the Americas",
+            "Country": "United States",
+            "Track_Image": "data/CircuitDiagarms/United_States/USA_Circuit.webp.avif",
+            "Flag": "🇺🇸"
+        },
+        {
+            "Round": 19,
+            "Grand_Prix": "Mexico City Grand Prix",
+            "Track_Name": "Autódromo Hermanos Rodríguez",
+            "Country": "Mexico",
+            "Track_Image": "data/CircuitDiagarms/Mexico/Mexico_Circuit.webp.avif",
+            "Flag": "🇲🇽"
+        },
+        {
+            "Round": 20,
+            "Grand_Prix": "São Paulo Grand Prix",
+            "Track_Name": "Autódromo José Carlos Pace",
+            "Country": "Brazil",
+            "Track_Image": "data/CircuitDiagarms/Brazil/Brazil_Circuit.webp.avif",
+            "Flag": "🇧🇷"
+        },
+        {
+            "Round": 21,
+            "Grand_Prix": "Las Vegas Grand Prix",
+            "Track_Name": "Las Vegas Strip Circuit",
+            "Country": "United States",
+            "Track_Image": "data/CircuitDiagarms/Las_Vegas/Las_Vegas_Circuit.webp.avif",
+            "Flag": "🇺🇸"
+        },
+        {
+            "Round": 22,
+            "Grand_Prix": "Abu Dhabi Grand Prix",
+            "Track_Name": "Yas Marina Circuit",
+            "Country": "United Arab Emirates",
+            "Track_Image": "data/CircuitDiagarms/United_Arab_Emirates/United_Arab_Emirates_Circuit.webp.avif",
+            "Flag": "🇦🇪"
+        }
+    ]
+}

@@ -1,10 +1,9 @@
 data/fastf1_cache/*
 src/agents/__pycache__/CarAgent.cpython-312.pyc
 src/agents/__pycache__/TeamAgent.cpython-312.pyc
-src/sim/__pycache__/RaceManager.cpython-312.pyc
 src/sim/__pycache__/RaceState.cpython-312.pyc
 UI/screens/__pycache__/welcome.cpython-312.pyc
 UI/screens/__pycache__/menu.cpython-312.pyc
 src/sim/__pycache__/RaceManager.cpython-312.pyc
-src/agents/__pycache__/TeamAgent.cpython-312.pyc
-src/agents/__pycache__/CarAgent.cpython-312.pyc
+UI/API/__pycache__/imports.cpython-312.pyc
+UI/screens/__pycache__/home.cpython-312.pyc
