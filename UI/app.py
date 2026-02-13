@@ -3,6 +3,7 @@ from API.imports import *
 from screens.welcome import Title
 from screens.home import Home
 from screens.customRace import CustomeRace
+from screens.simulation import Siumulation
 
 # Initialise pygame
 pygame.init()
@@ -35,6 +36,10 @@ def main(s_Mode, screen):
         Custom_Race_Screen = CustomeRace(s_Mode, screen)
         while s_Mode == 'CustomRace':
             s_Mode, screen = Custom_Race_Screen.update()
+            
+        Siumulation_Screen = Siumulation(s_Mode, screen)
+        while s_Mode == 'Simulation':
+            s_Mode, screen = Siumulation_Screen.update()
         
         if s_Mode == 'Quit':
             print('Quit')

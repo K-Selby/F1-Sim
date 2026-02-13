@@ -381,7 +381,7 @@ class CustomeRace:
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 card_num = -1
-                for card in self.cards[:2]:  # only first 2 if that's intentional
+                for card in self.cards[:2]:  # only first 2
                     card_num += 1
                     if card["rect"].collidepoint(mouse_pos):
                         # Select this one
@@ -397,6 +397,9 @@ class CustomeRace:
                         self.button_1()
                         self.create_cards()
                         self.create_race_cards()
+                
+                if self.cards[2]["rect"].collidepoint(mouse_pos):
+                    self.s_Mode = "Simulation"
                 
                 for card in self.button:
                     if card["rect"].collidepoint(mouse_pos):
