@@ -43,15 +43,16 @@ def main():
     # Build Race Manager using circuit params
     # ------------------------------------------
     rm = RaceManager(
-        season="2021",
-        total_laps=circuit_params["total_laps"],
-        base_lap_time=circuit_params["base_lap_time"],
-        track_deg_multiplier=circuit_params["track_deg_multiplier"],
-        sim_speed=1000.0  # playback speed multiplier
+        season="2024",
+        total_laps = circuit_params["total_laps"],
+        base_lap_time = circuit_params["base_lap_time"],
+        track_deg_multiplier = circuit_params["track_deg_multiplier"],
+        lap_time_std = circuit_params["lap_time_std"],
+        pit_loss = circuit_params["pit_loss"],
+        sim_speed = 500.0  # playback speed multiplier
     )
 
     rm.run()
-
 
 if __name__ == "__main__":
     main()

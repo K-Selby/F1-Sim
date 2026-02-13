@@ -18,14 +18,7 @@ class CarCalibration:
 
 class CarAgent:
 
-    def __init__(
-        self,
-        car_id: str,
-        team_id: str,
-        calibration: CarCalibration,
-        tyre_state: TyreState,
-        tyre_model: TyreModel,
-    ):
+    def __init__(self, car_id: str, team_id: str, calibration: CarCalibration, tyre_state: TyreState, tyre_model: TyreModel):
 
         self.car_id = car_id
         self.team_id = team_id
@@ -44,16 +37,15 @@ class CarAgent:
         self.retired: bool = False
 
         self._sector_counter: int = 0
+        
+        self.pending_pit: bool = False
+        self.pit_compound: Optional[str] = None
 
     # ==========================================================
     # SECTOR STEP
     # ==========================================================
 
-    def step_sector(
-        self,
-        sector_base_time: float,
-        track_deg_multiplier: float,
-    ) -> float:
+    def step_sector(self, sector_base_time: float, track_deg_multiplier: float, lap_time_std: float,) -> float:
 
         if self.retired:
             return 0.0
@@ -62,17 +54,14 @@ class CarAgent:
             self.retired = True
             return 0.0
 
-        tyre_delta = self.tyre_model.lap_delta(
-            tyre_state=self.tyre_state,
-            track_deg_multiplier=track_deg_multiplier,
-            team_deg_factor=self.calibration.k_team,
-        )
+        tyre_delta = self.tyre_model.lap_delta(tyre_state=self.tyre_state, track_deg_multiplier=track_deg_multiplier, team_deg_factor=self.calibration.k_team,)
 
-        sector_time = (
-            sector_base_time
-            + self.calibration.mu_team / 3
-            + tyre_delta / 3
-        )
+        sector_time = (sector_base_time + self.calibration.mu_team / 3 + tyre_delta / 3)
+        
+        # Add sector-level randomness
+        sector_std = self.calibration.lap_time_std / 3 if hasattr(self.calibration, 'lap_time_std') else 0.0
+        randomness = random.gauss(0, sector_std)
+        sector_time += randomness
 
         sector_time = self.adjust_for_traffic(sector_time)
 
@@ -110,8 +99,12 @@ class CarAgent:
     # ==========================================================
 
     def pit(self, new_compound: str) -> None:
-        self.tyre_state.compound = new_compound
-        self.tyre_state.age_laps = 0
+        """
+        Request a pit stop.
+        Actual time loss handled by RaceManager.
+        """
+        self.pending_pit = True
+        self.pit_compound = new_compound
 
     def apply_team_instruction(self, instruction: str) -> None:
         self.instruction = instruction

@@ -75,8 +75,10 @@ class TeamAgent:
         self.car_b.apply_team_instruction("NORMAL")
 
     def issue_pit_decision(self) -> None:
-        if self.current_lap == 5 and not self.has_pitted:
-            self.target_compound = "C2"
-            self.car_a.pit(self.target_compound)
-            self.car_b.pit(self.target_compound)
+        """
+        Basic one-stop strategy example.
+        """
+        if self.current_lap == 20 and not self.has_pitted:
+            self.car_a.pit("C3")
+            self.car_b.pit("C3")
             self.has_pitted = True

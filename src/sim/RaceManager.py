@@ -13,12 +13,14 @@ from src.models.TyreModel import TyreModel, TyreState
 
 class RaceManager:
 
-    def __init__(self, season: str, total_laps: int, base_lap_time: float, track_deg_multiplier: float, sim_speed: float = 10.0):
+    def __init__(self, season: str, total_laps: int, base_lap_time: float, track_deg_multiplier: float, lap_time_std: float, pit_loss: float, sim_speed: float = 10.0):
 
         self.season = season
         self.total_laps = total_laps
         self.base_lap_time = base_lap_time
         self.track_deg_multiplier = track_deg_multiplier
+        self.lap_time_std = lap_time_std
+        self.pit_loss = pit_loss
         self.sim_speed = sim_speed
 
         self.lap_number = 0
@@ -77,6 +79,10 @@ class RaceManager:
 
                 cars.append(car)
                 car_objects.append(car)
+                
+            print(f"\nTeam: {team_name}")
+            print("Car A calibration id:", id(car_objects[0].calibration))
+            print("Car B calibration id:", id(car_objects[1].calibration))
 
             team_agent = TeamAgent(
                 team_id=team_name,
@@ -135,15 +141,31 @@ class RaceManager:
                 team.decide()
 
         for car in self.cars:
-            car.step_sector(
-                sector_base_time=sector_time,
-                track_deg_multiplier=self.track_deg_multiplier,
-            )
+            car.step_sector(sector_base_time=self.base_lap_time / 3, track_deg_multiplier=self.track_deg_multiplier, lap_time_std=self.lap_time_std)
 
         print(f"Lap {self.lap_number+1} - Sector {self.sector_number}")
 
         if self.sector_number == 3:
             self.end_lap()
+            
+        for car in self.cars:
+            if car.pending_pit and not car.retired:
+                self.apply_pit_stop(car)
+
+    def apply_pit_stop(self, car: CarAgent) -> None:
+        """
+        Apply pit stop time loss and change tyres.
+        """
+        pit_loss = self.pit_loss
+
+        car.total_time += pit_loss
+
+        # Change tyres
+        car.tyre_state.compound = car.pit_compound
+        car.tyre_state.age_laps = 0
+
+        car.pending_pit = False
+        car.pit_compound = None
 
     # ==========================================================
     # LAP END
@@ -163,17 +185,32 @@ class RaceManager:
     # FINAL OUTPUT
     # ==========================================================
 
-    def print_final_classification(self):
-
+    def print_final_classification(self) -> None:
         print("\nFinal Classification\n")
 
+        # Finished cars
         classified = sorted(
             [c for c in self.cars if not c.retired],
             key=lambda c: c.total_time,
         )
 
-        for i, car in enumerate(classified, start=1):
+        # Retired cars
+        retired = [c for c in self.cars if c.retired]
+
+        position = 1
+
+        # Print finishers
+        for car in classified:
             print(
-                f"P{i:02d} | {car.car_id:<5} | {car.team_id:<18} "
+                f"P{position:02d} | {car.car_id:<5} | {car.team_id:<18} "
                 f"| {car.total_time:.2f}s"
             )
+            position += 1
+
+        # Print DNFs
+        for car in retired:
+            print(
+                f"P{position:02d} | {car.car_id:<5} | {car.team_id:<18} "
+                f"| DNF"
+            )
+            position += 1
