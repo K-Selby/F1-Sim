@@ -7,3 +7,7 @@ UI/screens/__pycache__/menu.cpython-312.pyc
 src/sim/__pycache__/RaceManager.cpython-312.pyc
 UI/API/__pycache__/imports.cpython-312.pyc
 UI/screens/__pycache__/home.cpython-312.pyc
+UI/API/__pycache__/scroll_container.cpython-312.pyc
+UI/screens/__pycache__/customRace.cpython-312.pyc
+data/UI/.DS_Store
+configs/sim_configuration.json
