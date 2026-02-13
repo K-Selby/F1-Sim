@@ -1,102 +1,179 @@
-from typing import Dict, List
+# src/sim/RaceManager.py
 
-from src.sim.RaceState import RaceState
-from src.agents.CarAgent import CarAgent, CarCalibration
+from __future__ import annotations
+import time
+import json
+from typing import List
+
+from src.sim.RaceState import RaceState, CarSnapshot
 from src.agents.TeamAgent import TeamAgent
+from src.agents.CarAgent import CarAgent, CarCalibration
 from src.models.TyreModel import TyreModel, TyreState
 
 
 class RaceManager:
-    """
-    Environment agent.
-    Owns the race clock and enforces physics.
-    """
 
-    def __init__(
-        self,
-        base_lap_time: float,
-        track_deg_multiplier: float,
-        total_laps: int,
-        teams_json: Dict,
-        tyres_json: Dict,
-    ):
+    def __init__(self, season: str, total_laps: int, base_lap_time: float, track_deg_multiplier: float, sim_speed: float = 10.0):
+
+        self.season = season
+        self.total_laps = total_laps
         self.base_lap_time = base_lap_time
         self.track_deg_multiplier = track_deg_multiplier
+        self.sim_speed = sim_speed
 
-        self.race_state = RaceState(total_laps)
-        self.tyre_model = TyreModel(tyres_json)
+        self.lap_number = 0
+        self.sector_number = 0
+        self.race_finished = False
 
-        self.cars: List[CarAgent] = []
-        self.teams: List[TeamAgent] = []
+        self.track_state = "GREEN"
+        self.weather_state = "DRY"
+        self.evolution_level = 0.0
 
-        # 🔧 TEMP: hard-map starting tyre to real compound
-        self.start_compound = "C3"  # MEDIUM ≈ C3
+        self.race_state = RaceState()
 
-        self._build_agents(teams_json)
+        self.teams, self.cars = self._build_grid()
 
-    def _build_agents(self, teams_json: Dict):
-        for team_id, team_data in teams_json.items():
-            calibration = CarCalibration(
-                mu_team=team_data["performance"]["pace_offset"],
-                k_team=team_data["performance"]["degradation_factor"],
-            )
+    # ==========================================================
+    # GRID BUILD
+    # ==========================================================
 
-            team_cars: List[CarAgent] = []
+    def _build_grid(self):
 
-            for idx in range(2):
-                car_id = f"{team_id}_{idx+1}"
+        with open("configs/teams.json") as f:
+            teams_json = json.load(f)[self.season]
 
-                tyre_state = TyreState(
-                    compound=self.start_compound,
-                    age_laps=0,
+        with open("configs/tyres.json") as f:
+            tyres_json = json.load(f)
+
+        tyre_model = TyreModel(tyres_json)
+
+        teams: List[TeamAgent] = []
+        cars: List[CarAgent] = []
+
+        for team_name, team_data in teams_json.items():
+
+            perf = team_data["performance"]
+            drivers = team_data["drivers"][:2]
+
+            car_objects = []
+
+            for driver in drivers:
+
+                calibration = CarCalibration(
+                    mu_team=float(perf["pace_offset"]),
+                    k_team=float(perf["degradation_factor"]),
+                    reliability_prob=0.001,
                 )
+
+                tyre_state = TyreState(compound="C2")
 
                 car = CarAgent(
-                    car_id=car_id,
-                    team_id=team_id,
+                    car_id=driver["name"],
+                    team_id=team_name,
                     calibration=calibration,
                     tyre_state=tyre_state,
-                    tyre_model=self.tyre_model,
+                    tyre_model=tyre_model,
                 )
 
-                self.cars.append(car)
-                team_cars.append(car)
+                cars.append(car)
+                car_objects.append(car)
 
-            self.teams.append(TeamAgent(team_id, team_cars))
+            team_agent = TeamAgent(
+                team_id=team_name,
+                car_a=car_objects[0],
+                car_b=car_objects[1],
+                mu_team=float(perf["pace_offset"]),
+                k_team=float(perf["degradation_factor"]),
+            )
+
+            teams.append(team_agent)
+
+        return teams, cars
+
+    # ==========================================================
+    # REAL-TIME RUN
+    # ==========================================================
 
     def run(self):
-        for lap in range(1, self.race_state.total_laps + 1):
-            self.race_state.current_lap = lap
 
-            # Teams observe and decide
+        print("\nStarting Real-Time MAS Simulation\n")
+
+        sim_time = 0.0
+        last_time = time.time()
+
+        seconds_per_lap = self.base_lap_time
+        seconds_per_sector = seconds_per_lap / 3
+
+        next_trigger = seconds_per_sector
+
+        while not self.race_finished:
+
+            now = time.time()
+            delta = now - last_time
+            last_time = now
+
+            sim_time += delta * self.sim_speed
+
+            if sim_time >= next_trigger:
+                self.step_sector(seconds_per_sector)
+                next_trigger += seconds_per_sector
+
+            time.sleep(0.001)
+
+        self.print_final_classification()
+
+    # ==========================================================
+    # SECTOR STEP
+    # ==========================================================
+
+    def step_sector(self, sector_time):
+
+        self.sector_number += 1
+
+        if self.sector_number == 1:
             for team in self.teams:
-                team.observe(self.race_state.team_view(team.team_id))
-                team.decide(lap)
+                team.decide()
 
-            # Cars execute one lap
-            for car in self.cars:
-                car.step_lap(
-                    self.base_lap_time,
-                    self.track_deg_multiplier,
-                )
+        for car in self.cars:
+            car.step_sector(
+                sector_base_time=sector_time,
+                track_deg_multiplier=self.track_deg_multiplier,
+            )
 
-                self.race_state.update_car(
-                    car_id=car.car_id,
-                    team_id=car.team_id,
-                    total_time=car.total_time,
-                    lap=car.current_lap,
-                    tyre=car.tyre_state.compound,
-                    tyre_age=car.tyre_state.age_laps,
-                )
+        print(f"Lap {self.lap_number+1} - Sector {self.sector_number}")
 
-        self._print_results()
+        if self.sector_number == 3:
+            self.end_lap()
 
-    def _print_results(self):
+    # ==========================================================
+    # LAP END
+    # ==========================================================
+
+    def end_lap(self):
+
+        self.lap_number += 1
+        self.sector_number = 0
+
+        print(f"--- LAP {self.lap_number} COMPLETE ---\n")
+
+        if self.lap_number >= self.total_laps:
+            self.race_finished = True
+
+    # ==========================================================
+    # FINAL OUTPUT
+    # ==========================================================
+
+    def print_final_classification(self):
+
         print("\nFinal Classification\n")
-        for i, car in enumerate(self.race_state.classification(), start=1):
+
+        classified = sorted(
+            [c for c in self.cars if not c.retired],
+            key=lambda c: c.total_time,
+        )
+
+        for i, car in enumerate(classified, start=1):
             print(
-                f"P{i:02d} | {car.car_id:<10} | "
-                f"{car.team_id:<12} | "
-                f"{car.total_time:.2f}s | "
-                f"{car.tyre}({car.tyre_age})"
+                f"P{i:02d} | {car.car_id:<5} | {car.team_id:<18} "
+                f"| {car.total_time:.2f}s"
             )

@@ -1,20 +1,22 @@
+# src/agents/CarAgent.py
+
+from __future__ import annotations
+
+import random
 from dataclasses import dataclass
+from typing import Optional
 
 from src.models.TyreModel import TyreModel, TyreState
 
 
 @dataclass
 class CarCalibration:
-    mu_team: float        # pace offset (seconds)
-    k_team: float         # degradation multiplier
+    mu_team: float
+    k_team: float
+    reliability_prob: float = 0.0
 
 
 class CarAgent:
-    """
-    Car agent.
-    Executes laps and pit stops.
-    Does NOT decide strategy.
-    """
 
     def __init__(
         self,
@@ -24,36 +26,41 @@ class CarAgent:
         tyre_state: TyreState,
         tyre_model: TyreModel,
     ):
+
         self.car_id = car_id
         self.team_id = team_id
         self.calibration = calibration
+
         self.tyre_state = tyre_state
         self.tyre_model = tyre_model
 
+        self.gap_ahead: Optional[float] = None
+        self.gap_behind: Optional[float] = None
+        self.track_state: str = "GREEN"
+
+        self.instruction: Optional[str] = None
+
         self.total_time: float = 0.0
-        self.current_lap: int = 0
-        self.has_pitted: bool = False
+        self.retired: bool = False
 
-    def pit(self, new_compound: str):
-        """
-        Execute a pit stop.
-        Compound MUST be C1–C5.
-        """
-        self.tyre_state = TyreState(
-            compound=new_compound,
-            age_laps=0
-        )
-        self.has_pitted = True
+        self._sector_counter: int = 0
 
-    def step_lap(
+    # ==========================================================
+    # SECTOR STEP
+    # ==========================================================
+
+    def step_sector(
         self,
-        base_lap_time: float,
+        sector_base_time: float,
         track_deg_multiplier: float,
-    ):
-        """
-        Run one clean-air lap.
-        """
-        self.current_lap += 1
+    ) -> float:
+
+        if self.retired:
+            return 0.0
+
+        if self._check_reliability_failure():
+            self.retired = True
+            return 0.0
 
         tyre_delta = self.tyre_model.lap_delta(
             tyre_state=self.tyre_state,
@@ -61,13 +68,59 @@ class CarAgent:
             team_deg_factor=self.calibration.k_team,
         )
 
-        lap_time = (
-            base_lap_time
-            + self.calibration.mu_team
-            + tyre_delta
+        sector_time = (
+            sector_base_time
+            + self.calibration.mu_team / 3
+            + tyre_delta / 3
         )
 
-        self.total_time += lap_time
+        sector_time = self.adjust_for_traffic(sector_time)
 
-        # Tyres age after lap completes
-        self.tyre_state.age_laps += 1
+        self.total_time += sector_time
+
+        self._sector_counter += 1
+        if self._sector_counter == 3:
+            self.update_tyre_wear()
+            self._sector_counter = 0
+
+        return sector_time
+
+    # ==========================================================
+    # TYRES
+    # ==========================================================
+
+    def update_tyre_wear(self) -> None:
+        self.tyre_model.advance(self.tyre_state, laps=1)
+
+    # ==========================================================
+    # RACECRAFT PLACEHOLDERS
+    # ==========================================================
+
+    def adjust_for_traffic(self, lap_time: float) -> float:
+        return lap_time
+
+    def attempt_overtake(self) -> bool:
+        return False
+
+    def defend_position(self) -> None:
+        pass
+
+    # ==========================================================
+    # PIT & TEAM INTERACTION
+    # ==========================================================
+
+    def pit(self, new_compound: str) -> None:
+        self.tyre_state.compound = new_compound
+        self.tyre_state.age_laps = 0
+
+    def apply_team_instruction(self, instruction: str) -> None:
+        self.instruction = instruction
+
+    # ==========================================================
+    # RELIABILITY
+    # ==========================================================
+
+    def _check_reliability_failure(self) -> bool:
+        if self.calibration.reliability_prob <= 0.0:
+            return False
+        return random.random() < self.calibration.reliability_prob

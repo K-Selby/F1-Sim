@@ -11,3 +11,8 @@ UI/API/__pycache__/scroll_container.cpython-312.pyc
 UI/screens/__pycache__/customRace.cpython-312.pyc
 data/UI/.DS_Store
 configs/sim_configuration.json
+data/CircuitDiagarms/.DS_Store
+src/sim/__pycache__/RaceManager.cpython-312.pyc
+UI/screens/__pycache__/simulation.cpython-312.pyc
+src/models/__pycache__/TyreModel.cpython-312.pyc
+configs/sim_configuration.json
