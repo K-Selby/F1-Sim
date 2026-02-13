@@ -36,13 +36,14 @@ class TeamAgent:
     # ==========================================================
     # OBSERVATION (called by RaceManager each lap)
     # ==========================================================
-    def observe(self, race_view: List[CarSnapshot], lap: int, track_state: str, pit_loss: float, base_lap_time: float, tyre_model: TyreModel) -> None:
+    def observe(self, race_view: List[CarSnapshot], lap: int, track_state: str, pit_loss: float, base_lap_time: float, tyre_model: TyreModel, total_laps: int) -> None:
         self.race_view = race_view
         self.current_lap = lap
         self.track_state = track_state
         self.pit_loss = pit_loss
         self.base_lap_time = base_lap_time
         self.tyre_model = tyre_model
+        self.total_laps = total_laps
 
     # ==========================================================
     # DECISION PIPELINE
@@ -82,12 +83,7 @@ class TeamAgent:
                 compound_code = compound  # already C1/C2/C3
                 
             temp_state = TyreState(compound=compound_code, age_laps=age)
-
-            tyre_delta = self.tyre_model.lap_delta(
-                tyre_state=temp_state,
-                track_deg_multiplier=1.0,
-                team_deg_factor=car.calibration.k_team,
-            )
+            tyre_delta = self.tyre_model.lap_delta(tyre_state=temp_state, track_deg_multiplier=1.0, team_deg_factor=car.calibration.k_team)
 
             lap_time = self.base_lap_time + car.calibration.mu_team + tyre_delta
             total += lap_time
@@ -97,6 +93,11 @@ class TeamAgent:
         return total
 
     def evaluate_stint_outcomes(self):
+        remaining_laps = self.total_laps - self.current_lap
+        
+        if remaining_laps <= self.projection_horizon:
+            return  # Too late to pit
+        
         for car in [self.car_a, self.car_b]:
             if car.retired:
                 continue

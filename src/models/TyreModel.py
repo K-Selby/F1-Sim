@@ -42,7 +42,7 @@ class TyreModel:
             )
 
     # ------------------------------------------------------------
-    # REQUIRED by CarAgent (this was missing)
+    # REQUIRED by CarAgent
     # ------------------------------------------------------------
     def advance(self, tyre_state: TyreState, laps: int = 1) -> None:
         """
@@ -53,27 +53,42 @@ class TyreModel:
     # ------------------------------------------------------------
     # Lap-time delta calculation
     # ------------------------------------------------------------
-    def lap_delta(
-        self,
-        tyre_state: TyreState,
-        track_deg_multiplier: float,
-        team_deg_factor: float,
-    ) -> float:
-        """
-        Returns tyre-induced lap time delta (seconds).
-        """
-        spec = self._tyres[tyre_state.compound]
-        life = max(0, tyre_state.age_laps)
+    def lap_delta(self, tyre_state, track_deg_multiplier: float, team_deg_factor: float) -> float:
+        compound = tyre_state.compound
+        age = tyre_state.age_laps
 
-        # Warm-up phase (penalty decreases to 0)
-        warmup_pen = 0.0
-        if spec.warmup_laps > 0 and life < spec.warmup_laps:
-            frac = 1.0 - (life / spec.warmup_laps)
-            warmup_pen = spec.warmup_start_penalty * max(0.0, frac)
+        if compound not in self._tyres:
+            raise KeyError(f"Unknown compound passed to TyreModel: {compound}")
 
-        # Degradation after peak life
-        age = max(0, life - spec.peak_life)
-        deg_pen = (spec.deg_linear * age) + (spec.deg_quadratic * (age ** 2))
+        spec = self._tyres[compound]
 
-        # Scale degradation
-        return (warmup_pen + deg_pen) * track_deg_multiplier * team_deg_factor
+        delta = 0.0
+
+        # -----------------------------
+        # Warmup phase
+        # -----------------------------
+        if age < spec.warmup_laps:
+            warmup_progress = age / spec.warmup_laps
+            warmup_penalty = spec.warmup_start_penalty * (1 - warmup_progress)
+            delta += warmup_penalty
+
+        # -----------------------------
+        # Degradation phase
+        # -----------------------------
+        if age > spec.peak_life:
+            deg_age = age - spec.peak_life
+
+            degradation = (
+                spec.deg_linear * deg_age +
+                spec.deg_quadratic * (deg_age ** 2)
+            )
+
+            delta += degradation
+
+        # -----------------------------
+        # Track + Team scaling
+        # -----------------------------
+        delta *= track_deg_multiplier
+        delta *= team_deg_factor
+
+        return delta

@@ -152,6 +152,7 @@ class RaceManager:
                 pit_loss=self.pit_loss,
                 base_lap_time=self.base_lap_time,
                 tyre_model=self.tyre_model,
+                total_laps=self.total_laps,
             )
 
     # ==========================================================
