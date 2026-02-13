@@ -19,6 +19,8 @@ class CustomeRace:
         self.play_image = pygame.image.load("data/UI/Images/play_circle.png")
         self.race_cards_json = "data/CircuitOptions/AllCircuits/races.json"
         self.selected_card = -1
+        self.colours = [red, red, green]
+        self.box_colours = [box_colour, box_colour, box_colour]
         self.cards = []
         self.button = []
         self.dots = []
@@ -55,8 +57,6 @@ class CustomeRace:
             "Its Lights out and away we go!"
         ]
 
-        colours = [red, red, green]
-
         for i in range(3):
             base_rect = pygame.Rect(start_x + i * (card_width + spacing), y, card_width, card_height)
 
@@ -66,14 +66,18 @@ class CustomeRace:
                 "title": titles[i],
                 "desc": descriptions[i],
                 "hover": False,
-                "colour": box_colour,
-                "hover_colour": colours[i],
+                "colour": self.box_colours[i],
+                "hover_colour": self.colours[i],
                 "scale": 1.0,
-                "selected": False
+                "selected": False,
+                "selected_colour": self.colours[i]
             })
             
             if self.selected_card == i:
                 self.cards[i]["selected"] = True
+                
+            else:
+                self.cards[i]["selected"] = False
 
     def create_dots(self):
         self.dots.clear()
@@ -316,7 +320,7 @@ class CustomeRace:
 
             # Scolour changes
             if card["selected"]:
-                r, g, b = red
+                r, g, b = card["selected_colour"]
                 alpha = 200
                 
             elif card["hover"]:
@@ -369,7 +373,7 @@ class CustomeRace:
         for event in pygame.event.get():
             if event.type == pygame.MOUSEWHEEL:
                 if self.selected_card != -1:           
-                    self.scroll_offset -= event.y * 20  # scroll speed # Clamp scroll range
+                    self.scroll_offset -= event.y * 30  # scroll speed # Clamp scroll range
                     self.scroll_offset = max(0, min(self.scroll_offset, self.max_scroll))
                     self.button_1()
                     self.create_cards()
@@ -397,6 +401,29 @@ class CustomeRace:
                 for card in self.button:
                     if card["rect"].collidepoint(mouse_pos):
                         self.s_Mode = card["mode"]
+
+                if self.selected_card == 0:  
+                    for card in self.race_cards:
+                        if card["rect"].collidepoint(mouse_pos):
+                            self.box_colours[0] = green
+                            self.colours[0] = green
+                            self.selected_card = -1
+                            self.scroll_offset = 0
+                            
+                            circuit, grandprix = card["data"]["Track_Name"], card["data"]["Grand_Prix"]
+                            with open("configs/sim_configuration.json", "r") as configFile:
+                                config_data = json.load(configFile)
+                                
+                            # Update only required fields
+                            config_data["Grand Prix"] = grandprix
+                            config_data["Circuit"] = circuit
+                            
+                            # Write back to config file 
+                            with open("configs/sim_configuration.json", "w") as configFile:
+                                json.dump(config_data, configFile, indent=4)
+                            
+                            self.button_1()
+                            self.create_cards()
         
             if event.type == pygame.QUIT:
                 self.s_Mode = "Quit"
