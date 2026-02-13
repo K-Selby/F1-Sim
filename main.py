@@ -3,18 +3,10 @@
 from src.sim.RaceManager import RaceManager
 import json
 
-
 CIRCUIT_FILE = "configs/circuits.json"
 SIM_CONFIG_FILE = "configs/sim_configuration.json"
 
-
 def main():
-    """
-    Thin entry point.
-    No race logic lives here.
-    Only wiring of configuration.
-    """
-
     # ------------------------------------------
     # Load simulation configuration
     # ------------------------------------------
@@ -43,7 +35,8 @@ def main():
     # Build Race Manager using circuit params
     # ------------------------------------------
     rm = RaceManager(
-        season="2024",
+        season = "2024",
+        circuit = selected_gp,
         total_laps = circuit_params["total_laps"],
         base_lap_time = circuit_params["base_lap_time"],
         track_deg_multiplier = circuit_params["track_deg_multiplier"],

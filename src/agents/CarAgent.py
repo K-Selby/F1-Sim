@@ -15,11 +15,8 @@ class CarCalibration:
     k_team: float
     reliability_prob: float = 0.0
 
-
 class CarAgent:
-
     def __init__(self, car_id: str, team_id: str, calibration: CarCalibration, tyre_state: TyreState, tyre_model: TyreModel):
-
         self.car_id = car_id
         self.team_id = team_id
         self.calibration = calibration
@@ -38,15 +35,14 @@ class CarAgent:
 
         self._sector_counter: int = 0
         
-        self.pending_pit: bool = False
+        self.pending_pit: Optional[str] = None
+        self._pit_loss: float = 0.0
         self.pit_compound: Optional[str] = None
 
     # ==========================================================
     # SECTOR STEP
     # ==========================================================
-
     def step_sector(self, sector_base_time: float, track_deg_multiplier: float, lap_time_std: float,) -> float:
-
         if self.retired:
             return 0.0
 
@@ -55,7 +51,6 @@ class CarAgent:
             return 0.0
 
         tyre_delta = self.tyre_model.lap_delta(tyre_state=self.tyre_state, track_deg_multiplier=track_deg_multiplier, team_deg_factor=self.calibration.k_team,)
-
         sector_time = (sector_base_time + self.calibration.mu_team / 3 + tyre_delta / 3)
         
         # Add sector-level randomness
@@ -64,7 +59,6 @@ class CarAgent:
         sector_time += randomness
 
         sector_time = self.adjust_for_traffic(sector_time)
-
         self.total_time += sector_time
 
         self._sector_counter += 1
@@ -72,19 +66,35 @@ class CarAgent:
             self.update_tyre_wear()
             self._sector_counter = 0
 
+        # Execute pit stop at end of lap
+        if self.pending_pit and self._sector_counter == 0:
+            pit_time = self._pit_loss
+
+            # Safety Car discount
+            if self.track_state == "SC":
+                pit_time *= 0.6  # 40% cheaper under SC
+
+            self.total_time += pit_time
+
+            print(
+                f"{self.car_id} PIT STOP | +{pit_time:.2f}s | "
+                f"Total {self.total_time:.2f}s"
+            )
+
+            self.pit(self._pending_pit)
+            self._pending_pit = None
+
         return sector_time
 
     # ==========================================================
     # TYRES
     # ==========================================================
-
     def update_tyre_wear(self) -> None:
         self.tyre_model.advance(self.tyre_state, laps=1)
 
     # ==========================================================
     # RACECRAFT PLACEHOLDERS
     # ==========================================================
-
     def adjust_for_traffic(self, lap_time: float) -> float:
         return lap_time
 
@@ -97,7 +107,6 @@ class CarAgent:
     # ==========================================================
     # PIT & TEAM INTERACTION
     # ==========================================================
-
     def pit(self, new_compound: str) -> None:
         """
         Request a pit stop.
@@ -112,7 +121,6 @@ class CarAgent:
     # ==========================================================
     # RELIABILITY
     # ==========================================================
-
     def _check_reliability_failure(self) -> bool:
         if self.calibration.reliability_prob <= 0.0:
             return False

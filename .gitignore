@@ -16,3 +16,4 @@ src/sim/__pycache__/RaceManager.cpython-312.pyc
 UI/screens/__pycache__/simulation.cpython-312.pyc
 src/models/__pycache__/TyreModel.cpython-312.pyc
 configs/sim_configuration.json
+src/.DS_Store
