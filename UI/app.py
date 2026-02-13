@@ -31,7 +31,6 @@ def main(s_Mode, screen):
         while s_Mode == 'Home':
             s_Mode, screen = Home_Screen.update()
             
-        
         # Custom Race screen
         Custom_Race_Screen = CustomeRace(s_Mode, screen)
         while s_Mode == 'CustomRace':
@@ -41,17 +40,8 @@ def main(s_Mode, screen):
             print('Quit')
             pygame.quit()
             sys.exit()
-
-        else:
-            print(f"Unknown mode: {s_Mode}")
-            pygame.quit()
-            sys.exit()
             
 if __name__ == "__main__":
     # Loop variable
-    s_Mode = 'Title'
+    s_Mode = 'CustomRace'
     main(s_Mode, screen)
-    
-#TO DO
-# resize boxes
-# Change hover cplour and make boxes bigger
