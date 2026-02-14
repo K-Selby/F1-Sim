@@ -38,6 +38,9 @@ class CarAgent:
         self.pending_pit: Optional[str] = None
         self._pit_loss: float = 0.0
         self.pit_compound: Optional[str] = None
+        self.traffic_penalty = 0.0
+        self.slipstream_bonus = 0.0
+        self.following_intensity = 0.0
 
     # ==========================================================
     # SECTOR STEP
@@ -51,7 +54,7 @@ class CarAgent:
             return 0.0
 
         tyre_delta = self.tyre_model.lap_delta(tyre_state=self.tyre_state, track_deg_multiplier=track_deg_multiplier, team_deg_factor=self.calibration.k_team,)
-        sector_time = (sector_base_time + self.calibration.mu_team / 3 + tyre_delta / 3)
+        sector_time = (sector_base_time + self.calibration.mu_team / 3 + tyre_delta / 3 + self.traffic_penalty - self.slipstream_bonus)
         
         # Add sector-level randomness
         sector_std = self.calibration.lap_time_std / 3 if hasattr(self.calibration, 'lap_time_std') else 0.0
@@ -90,7 +93,8 @@ class CarAgent:
     # TYRES
     # ==========================================================
     def update_tyre_wear(self) -> None:
-        self.tyre_model.advance(self.tyre_state, laps=1)
+        extra_deg = 1.0 + 0.15 * self.following_intensity
+        self.tyre_model.advance(self.tyre_state, laps=extra_deg)
 
     # ==========================================================
     # RACECRAFT PLACEHOLDERS

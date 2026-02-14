@@ -32,7 +32,6 @@ class RaceManager:
         
         # Safety car timing multipliers (for pit advantage)
         self.sc_lap_time_factor = 1.4
-
         # Pit lane congestion
         self.cars_pitting_this_lap: int = 0
 
@@ -209,6 +208,8 @@ class RaceManager:
             for car in self.cars:
                 if car.pending_pit and not car.retired:
                     self.apply_pit_stop(car)
+                    
+        self.apply_gap_based_dirty_air()
 
         for car in self.cars:
             car.step_sector(sector_base_time=self.base_lap_time / 3, track_deg_multiplier=self.track_deg_multiplier, lap_time_std=self.lap_time_std)
@@ -251,6 +252,44 @@ class RaceManager:
         car.tyre_state.age_laps = 0
         car.pending_pit = False
         car.pit_compound = None
+
+    # ==========================================================
+    # Traffic Logic
+    # ==========================================================
+    def apply_gap_based_dirty_air(self):
+        if self.track_state != "GREEN":
+            return
+
+        sorted_cars = sorted(self.cars, key=lambda c: c.total_time)
+
+        for car in sorted_cars:
+            car.traffic_penalty = 0.0
+            car.slipstream_bonus = 0.0
+            car.following_intensity = 0.0
+
+        for i in range(1, len(sorted_cars)):
+            car = sorted_cars[i]
+            car_ahead = sorted_cars[i - 1]
+
+            if car.retired:
+                continue
+
+            gap = car.total_time - car_ahead.total_time
+
+            if gap < 0.7:
+                car.traffic_penalty = 0.12
+                car.slipstream_bonus = 0.04
+                car.following_intensity = 1.0
+
+            elif gap < 1.2:
+                car.traffic_penalty = 0.08
+                car.slipstream_bonus = 0.03
+                car.following_intensity = 0.7
+
+            elif gap < 1.8:
+                car.traffic_penalty = 0.04
+                car.slipstream_bonus = 0.02
+                car.following_intensity = 0.4
 
     # ==========================================================
     # LAP END
