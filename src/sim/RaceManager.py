@@ -72,7 +72,7 @@ class RaceManager:
                 calibration = CarCalibration(
                     mu_team=float(perf["pace_offset"]),
                     k_team=float(perf["degradation_factor"]),
-                    reliability_prob=0.001,
+                    reliability_prob=0.0008,
                 )
 
                 tyre_state = TyreState(compound="C2")
@@ -295,6 +295,13 @@ class RaceManager:
     # LAP END
     # ==========================================================
     def end_lap(self):
+        # Reliability check once per lap
+        for car in self.cars:
+            if not car.retired:
+                if car.check_reliability_failure():
+                    car.retired = True
+                    print(f"[Lap {self.lap_number+1}] {car.car_id} RETIRES (Mechanical)")
+        
         self.lap_number += 1
         self.sector_number = 0
 

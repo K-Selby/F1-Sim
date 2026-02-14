@@ -49,10 +49,6 @@ class CarAgent:
         if self.retired:
             return 0.0
 
-        if self._check_reliability_failure():
-            self.retired = True
-            return 0.0
-
         tyre_delta = self.tyre_model.lap_delta(tyre_state=self.tyre_state, track_deg_multiplier=track_deg_multiplier, team_deg_factor=self.calibration.k_team,)
         sector_time = (sector_base_time + self.calibration.mu_team / 3 + tyre_delta / 3 + self.traffic_penalty - self.slipstream_bonus)
         
@@ -125,7 +121,7 @@ class CarAgent:
     # ==========================================================
     # RELIABILITY
     # ==========================================================
-    def _check_reliability_failure(self) -> bool:
+    def check_reliability_failure(self) -> bool:
         if self.calibration.reliability_prob <= 0.0:
             return False
         return random.random() < self.calibration.reliability_prob
