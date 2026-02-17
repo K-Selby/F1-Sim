@@ -3,15 +3,18 @@
 from __future__ import annotations
 import json
 from typing import List
-
+import random
 from src.sim.RaceState import RaceState, CarSnapshot
 from src.agents.TeamAgent import TeamAgent
 from src.agents.CarAgent import CarAgent, CarCalibration
 from src.models.TyreModel import TyreModel, TyreState
 
-
 class RaceManager:
-    def __init__(self, season: str, circuit: str, total_laps: int, base_lap_time: float, lap_time_std: float, pit_loss: float):
+    def __init__(self, season: str, circuit: str, total_laps: int, base_lap_time: float, lap_time_std: float, pit_loss: float, seed: int | None = None):
+        # Seeded randomness (for reproducible simulations)
+        if seed is not None:
+            random.seed(seed)
+        
         self.season = season
         self.circuit_name = circuit
         self.total_laps = total_laps
