@@ -1,20 +1,17 @@
 # src/agents/CarAgent.py
 
 from __future__ import annotations
-
 import random
 from dataclasses import dataclass
 from typing import Optional
 
 from src.models.TyreModel import TyreModel, TyreState
 
-
 @dataclass
 class CarCalibration:
     mu_team: float
     k_team: float
     reliability_prob: float = 0.0
-
 
 class CarAgent:
     def __init__(self, car_id: str, team_id: str, calibration: CarCalibration, tyre_state: TyreState, tyre_model: TyreModel):
@@ -28,6 +25,7 @@ class CarAgent:
         self.instruction: Optional[str] = None
 
         self.total_time: float = 0.0
+        self.current_lap_time: float = 0.0
         self.retired: bool = False
 
         # Pit / strategy flags
@@ -39,10 +37,14 @@ class CarAgent:
         self.slipstream_bonus = 0.0
         self.following_intensity = 0.0
 
-        # --- Spatial state ---
+        # Spatial state
         self.track_position: float = 0.0
         self.lap_count: int = 0
         self.drs_eligible: bool = False
+        
+        # Driver variance (persists per lap)
+        self.lap_execution_noise: float = 0.0
+        self.last_lap_for_noise: int = -1
 
     # ==========================================================
     # SPATIAL HELPERS
@@ -69,49 +71,53 @@ class CarAgent:
         """
         Returns speed in m/s for this tick.
         """
-
         if self.retired:
             return 0.0
 
-        # --- Tyre delta ---
+        # Generate lap-level execution noise
+        if self.lap_count != self.last_lap_for_noise:
+            self.lap_execution_noise = random.gauss(0, 0.20)
+            self.last_lap_for_noise = self.lap_count
+            
+        # Tyre performance
         tyre_delta = self.tyre_model.lap_delta(
-            tyre_state=self.tyre_state,
-            track_deg_multiplier=1.0,
-            team_deg_factor=self.calibration.k_team,
+            tyre_state = self.tyre_state,
+            track_deg_multiplier = 1.0,
+            team_deg_factor = self.calibration.k_team,
         )
 
-        # --- Base effective lap time ---
-        effective_lap_time = (
-            base_lap_time
-            + self.calibration.mu_team
-            + tyre_delta
-        )
+        effective_lap_time = (base_lap_time + self.calibration.mu_team + tyre_delta + self.lap_execution_noise)
 
-        # --- Track evolution effect ---
+        # Track evolution
         evolution_multiplier = 1.0 - (0.02 * evolution_level)
         effective_lap_time *= evolution_multiplier
 
-        # --- Segment severity adjustments ---
+        # Segment-specific variance
         seg_type = segment.get("type", "straight")
         severity = segment.get("severity", 0.5)
 
         if seg_type == "braking":
-            effective_lap_time *= 1.0 + (0.04 * severity)
-        elif seg_type == "corner":
-            effective_lap_time *= 1.0 + (0.03 * severity)
+            # braking zones are messy
+            effective_lap_time += random.gauss(0, 0.08 * severity)
 
-        # --- Traffic effects ---
+        elif seg_type == "corner":
+            effective_lap_time += random.gauss(0, 0.05 * severity)
+
+        else:  # straight
+            effective_lap_time += random.gauss(0, 0.02)
+
+        # Traffic
         effective_lap_time += self.traffic_penalty
         effective_lap_time -= self.slipstream_bonus
 
-        # --- Small randomness ---
-        effective_lap_time += random.gauss(0, lap_time_std * 0.02)
+        # Tiny per-tick noise (wind / throttle jitter)
+        effective_lap_time += random.gauss(0, 0.01)
 
-        # --- Convert lap time to speed ---
+        # Convert to speed
         speed = track_length / max(effective_lap_time, 1e-6)
 
         return speed
-
+    
     # ==========================================================
     # TYRES
     # ==========================================================
@@ -140,7 +146,6 @@ class CarAgent:
 
     def defend_position(self) -> None:
         pass
-
 
     # ==========================================================
     # RELIABILITY

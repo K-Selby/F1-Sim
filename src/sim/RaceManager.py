@@ -57,7 +57,7 @@ class RaceManager:
         self.characteristics = circuit_data.get("characteristics", {})
 
         # Build segment boundaries
-        self.segment_boundaries = self._build_segment_boundaries()
+        self.segment_boundaries = self.build_segment_boundaries()
 
         self.teams, self.cars = self.build_grid()
 
@@ -134,7 +134,7 @@ class RaceManager:
     # ==========================================================
     # SEGMENT BOUNDARIES
     # ==========================================================
-    def _build_segment_boundaries(self):
+    def build_segment_boundaries(self):
         """
         Convert segment length list into (start, end, segment_dict)
         for fast lookup.
@@ -269,9 +269,12 @@ class RaceManager:
             crossed_line = car.advance_position(distance, self.track_length)
 
             # Time passes for this car
-            car.total_time += dt
+            car.current_lap_time += dt
 
             if crossed_line:
+                # Commit lap time
+                car.total_time += car.current_lap_time
+                car.current_lap_time = 0.0
                 car.update_tyre_wear()
 
         leader = min([c for c in self.cars if not c.retired], key=lambda c: c.total_time, default=None)
@@ -359,6 +362,7 @@ class RaceManager:
             car_ahead = active_cars[i - 1] if i > 0 else active_cars[-1]
 
             gap = car_ahead.track_position - car.track_position
+            
             if gap <= 0:
                 gap += self.track_length
 
