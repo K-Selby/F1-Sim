@@ -29,7 +29,6 @@ def main():
     print(f"\nLoaded Circuit: {selected_gp}")
     print(f"Total Laps: {circuit_params['total_laps']}")
     print(f"Base Lap Time: {circuit_params['base_lap_time']}")
-    print(f"Track Deg Multiplier: {circuit_params['track_deg_multiplier']}\n")
 
     # ------------------------------------------
     # Build Race Manager using circuit params
@@ -39,10 +38,8 @@ def main():
         circuit = selected_gp,
         total_laps = circuit_params["total_laps"],
         base_lap_time = circuit_params["base_lap_time"],
-        track_deg_multiplier = circuit_params["track_deg_multiplier"],
         lap_time_std = circuit_params["lap_time_std"],
         pit_loss = circuit_params["pit_loss"],
-        sim_speed = 500.0  # playback speed multiplier
     )
 
     rm.run()

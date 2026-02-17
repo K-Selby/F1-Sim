@@ -15,6 +15,7 @@ class CarCalibration:
     k_team: float
     reliability_prob: float = 0.0
 
+
 class CarAgent:
     def __init__(self, car_id: str, team_id: str, calibration: CarCalibration, tyre_state: TyreState, tyre_model: TyreModel):
         self.car_id = car_id
@@ -24,48 +25,92 @@ class CarAgent:
         self.tyre_state = tyre_state
         self.tyre_model = tyre_model
 
-        self.gap_ahead: Optional[float] = None
-        self.gap_behind: Optional[float] = None
-        self.track_state: str = "GREEN"
-
         self.instruction: Optional[str] = None
 
         self.total_time: float = 0.0
         self.retired: bool = False
 
-        self._sector_counter: int = 0
-        
-        self.pending_pit: Optional[str] = None
-        self._pit_loss: float = 0.0
+        # Pit / strategy flags
+        self.pending_pit: bool = False
         self.pit_compound: Optional[str] = None
+
+        # Traffic effects (set by RaceManager)
         self.traffic_penalty = 0.0
         self.slipstream_bonus = 0.0
         self.following_intensity = 0.0
 
+        # --- Spatial state ---
+        self.track_position: float = 0.0
+        self.lap_count: int = 0
+        self.drs_eligible: bool = False
+
     # ==========================================================
-    # SECTOR STEP
+    # SPATIAL HELPERS
     # ==========================================================
-    def step_sector(self, sector_base_time: float, track_deg_multiplier: float, lap_time_std: float,) -> float:
+    def set_grid_position(self, grid_offset_m: float, track_length: float) -> None:
+        self.track_position = grid_offset_m % track_length
+        self.lap_count = 0
+        self.drs_eligible = False
+
+    def advance_position(self, distance_m: float, track_length: float) -> bool:
+        new_pos = self.track_position + distance_m
+        crossed_line = new_pos >= track_length
+        self.track_position = new_pos % track_length
+
+        if crossed_line:
+            self.lap_count += 1
+
+        return crossed_line
+
+    # ==========================================================
+    # SPEED / PACE MODEL (NOW AGENT CONTROLLED)
+    # ==========================================================
+    def compute_speed(self, segment: dict, track_length: float, base_lap_time: float, lap_time_std: float, evolution_level: float) -> float:
+        """
+        Returns speed in m/s for this tick.
+        """
+
         if self.retired:
             return 0.0
 
-        tyre_delta = self.tyre_model.lap_delta(tyre_state=self.tyre_state, track_deg_multiplier=track_deg_multiplier, team_deg_factor=self.calibration.k_team,)
-        sector_time = (sector_base_time + self.calibration.mu_team / 3 + tyre_delta / 3 + self.traffic_penalty - self.slipstream_bonus)
-        
-        # Add sector-level randomness
-        sector_std = lap_time_std / 3 
-        randomness = random.gauss(0, sector_std)
-        sector_time += randomness
+        # --- Tyre delta ---
+        tyre_delta = self.tyre_model.lap_delta(
+            tyre_state=self.tyre_state,
+            track_deg_multiplier=1.0,
+            team_deg_factor=self.calibration.k_team,
+        )
 
-        sector_time = self.adjust_for_traffic(sector_time)
-        self.total_time += sector_time
+        # --- Base effective lap time ---
+        effective_lap_time = (
+            base_lap_time
+            + self.calibration.mu_team
+            + tyre_delta
+        )
 
-        self._sector_counter += 1
-        if self._sector_counter == 3:
-            self.update_tyre_wear()
-            self._sector_counter = 0
+        # --- Track evolution effect ---
+        evolution_multiplier = 1.0 - (0.02 * evolution_level)
+        effective_lap_time *= evolution_multiplier
 
-        return sector_time
+        # --- Segment severity adjustments ---
+        seg_type = segment.get("type", "straight")
+        severity = segment.get("severity", 0.5)
+
+        if seg_type == "braking":
+            effective_lap_time *= 1.0 + (0.04 * severity)
+        elif seg_type == "corner":
+            effective_lap_time *= 1.0 + (0.03 * severity)
+
+        # --- Traffic effects ---
+        effective_lap_time += self.traffic_penalty
+        effective_lap_time -= self.slipstream_bonus
+
+        # --- Small randomness ---
+        effective_lap_time += random.gauss(0, lap_time_std * 0.02)
+
+        # --- Convert lap time to speed ---
+        speed = track_length / max(effective_lap_time, 1e-6)
+
+        return speed
 
     # ==========================================================
     # TYRES
@@ -73,6 +118,16 @@ class CarAgent:
     def update_tyre_wear(self) -> None:
         extra_deg = 1.0 + 0.15 * self.following_intensity
         self.tyre_model.advance(self.tyre_state, laps=extra_deg)
+
+    # ==========================================================
+    # PIT & TEAM INTERACTION
+    # ==========================================================
+    def pit(self, new_compound: str) -> None:
+        self.pending_pit = True
+        self.pit_compound = new_compound
+
+    def apply_team_instruction(self, instruction: str) -> None:
+        self.instruction = instruction
 
     # ==========================================================
     # RACECRAFT PLACEHOLDERS
@@ -86,19 +141,6 @@ class CarAgent:
     def defend_position(self) -> None:
         pass
 
-    # ==========================================================
-    # PIT & TEAM INTERACTION
-    # ==========================================================
-    def pit(self, new_compound: str) -> None:
-        """
-        a pit stop.
-        Actual time loss handled by RaceManager.
-        """
-        self.pending_pit = True
-        self.pit_compound = new_compound
-
-    def apply_team_instruction(self, instruction: str) -> None:
-        self.instruction = instruction
 
     # ==========================================================
     # RELIABILITY
