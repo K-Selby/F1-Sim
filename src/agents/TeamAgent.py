@@ -8,7 +8,7 @@ from src.sim.RaceState import CarSnapshot
 from src.models.TyreModel import TyreState, TyreModel
 
 class TeamAgent:
-    def __init__(self, team_id: str, car_a: CarAgent, car_b: CarAgent, mu_team: float, k_team: float, available_compounds: List[str]):
+    def __init__(self, team_id: str, car_a: CarAgent, car_b: CarAgent, mu_team: float, k_team: float, compound_map: dict[str, str]):
         self.team_id = team_id
         self.car_a = car_a
         self.car_b = car_b
@@ -16,7 +16,7 @@ class TeamAgent:
         self.mu_team = mu_team
         self.k_team = k_team
         
-        self.available_compounds = available_compounds
+        self.compound_map = compound_map
 
         # Runtime race context (set via observe)
         self.current_lap: int = 0
@@ -76,8 +76,8 @@ class TeamAgent:
             age = car.tyre_state.age_laps
 
         for _ in range(self.projection_horizon):
-            if compound in self.available_compounds:
-                compound_code = self.available_compounds[compound]   # SOFT → C3
+            if compound in self.compound_map:
+                compound_code = self.compound_map[compound]   # SOFT → C3
                 
             else:
                 compound_code = compound  # already C1/C2/C3
@@ -107,7 +107,7 @@ class TeamAgent:
             best_option = None
             best_delta = 0.0
 
-            for compound in self.available_compounds:
+            for compound in self.compound_map:
                 if compound == car.tyre_state.compound:
                     continue
 
@@ -177,8 +177,8 @@ class TeamAgent:
 
             print(f"[Lap {self.current_lap}] {self.team_id} orders {car.car_id} to PIT for {compound}")
 
-            if compound in self.available_compounds:
-                compound_code = self.available_compounds[compound]
+            if compound in self.compound_map:
+                compound_code = self.compound_map[compound]
             else:
                 compound_code = compound
 

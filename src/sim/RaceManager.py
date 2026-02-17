@@ -59,6 +59,8 @@ class RaceManager:
 
         teams: List[TeamAgent] = []
         cars: List[CarAgent] = []
+        
+        start_compound = self.compound_map["MEDIUM"]
 
         for team_name, team_data in teams_json.items():
 
@@ -75,7 +77,7 @@ class RaceManager:
                     reliability_prob=0.0008,
                 )
 
-                tyre_state = TyreState(compound="C2")
+                tyre_state = TyreState(compound=start_compound)
 
                 car = CarAgent(
                     car_id=driver["name"],
@@ -94,7 +96,7 @@ class RaceManager:
                 car_b=car_objects[1],
                 mu_team=float(perf["pace_offset"]),
                 k_team=float(perf["degradation_factor"]),
-                available_compounds=self.compound_map,
+                compound_map=self.compound_map,
             )
 
             teams.append(team_agent)

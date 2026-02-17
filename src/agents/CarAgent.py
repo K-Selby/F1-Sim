@@ -53,7 +53,7 @@ class CarAgent:
         sector_time = (sector_base_time + self.calibration.mu_team / 3 + tyre_delta / 3 + self.traffic_penalty - self.slipstream_bonus)
         
         # Add sector-level randomness
-        sector_std = self.calibration.lap_time_std / 3 if hasattr(self.calibration, 'lap_time_std') else 0.0
+        sector_std = lap_time_std / 3 
         randomness = random.gauss(0, sector_std)
         sector_time += randomness
 
@@ -64,24 +64,6 @@ class CarAgent:
         if self._sector_counter == 3:
             self.update_tyre_wear()
             self._sector_counter = 0
-
-        # Execute pit stop at end of lap
-        if self.pending_pit and self._sector_counter == 0:
-            pit_time = self._pit_loss
-
-            # Safety Car discount
-            if self.track_state == "SC":
-                pit_time *= 0.6  # 40% cheaper under SC
-
-            self.total_time += pit_time
-
-            print(
-                f"{self.car_id} PIT STOP | +{pit_time:.2f}s | "
-                f"Total {self.total_time:.2f}s"
-            )
-
-            self.pit(self._pending_pit)
-            self._pending_pit = None
 
         return sector_time
 
@@ -109,7 +91,7 @@ class CarAgent:
     # ==========================================================
     def pit(self, new_compound: str) -> None:
         """
-        Request a pit stop.
+        a pit stop.
         Actual time loss handled by RaceManager.
         """
         self.pending_pit = True
