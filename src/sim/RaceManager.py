@@ -22,7 +22,7 @@ class RaceManager:
         self.lap_time_std = lap_time_std
         self.pit_loss = pit_loss
 
-        # Deterministic simulation clock (seconds)
+        # simulation clock (seconds)
         self.sim_time: float = 0.0
 
         # Fixed timestep (seconds of simulated time per tick)
@@ -34,6 +34,7 @@ class RaceManager:
         self.track_state = "GREEN"
         self.weather_state = "DRY"
         self.evolution_level = 0.0
+        self.winner_finish_time: float | None = None
 
         # Pit lane congestion
         self.cars_pitting_this_lap: int = 0
@@ -257,6 +258,10 @@ class RaceManager:
         for car in self.cars:
             if car.retired:
                 continue
+            
+            # IMPORTANT: once a car has finished, stop updating it
+            if car.lap_count >= self.total_laps:
+                continue
 
             segment = self.get_segment_for_position(car.track_position)
 
@@ -279,18 +284,24 @@ class RaceManager:
                 car.total_time += car.current_lap_time
                 car.current_lap_time = 0.0
                 car.update_tyre_wear()
+                
+                # Capture winner time at the exact finish moment
+                if car.lap_count >= self.total_laps and self.winner_finish_time is None:
+                    self.winner_finish_time = car.total_time
 
-        leader = min([c for c in self.cars if not c.retired], key=lambda c: c.total_time, default=None)
-
+        leader = max([c for c in self.cars if not c.retired], key = lambda c: (c.lap_count, c.track_position), default = None)
+        
         if leader is not None:
             new_global_lap = leader.lap_count
             if new_global_lap > self.lap_number:
                 self.lap_number = new_global_lap
                 self.on_new_lap()
 
-        if leader is not None and leader.lap_count >= self.total_laps:
-            self.race_finished = True
-
+        if self.winner_finish_time is not None:
+            # Wait until all active cars have also completed total_laps
+            if all(c.lap_count >= self.total_laps or c.retired for c in self.cars):
+                self.race_finished = True
+                    
     # ==========================================================
     # LAP EVENTS (broadcast/strategy/pit/reliability/evolution)
     # ==========================================================
@@ -391,22 +402,25 @@ class RaceManager:
         print("\nFinal Classification\n")
 
         classified = sorted(
-            [c for c in self.cars if not c.retired],
-            key=lambda c: c.total_time,
+        [c for c in self.cars if not c.retired],
+        key=lambda c: c.total_time + c.current_lap_time,
         )
 
         retired = [c for c in self.cars if c.retired]
 
         position = 1
-        winner_time = classified[0].total_time if classified else 0.0
+
+        winner = classified[0]
+        winner_time = winner.total_time + winner.current_lap_time
 
         for car in classified:
-            gap = car.total_time - winner_time
+            final_time = car.total_time + car.current_lap_time
 
             if position == 1:
-                gap_str = self.format_time(car.total_time)
+                gap_str = self.format_time(final_time)
             else:
-                gap_str = f"+{self.format_time(gap)}"
+                gap_seconds = final_time - winner_time
+                gap_str = f"+{self.format_time(gap_seconds)}"
 
             print(f"P{position:02d} | {car.car_id:<12} | {car.team_id:<18} | {gap_str}")
             position += 1
