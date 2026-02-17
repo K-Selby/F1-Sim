@@ -1,8 +1,6 @@
 from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import Dict
-
 
 @dataclass
 class TyreSpec:
@@ -12,12 +10,10 @@ class TyreSpec:
     deg_linear: float
     deg_quadratic: float
 
-
 @dataclass
 class TyreState:
     compound: str
     age_laps: int = 0
-
 
 class TyreModel:
     """
