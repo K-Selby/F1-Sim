@@ -21,6 +21,7 @@ class RaceManager:
         self.base_lap_time = base_lap_time
         self.lap_time_std = lap_time_std
         self.pit_loss = pit_loss
+        self.pit_speed = 22.0 # add info to circuit file
 
         # simulation clock (seconds)
         self.sim_time: float = 0.0
@@ -35,7 +36,9 @@ class RaceManager:
         self.weather_state = "DRY"
         self.evolution_level = 0.0
         self.winner_finish_time: float | None = None
-
+        
+        self.last_tower_print = -1
+        
         # Pit lane congestion
         self.cars_pitting_this_lap: int = 0
 
@@ -174,6 +177,9 @@ class RaceManager:
 
         return self.segment_boundaries[-1]["data"]
 
+    def get_progress(self, car: CarAgent) -> float:
+        return (car.lap_count * self.track_length) + car.track_position
+
     # ==========================================================
     # PUBLIC STATE + BROADCAST
     # ==========================================================
@@ -184,17 +190,20 @@ class RaceManager:
             if car.retired:
                 continue
 
+            live_time = car.total_time + car.current_lap_time
+
             snapshots.append(
                 CarSnapshot(
                     car_id=car.car_id,
                     team_id=car.team_id,
-                    total_time=car.total_time,
+                    total_time=live_time,
                     tyre_compound=car.tyre_state.compound,
                     tyre_age=car.tyre_state.age_laps,
                 )
             )
 
         snapshots.sort(key=lambda s: s.total_time)
+
         return snapshots
 
     def broadcast_public_signals(self) -> None:
@@ -259,6 +268,44 @@ class RaceManager:
             if car.retired:
                 continue
             
+            if car.in_pit_lane:
+                car.pit_time_remaining -= dt
+                car.current_lap_time += dt
+
+                # Move in pit lane
+                car.track_position += self.pit_speed * dt
+                
+                car.last_speed_mps = self.pit_speed
+
+                # Handle start/finish crossing WHILE in pit lane
+                if car.track_position >= self.track_length:
+                    car.track_position -= self.track_length
+
+                    # Lap is completed even if you're in the pits
+                    car.lap_count += 1
+                    car.total_time += car.current_lap_time
+                    car.current_lap_time = 0.0
+
+                    # Keep tyre/lap mechanics consistent (see note below)
+                    car.update_tyre_wear()
+
+                    # Winner capture (same logic as normal path)
+                    if car.lap_count >= self.total_laps and self.winner_finish_time is None:
+                        self.winner_finish_time = car.total_time
+
+                if car.pit_time_remaining <= 0:
+                    car.in_pit_lane = False
+                    if getattr(car, "next_compound", None) is not None:
+                        car.tyre_state.compound = car.next_compound
+                        car.tyre_state.age_laps = 0
+                        car.next_compound = None
+
+                continue
+            
+            # Reduce overtake cooldown
+            if car.overtake_cooldown > 0:
+                car.overtake_cooldown = max(0.0, car.overtake_cooldown - dt)
+            
             # IMPORTANT: once a car has finished, stop updating it
             if car.lap_count >= self.total_laps:
                 continue
@@ -272,6 +319,8 @@ class RaceManager:
                 lap_time_std=self.lap_time_std,
                 evolution_level=self.evolution_level,
             )
+            
+            car.last_speed_mps = speed
 
             distance = speed * dt
             crossed_line = car.advance_position(distance, self.track_length)
@@ -289,10 +338,81 @@ class RaceManager:
                 if car.lap_count >= self.total_laps and self.winner_finish_time is None:
                     self.winner_finish_time = car.total_time
 
+        # Resolve side-by-side battles
+        processed_pairs = set()
+
+        for car in self.cars:
+            if car.side_by_side_with is None:
+                continue
+
+            opponent = car.side_by_side_with
+
+            # Avoid resolving same pair twice
+            pair_id = tuple(sorted([car.car_id, opponent.car_id]))
+            if pair_id in processed_pairs:
+                continue
+
+            processed_pairs.add(pair_id)
+
+            car.side_by_side_ticks -= 1
+            opponent.side_by_side_ticks -= 1
+
+            if car.side_by_side_ticks > 0:
+                continue
+
+            # Compute current segment
+            segment = self.get_segment_for_position(car.track_position)
+
+            speed_car = car.compute_speed(
+                segment,
+                self.track_length,
+                self.base_lap_time,
+                self.lap_time_std,
+                self.evolution_level
+            )
+
+            speed_opponent = opponent.compute_speed(
+                segment,
+                self.track_length,
+                self.base_lap_time,
+                self.lap_time_std,
+                self.evolution_level
+            )
+
+            # Add small battle randomness
+            speed_car += random.gauss(0, 0.5)
+            speed_opponent += random.gauss(0, 0.5)
+
+            if speed_car > speed_opponent:
+                winner = car
+                loser = opponent
+            else:
+                winner = opponent
+                loser = car
+
+            winner_progress = self.get_progress(winner)
+            loser_progress = self.get_progress(loser)
+
+            reference_progress = max(winner_progress, loser_progress)
+
+            winner_new = reference_progress + (winner.car_length * 1.2)
+            loser_new = winner_new - (winner.car_length * 1.5)
+
+            winner.track_position = winner_new % self.track_length
+            loser.track_position = loser_new % self.track_length
+
+            winner.overtake_cooldown = 2.0
+            loser.overtake_cooldown = 3.0
+
+            winner.side_by_side_with = None
+            loser.side_by_side_with = None
+
+        # Track-based leader (who crossed the line first)
         leader = max([c for c in self.cars if not c.retired], key = lambda c: (c.lap_count, c.track_position), default = None)
-        
+
         if leader is not None:
             new_global_lap = leader.lap_count
+
             if new_global_lap > self.lap_number:
                 self.lap_number = new_global_lap
                 self.on_new_lap()
@@ -301,6 +421,12 @@ class RaceManager:
             # Wait until all active cars have also completed total_laps
             if all(c.lap_count >= self.total_laps or c.retired for c in self.cars):
                 self.race_finished = True
+                
+        current_second = int(self.sim_time)
+
+        if current_second % 80 == 0 and current_second != self.last_tower_print:
+            self.print_timing_tower()
+            self.last_tower_print = current_second
                     
     # ==========================================================
     # LAP EVENTS (broadcast/strategy/pit/reliability/evolution)
@@ -330,6 +456,68 @@ class RaceManager:
             if car.pending_pit and not car.retired:
                 self.apply_pit_stop(car)
 
+    def print_timing_tower(self):
+        racing = [c for c in self.cars if not c.retired and c.lap_count < self.total_laps]
+        finished = [c for c in self.cars if not c.retired and c.lap_count >= self.total_laps]
+
+        # Spatial order: leader is highest progress
+        racing.sort(key=lambda c: self.get_progress(c), reverse=True)
+
+        print("\n--- Timing Tower (Spatial) ---")
+
+        position = 1
+
+        if racing:
+            leader = racing[0]
+            leader_prog = self.get_progress(leader)
+
+        for i, car in enumerate(racing):
+            prog = self.get_progress(car)
+
+            if i == 0:
+                gap_ahead_str = "-"
+                gap_leader_str = "LEADER"
+            else:
+                ahead = racing[i - 1]
+                ahead_prog = self.get_progress(ahead)
+
+                gap_ahead_m = max(0.0, ahead_prog - prog)
+                gap_leader_m = max(0.0, leader_prog - prog)
+
+                def fmt_gap(gap_m: float, speed_mps: float) -> str:
+                    # Convert big gaps into +xL +ym
+                    laps_down = int(gap_m // self.track_length)
+                    rem_m = gap_m - (laps_down * self.track_length)
+
+                    # Seconds estimate from last cached speed (never call compute_speed here)
+                    speed_mps = max(speed_mps, 1e-6)
+                    est_s = rem_m / speed_mps
+
+                    if laps_down > 0:
+                        return f"+{laps_down}L +{rem_m:,.0f}m (~{est_s:.1f}s)"
+                    return f"+{rem_m:,.0f}m (~{est_s:.2f}s)"
+
+                gap_ahead_str = fmt_gap(gap_ahead_m, car.last_speed_mps)
+                gap_leader_str = fmt_gap(gap_leader_m, car.last_speed_mps)
+
+            print(
+                f"P{position:02d} "
+                f"{car.car_id:<5} "
+                f"| Ahead: {gap_ahead_str:<22} "
+                f"| Leader: {gap_leader_str}"
+            )
+
+            position += 1
+
+        # Finished cars (time-based, as you already do)
+        for car in sorted(finished, key=lambda c: c.total_time):
+            print(
+                f"P{position:02d} "
+                f"{car.car_id:<5} "
+                f"| FINISHED {self.format_time(car.total_time)}"
+            )
+            position += 1
+
     # ==========================================================
     # PIT STOP APPLICATION (ENVIRONMENT RESPONSIBILITY)
     # ==========================================================
@@ -342,7 +530,8 @@ class RaceManager:
 
         self.cars_pitting_this_lap += 1
 
-        car.total_time += pit_time_total
+        car.in_pit_lane = True
+        car.pit_time_remaining = pit_time_total
 
         print(
             f"[Lap {self.lap_number+1}] {car.team_id} | {car.car_id} PIT "
@@ -350,50 +539,87 @@ class RaceManager:
             f"| race_total={car.total_time:.2f}s"
         )
 
-        car.tyre_state.compound = car.pit_compound
-        car.tyre_state.age_laps = 0
+        # Defer tyre change until pit stop finishes
+        car.next_compound = car.pit_compound
+
+        # Clear pit request flags now
         car.pending_pit = False
         car.pit_compound = None
-
+    
     # ==========================================================
     # Traffic Logic
     # ==========================================================
     def apply_spatial_dirty_air(self):
         """
-        Apply dirty air + slipstream based on spatial proximity.
+        Clean traffic model:
+        - No artificial time injection
+        - No artificial position pushback
+        - Only soft speed modifiers
         """
-        active_cars = [c for c in self.cars if not c.retired]
+        active_cars = [c for c in self.cars if not c.retired and not c.in_pit_lane]
 
-        active_cars.sort(key=lambda c: c.track_position, reverse=True)
+        # Sort by true race progress
+        active_cars.sort(key=lambda c: self.get_progress(c), reverse=True)
 
         for car in active_cars:
             car.traffic_penalty = 0.0
             car.slipstream_bonus = 0.0
             car.following_intensity = 0.0
+            car.car_ahead = None
+            car.car_behind = None
+            car.gap_ahead = float("inf")
+            car.gap_behind = float("inf")
 
         for i in range(len(active_cars)):
             car = active_cars[i]
-            car_ahead = active_cars[i - 1] if i > 0 else active_cars[-1]
 
-            gap = car_ahead.track_position - car.track_position
-            
-            if gap <= 0:
-                gap += self.track_length
+            car_ahead = active_cars[i - 1] if i > 0 else None
+            car_behind = active_cars[i + 1] if i < len(active_cars) - 1 else None
 
-            if gap < 15:
-                car.traffic_penalty = 0.15
-                car.slipstream_bonus = 0.05
-                car.following_intensity = 1.0
+            car_progress = self.get_progress(car)
 
-            elif gap < 30:
-                car.traffic_penalty = 0.10
-                car.slipstream_bonus = 0.04
-                car.following_intensity = 0.7
+            if car_ahead:
+                ahead_progress = self.get_progress(car_ahead)
+                gap = ahead_progress - car_progress
 
-            elif gap < 50:
-                car.traffic_penalty = 0.05
-                car.slipstream_bonus = 0.02
+                car.car_ahead = car_ahead
+                car.gap_ahead = max(0.0, gap)
+
+            if car_behind:
+                behind_progress = self.get_progress(car_behind)
+                gap_b = car_progress - behind_progress
+
+                car.car_behind = car_behind
+                car.gap_behind = max(0.0, gap_b)
+
+            # --- Soft dirty air only ---
+            if car.gap_ahead < 10:
+                car.traffic_penalty = 0.02
+                car.slipstream_bonus = 0.015
+                car.following_intensity = 0.8
+
+            elif car.gap_ahead < 25:
+                car.traffic_penalty = 0.01
+                car.slipstream_bonus = 0.01
                 car.following_intensity = 0.4
+
+            # Overtake trigger (unchanged)
+            if (car.car_ahead and 
+                car.side_by_side_with is None and 
+                car.car_ahead.side_by_side_with is None):
+                
+                if car.attempt_overtake():
+                    self.start_side_by_side(car, car.car_ahead)
+            
+    def start_side_by_side(self, attacker: CarAgent, defender: CarAgent):
+        if attacker.side_by_side_with is not None:
+            return
+
+        attacker.side_by_side_with = defender
+        defender.side_by_side_with = attacker
+
+        attacker.side_by_side_ticks = 5
+        defender.side_by_side_ticks = 5
 
     # ==========================================================
     # FINAL OUTPUT
@@ -401,30 +627,41 @@ class RaceManager:
     def print_final_classification(self) -> None:
         print("\nFinal Classification\n")
 
+        # Classification MUST be time-based
         classified = sorted(
-        [c for c in self.cars if not c.retired],
-        key=lambda c: c.total_time + c.current_lap_time,
+            [c for c in self.cars if not c.retired],
+            key=lambda c: c.total_time
         )
 
         retired = [c for c in self.cars if c.retired]
 
+        winner_time = classified[0].total_time
+
         position = 1
 
-        winner = classified[0]
-        winner_time = winner.total_time + winner.current_lap_time
-
         for car in classified:
-            final_time = car.total_time + car.current_lap_time
+            final_time = car.total_time
 
             if position == 1:
                 gap_str = self.format_time(final_time)
             else:
-                gap_seconds = final_time - winner_time
+                gap_seconds = max(0.0, final_time - winner_time)
                 gap_str = f"+{self.format_time(gap_seconds)}"
 
-            print(f"P{position:02d} | {car.car_id:<12} | {car.team_id:<18} | {gap_str}")
+            print(
+                f"P{position:02d} | "
+                f"{car.car_id:<12} | "
+                f"{car.team_id:<18} | "
+                f"{gap_str} | "
+                f"RAW={final_time:.3f}"
+            )
+
             position += 1
 
         for car in retired:
-            print(f"P{position:02d} | {car.car_id:<12} | {car.team_id:<18} | DNF")
+            print(
+                f"P{position:02d} | "
+                f"{car.car_id:<12} | "
+                f"{car.team_id:<18} | DNF"
+            )
             position += 1

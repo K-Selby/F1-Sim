@@ -18,6 +18,7 @@ class CarAgent:
         self.car_id = car_id
         self.team_id = team_id
         self.calibration = calibration
+        self.car_length = 5.5  # metres (F1 approx)
 
         self.tyre_state = tyre_state
         self.tyre_model = tyre_model
@@ -30,12 +31,24 @@ class CarAgent:
 
         # Pit / strategy flags
         self.pending_pit: bool = False
-        self.pit_compound: Optional[str] = None
+        self.pit_compound: Optional[str] = None     # check these 2
+        self.next_compound: Optional[str] = None      #Thsi one as well
+        self.in_pit_lane: bool = False
+        self.pit_time_remaining: float = 0.0
 
         # Traffic effects (set by RaceManager)
         self.traffic_penalty = 0.0
         self.slipstream_bonus = 0.0
         self.following_intensity = 0.0
+        self.last_speed_mps: float = 0.0
+        
+        self.side_by_side_with: Optional[CarAgent] = None
+        self.side_by_side_ticks: int = 0
+        self.overtake_cooldown: float = 0.0
+        self.car_ahead: Optional[CarAgent] = None
+        self.car_behind: Optional[CarAgent] = None
+        self.gap_ahead: float = float("inf")
+        self.gap_behind: float = float("inf")
 
         # Spatial state
         self.track_position: float = 0.0
@@ -115,6 +128,11 @@ class CarAgent:
 
         # Convert to speed
         speed = track_length / max(effective_lap_time, 1e-6)
+        
+        # Defensive modifier
+        speed += self.defend_position()
+
+        speed = max(0.0, speed)
 
         return speed
     
@@ -142,10 +160,62 @@ class CarAgent:
         return lap_time
 
     def attempt_overtake(self) -> bool:
-        return False
+        """
+        Realistic F1 overtake model with cooldown.
+        """
+        if self.retired:
+            return False
 
-    def defend_position(self) -> None:
-        pass
+        if self.car_ahead is None:
+            return False
+
+        # Cooldown active
+        if self.overtake_cooldown > 0:
+            return False
+
+        # Must be very close
+        if self.gap_ahead > self.car_length:
+            return False
+
+        # Pace delta
+        attacker_pace = self.calibration.mu_team
+        defender_pace = self.car_ahead.calibration.mu_team
+
+        pace_delta = defender_pace - attacker_pace
+
+        if pace_delta < -0.05:
+            return False
+
+        # Tyre advantage
+        tyre_delta = (
+            self.car_ahead.tyre_state.age_laps -
+            self.tyre_state.age_laps
+        )
+
+        tyre_advantage = tyre_delta * 0.02
+
+        base_probability = 0.12
+        base_probability += max(0.0, pace_delta * 0.4)
+        base_probability += max(0.0, tyre_advantage)
+
+        base_probability = min(base_probability, 0.45)
+
+        success = random.random() < base_probability
+
+        if success:
+            # 2 second cooldown after attempt
+            self.overtake_cooldown = 2.0
+
+        return success
+
+    def defend_position(self) -> float:
+        """
+        Returns defensive speed modifier.
+        """
+        if self.car_behind and self.gap_behind < (1.5 * self.car_length):
+            # Defending reduces own pace slightly
+            return -0.5  # m/s penalty
+        return 0.0
 
     # ==========================================================
     # RELIABILITY
