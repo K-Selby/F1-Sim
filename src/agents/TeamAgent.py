@@ -36,7 +36,7 @@ class TeamAgent:
     # ==========================================================
     # OBSERVATION (called by RaceManager each lap)
     # ==========================================================
-    def observe(self, race_view: List[CarSnapshot], lap: int, track_state: str, pit_loss: float, base_lap_time: float, tyre_model: TyreModel, total_laps: int) -> None:
+    def observe(self, race_view: List[CarSnapshot], lap: int, track_state: str, pit_loss: float, base_lap_time: float, tyre_model: TyreModel, total_laps: int, track_deg_multiplier: float) -> None:
         self.race_view = race_view
         self.current_lap = lap
         self.track_state = track_state
@@ -44,6 +44,7 @@ class TeamAgent:
         self.base_lap_time = base_lap_time
         self.tyre_model = tyre_model
         self.total_laps = total_laps
+        self.track_deg_multiplier = track_deg_multiplier
 
     # ==========================================================
     # DECISION PIPELINE
@@ -61,65 +62,72 @@ class TeamAgent:
     def update_race_context(self) -> None:
         self.pit_candidates = []
 
-    def project_stint_time(self, car: CarAgent, compound: str) -> float:
+    def project_stint_time(self, car: CarAgent, compound_code: str) -> float:
         """
-        Project next N laps if car runs this compound.
-        Includes degradation + warmup.
+        Project next N laps if car runs this compound CODE (e.g., C3/C4/C5).
+        Includes degradation + warmup effects from TyreModel.
         """
-
         total = 0.0
 
         # If switching compound -> start at age 0
-        if compound != car.tyre_state.compound:
+        if compound_code != car.tyre_state.compound:
             age = 0
         else:
             age = car.tyre_state.age_laps
 
         for _ in range(self.projection_horizon):
-            if compound in self.compound_map:
-                compound_code = self.compound_map[compound]   # SOFT → C3
-                
-            else:
-                compound_code = compound  # already C1/C2/C3
-                
             temp_state = TyreState(compound=compound_code, age_laps=age)
-            tyre_delta = self.tyre_model.lap_delta(tyre_state=temp_state, track_deg_multiplier=1.0, team_deg_factor=car.calibration.k_team)
+
+            tyre_delta = self.tyre_model.lap_delta(
+                tyre_state=temp_state,
+                track_deg_multiplier=self.track_deg_multiplier,
+                team_deg_factor=car.calibration.k_team,
+            )
 
             lap_time = self.base_lap_time + car.calibration.mu_team + tyre_delta
             total += lap_time
-
             age += 1
 
         return total
 
     def evaluate_stint_outcomes(self):
         remaining_laps = self.total_laps - self.current_lap
-        
+
         if remaining_laps <= self.projection_horizon:
             return  # Too late to pit
-        
+
+        self.pit_candidates = []
+
+        # Strategy options are the circuit's allocated dry compounds (codes)
+        option_codes = list(self.compound_map.values())  # e.g., ["C5","C4","C3"]
+        code_to_label = {v: k for k, v in self.compound_map.items()}  # "C4" -> "MEDIUM"
+
         for car in [self.car_a, self.car_b]:
             if car.retired:
                 continue
 
-            current_projection = self.project_stint_time(car, car.tyre_state.compound)
+            current_code = car.tyre_state.compound
+            current_projection = self.project_stint_time(car, current_code)
 
-            best_option = None
+            best_option_code = None
             best_delta = 0.0
 
-            for compound in self.compound_map:
-                if compound == car.tyre_state.compound:
+            for alt_code in option_codes:
+                if alt_code == current_code:
                     continue
 
-                alt_projection = self.project_stint_time(car, compound)
+                alt_projection = self.project_stint_time(car, alt_code)
                 delta = current_projection - (alt_projection + self.pit_loss)
 
                 if delta > best_delta:
                     best_delta = delta
-                    best_option = compound
+                    best_option_code = alt_code
 
-            if best_option is not None and best_delta > 0:
-                self.pit_candidates.append((car, best_option))
+            if best_option_code is not None and best_delta > 0:
+                self.pit_candidates.append((car, best_option_code))
+
+        # Keep labels only for printing/debug
+        self._code_to_label = code_to_label
 
     def assess_undercut_overcut(self) -> None:
         updated_candidates = []
@@ -170,17 +178,13 @@ class TeamAgent:
         self.car_b.apply_team_instruction("NORMAL")
 
     def issue_pit_decision(self) -> None:
-        for car, compound in self.pit_candidates:
+        for car, compound_code in self.pit_candidates:
 
             if self.last_pit_lap == self.current_lap:
                 return  # double stack prevention
 
-            print(f"[Lap {self.current_lap}] {self.team_id} orders {car.car_id} to PIT for {compound}")
-
-            if compound in self.compound_map:
-                compound_code = self.compound_map[compound]
-            else:
-                compound_code = compound
+            label = getattr(self, "_code_to_label", {}).get(compound_code, compound_code)
+            print(f"[Lap {self.current_lap}] {self.team_id} orders {car.car_id} to PIT for {label} ({compound_code})")
 
             car.pit(compound_code)
             self.last_pit_lap = self.current_lap

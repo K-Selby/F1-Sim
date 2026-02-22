@@ -15,11 +15,6 @@
         "pace_offset": -0.831,
         "degradation_factor": 1.04,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Red Bull Racing": {
@@ -37,11 +32,6 @@
         "pace_offset": -1.473,
         "degradation_factor": 1.04,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "McLaren": {
@@ -59,11 +49,6 @@
         "pace_offset": -0.195,
         "degradation_factor": 1.04,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Ferrari": {
@@ -81,11 +66,6 @@
         "pace_offset": -0.231,
         "degradation_factor": 1.04,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "AlphaTauri": {
@@ -103,11 +83,6 @@
         "pace_offset": 0.382,
         "degradation_factor": 1.06,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Aston Martin": {
@@ -125,11 +100,6 @@
         "pace_offset": 0.193,
         "degradation_factor": 1.05,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Alfa Romeo Racing": {
@@ -151,11 +121,6 @@
         "pace_offset": 0.336,
         "degradation_factor": 1.05,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Alpine": {
@@ -173,11 +138,6 @@
         "pace_offset": -0.133,
         "degradation_factor": 1.05,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Williams": {
@@ -195,11 +155,6 @@
         "pace_offset": 0.868,
         "degradation_factor": 1.06,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Haas F1 Team": {
@@ -217,11 +172,6 @@
         "pace_offset": 1.271,
         "degradation_factor": 1.06,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     }
   },
@@ -241,11 +191,6 @@
         "pace_offset": -0.264,
         "degradation_factor": 1.07,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "AlphaTauri": {
@@ -263,11 +208,6 @@
         "pace_offset": 0.407,
         "degradation_factor": 1.07,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Alpine": {
@@ -285,11 +225,6 @@
         "pace_offset": -0.046,
         "degradation_factor": 1.06,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Ferrari": {
@@ -307,11 +242,6 @@
         "pace_offset": -1.707,
         "degradation_factor": 1.07,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Aston Martin": {
@@ -333,11 +263,6 @@
         "pace_offset": 0.615,
         "degradation_factor": 1.08,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Haas F1 Team": {
@@ -355,11 +280,6 @@
         "pace_offset": 1.579,
         "degradation_factor": 1.09,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Williams": {
@@ -381,11 +301,6 @@
         "pace_offset": 0.274,
         "degradation_factor": 1.09,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Alfa Romeo": {
@@ -403,11 +318,6 @@
         "pace_offset": -0.867,
         "degradation_factor": 1.05,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "McLaren": {
@@ -425,11 +335,6 @@
         "pace_offset": 0.952,
         "degradation_factor": 1.07,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Mercedes": {
@@ -447,11 +352,6 @@
         "pace_offset": -1.037,
         "degradation_factor": 1.06,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     }
   },
@@ -471,11 +371,6 @@
         "pace_offset": -0.844,
         "degradation_factor": 1.04,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Alpine": {
@@ -493,11 +388,6 @@
         "pace_offset": -0.262,
         "degradation_factor": 1.05,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Aston Martin": {
@@ -515,11 +405,6 @@
         "pace_offset": -0.599,
         "degradation_factor": 1.04,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Ferrari": {
@@ -537,11 +422,6 @@
         "pace_offset": -0.061,
         "degradation_factor": 1.04,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Williams": {
@@ -559,11 +439,6 @@
         "pace_offset": 1.215,
         "degradation_factor": 1.07,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Haas F1 Team": {
@@ -581,11 +456,6 @@
         "pace_offset": 1.462,
         "degradation_factor": 1.07,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "AlphaTauri": {
@@ -611,11 +481,6 @@
         "pace_offset": -0.165,
         "degradation_factor": 1.05,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Alfa Romeo": {
@@ -633,11 +498,6 @@
         "pace_offset": 0.699,
         "degradation_factor": 1.06,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "McLaren": {
@@ -655,11 +515,6 @@
         "pace_offset": -1.207,
         "degradation_factor": 1.05,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Mercedes": {
@@ -677,11 +532,6 @@
         "pace_offset": -0.107,
         "degradation_factor": 1.05,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     }
   },
@@ -701,11 +551,6 @@
         "pace_offset": -0.285,
         "degradation_factor": 1.06,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Ferrari": {
@@ -727,11 +572,6 @@
         "pace_offset": -0.587,
         "degradation_factor": 1.04,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Mercedes": {
@@ -749,11 +589,6 @@
         "pace_offset": -0.822,
         "degradation_factor": 1.05,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "McLaren": {
@@ -771,11 +606,6 @@
         "pace_offset": -0.892,
         "degradation_factor": 1.06,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Aston Martin": {
@@ -793,11 +623,6 @@
         "pace_offset": 0.366,
         "degradation_factor": 1.07,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Kick Sauber": {
@@ -815,11 +640,6 @@
         "pace_offset": 0.289,
         "degradation_factor": 1.07,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Haas F1 Team": {
@@ -841,11 +661,6 @@
         "pace_offset": 0.927,
         "degradation_factor": 1.06,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "RB": {
@@ -867,11 +682,6 @@
         "pace_offset": 0.025,
         "degradation_factor": 1.05,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Williams": {
@@ -893,11 +703,6 @@
         "pace_offset": 0.767,
         "degradation_factor": 1.07,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     },
     "Alpine": {
@@ -919,11 +724,6 @@
         "pace_offset": 0.483,
         "degradation_factor": 1.05,
         "pit_execution_std": 1.0
-      },
-      "strategy_profile": {
-        "risk_tolerance": 0.5,
-        "undercut_bias": 0.5,
-        "overcut_bias": 0.5
       }
     }
   }

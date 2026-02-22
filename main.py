@@ -40,7 +40,7 @@ def main():
         base_lap_time = circuit_params["base_lap_time"],
         lap_time_std = circuit_params["lap_time_std"],
         pit_loss = circuit_params["pit_loss"],
-        seed = 44
+        seed = 24
     )
 
     rm.run()

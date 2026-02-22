@@ -49,11 +49,14 @@ class CarAgent:
         self.car_behind: Optional[CarAgent] = None
         self.gap_ahead: float = float("inf")
         self.gap_behind: float = float("inf")
+        # DRS eligibility is decided at each zone's detection point.
+        # We store a lap "stamp" per zone so pit-straight DRS works when detection is before S/F.
+        self.drs_eligible_lap: dict[int, int] = {}   # {zone_number: lap_count_at_detection}
+        self.drs_active: bool = False
 
         # Spatial state
         self.track_position: float = 0.0
         self.lap_count: int = 0
-        self.drs_eligible: bool = False
         
         # Driver variance (persists per lap)
         self.lap_execution_noise: float = 0.0
@@ -65,9 +68,17 @@ class CarAgent:
     def set_grid_position(self, grid_offset_m: float, track_length: float) -> None:
         self.track_position = grid_offset_m % track_length
         self.lap_count = 0
-        self.drs_eligible = False
+
+        # DRS state (managed by RaceManager using circuit JSON)
+        self.drs_eligible_lap = {}   # reset all zone eligibility stamps
+        self.drs_active = False
+
+        # Needed to detect crossing detection points
+        self.prev_track_position: float = self.track_position
 
     def advance_position(self, distance_m: float, track_length: float) -> bool:
+        self.prev_track_position = self.track_position
+
         new_pos = self.track_position + distance_m
         crossed_line = new_pos >= track_length
         self.track_position = new_pos % track_length
@@ -80,67 +91,107 @@ class CarAgent:
     # ==========================================================
     # SPEED / PACE MODEL (NOW AGENT CONTROLLED)
     # ==========================================================
-    def compute_speed(self, segment: dict, track_length: float, base_lap_time: float, lap_time_std: float, evolution_level: float) -> float:
+    def compute_speed(self, segment: dict, track_length: float, base_lap_time: float, lap_time_std: float, evolution_level: float, track_deg_multiplier: float, drs_available: bool) -> float:
         """
         Returns speed in m/s for this tick.
+
+        Model approach:
+        - Compute a clean-air lap-time baseline (seconds)
+        - Convert to baseline speed (m/s)
+        - Convert baseline speed to baseline *segment time*
+        - Apply segment-scaled deltas (seg_frac) for lap noise, traffic, DRS, and micro-variance
+        - Convert back to segment speed (m/s)
         """
         if self.retired:
             return 0.0
 
-        # Generate lap-level execution noise
+        std_scale = max(lap_time_std, 1e-6) / 1.0  # 1.0 == "baseline" spread
+
+        # Generate lap-level execution noise once per lap (driver variability)
         if self.lap_count != self.last_lap_for_noise:
-            self.lap_execution_noise = random.gauss(0, 0.20)
+            self.lap_execution_noise = random.gauss(0, 0.20 * std_scale)
             self.last_lap_for_noise = self.lap_count
-            
-        # Tyre performance
+
+        # Tyre performance (seconds of lap-time delta)
         tyre_delta = self.tyre_model.lap_delta(
-            tyre_state = self.tyre_state,
-            track_deg_multiplier = 1.0,
-            team_deg_factor = self.calibration.k_team,
+            tyre_state=self.tyre_state,
+            track_deg_multiplier=track_deg_multiplier,
+            team_deg_factor=self.calibration.k_team,
         )
 
-        effective_lap_time = (base_lap_time + self.calibration.mu_team + tyre_delta + self.lap_execution_noise)
+        # Clean-air lap time baseline (seconds)
+        effective_lap_time = base_lap_time + self.calibration.mu_team + tyre_delta
 
-        # Track evolution
+        # Track evolution reduces lap time over the race
+        # (simple linear effect; keep small so it doesn't dominate calibration)
         evolution_multiplier = 1.0 - (0.02 * evolution_level)
-        effective_lap_time *= evolution_multiplier
+        effective_lap_time *= max(0.90, evolution_multiplier)
 
-        # Segment-specific variance
+        # Convert to baseline clean speed (m/s)
+        base_speed = track_length / max(effective_lap_time, 1e-6)
+
+        # Segment geometry
+        seg_len = float(segment.get("length", track_length))
+        seg_len = max(seg_len, 1e-6)
+        seg_frac = seg_len / max(track_length, 1e-6)
+
+        # Baseline time to traverse this segment at clean-air pace
+        seg_time = seg_len / max(base_speed, 1e-6)
+
+        # Distribute lap-level noise & traffic across the lap using seg_frac
+        # (so longer segments "carry" more of the lap variability)
+        seg_time += self.lap_execution_noise * seg_frac
+        seg_time += self.traffic_penalty * seg_frac
+        seg_time -= self.slipstream_bonus * seg_frac
+
+        # Segment-type micro variance (braking/corners messier than straights)
         seg_type = segment.get("type", "straight")
-        severity = segment.get("severity", 0.5)
+        severity = float(segment.get("severity", 0.5))
+        severity = min(max(severity, 0.0), 1.0)
 
         if seg_type == "braking":
-            # braking zones are messy
-            effective_lap_time += random.gauss(0, 0.08 * severity)
-
+            sigma_frac = 0.030  # ~3% time noise in braking zones
+            sigma = seg_time * sigma_frac * (0.5 + 0.7 * severity) * std_scale
         elif seg_type == "corner":
-            effective_lap_time += random.gauss(0, 0.05 * severity)
-
+            sigma_frac = 0.020
+            sigma = seg_time * sigma_frac * (0.5 + 0.7 * severity) * std_scale
         else:  # straight
-            effective_lap_time += random.gauss(0, 0.02)
+            sigma_frac = 0.010
+            sigma = seg_time * sigma_frac * std_scale
 
-        # Traffic
-        effective_lap_time += self.traffic_penalty
-        effective_lap_time -= self.slipstream_bonus
+        seg_time += random.gauss(0, sigma)
 
-        # Tiny per-tick noise (wind / throttle jitter)
-        effective_lap_time += random.gauss(0, 0.01)
+        # Team pace instruction (very small, but allows "push" vs "save" later)
+        if self.instruction == "PUSH":
+            seg_time *= 0.995
+        elif self.instruction == "SAVE":
+            seg_time *= 1.005
 
-        # Convert to speed
-        speed = track_length / max(effective_lap_time, 1e-6)
-        
-        # Defensive modifier
+        # DRS: only meaningful on straights, reduces segment time a bit
+        if drs_available and seg_type == "straight":
+            seg_time *= 0.94  # ~6% straight-line gain (kept conservative)
+
+        # Tiny per-tick jitter (wind / throttle / kerb usage)
+        seg_time += random.gauss(0, 0.002)
+
+        # Convert segment time back to speed
+        speed = seg_len / max(seg_time, 1e-6)
+
+        # Defensive modifier (simple m/s penalty when defending)
         speed += self.defend_position()
 
-        speed = max(0.0, speed)
-
-        return speed
+        return max(0.0, speed)
     
     # ==========================================================
     # TYRES
     # ==========================================================
-    def update_tyre_wear(self) -> None:
+    def update_tyre_wear(self, track_deg_multiplier: float) -> None:
+        # Following increases wear in dirty air / turbulence (simple proxy)
         extra_deg = 1.0 + 0.15 * self.following_intensity
+
+        # Circuit degradation multiplier from characteristics (abrasion/tyre stress)
+        extra_deg *= max(0.7, track_deg_multiplier)
+
         self.tyre_model.advance(self.tyre_state, laps=extra_deg)
 
     # ==========================================================
@@ -159,51 +210,50 @@ class CarAgent:
     def adjust_for_traffic(self, lap_time: float) -> float:
         return lap_time
 
-    def attempt_overtake(self) -> bool:
+    def attempt_overtake(self, segment: dict, drs_available: bool, overtake_difficulty: float) -> bool:
         """
-        Realistic F1 overtake model with cooldown.
+        Overtake attempts are evaluated at interaction points (straights/braking),
+        with higher success probability if DRS is available.
         """
-        if self.retired:
+        if self.retired or self.car_ahead is None:
             return False
 
-        if self.car_ahead is None:
-            return False
-
-        # Cooldown active
         if self.overtake_cooldown > 0:
             return False
 
-        # Must be very close
+        seg_type = segment.get("type", "straight")
+        interaction_point = (seg_type in ("straight", "braking")) or drs_available
+        if not interaction_point:
+            return False
+
+        # Must be very close (wheel-to-wheel initiation)
         if self.gap_ahead > self.car_length:
             return False
 
-        # Pace delta
         attacker_pace = self.calibration.mu_team
         defender_pace = self.car_ahead.calibration.mu_team
+        pace_delta = defender_pace - attacker_pace  # positive means attacker is faster (lower mu)
 
-        pace_delta = defender_pace - attacker_pace
+        # Tyre advantage (freshness proxy)
+        tyre_advantage = (self.car_ahead.tyre_state.age_laps - self.tyre_state.age_laps) * 0.02
 
-        if pace_delta < -0.05:
-            return False
-
-        # Tyre advantage
-        tyre_delta = (
-            self.car_ahead.tyre_state.age_laps -
-            self.tyre_state.age_laps
-        )
-
-        tyre_advantage = tyre_delta * 0.02
-
-        base_probability = 0.12
-        base_probability += max(0.0, pace_delta * 0.4)
+        # Base probability tuned conservative
+        base_probability = 0.10
+        base_probability += max(0.0, pace_delta * 0.35)
         base_probability += max(0.0, tyre_advantage)
 
-        base_probability = min(base_probability, 0.45)
+        # DRS boost increases probability on straights
+        if drs_available and seg_type == "straight":
+            base_probability += 0.10
+
+        # Circuit difficulty factor (1.0 baseline; >1 harder)
+        # Clamp impact so it doesn't dominate.
+        base_probability /= max(0.7, min(overtake_difficulty, 1.5))
+
+        base_probability = min(max(base_probability, 0.02), 0.50)
 
         success = random.random() < base_probability
-
         if success:
-            # 2 second cooldown after attempt
             self.overtake_cooldown = 2.0
 
         return success
