@@ -1,321 +1,1302 @@
 {
-  "Bahrain Grand Prix": {
-    "total_laps": 57,
-    "base_lap_time": 97.85,
-    "lap_time_std": 1.39,
-    "track_deg_multiplier": 1.35,
-    "pit_loss": 25.59,
-    "sc_probability": 0.5,
-    "vsc_probability": 0.75,
-    "sc_duration_mean": 5.0,
-    "overtake_difficulty": 0.83
-  },
-  "Emilia Romagna Grand Prix": {
-    "total_laps": 63,
-    "base_lap_time": 83.98,
-    "lap_time_std": 4.22,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 32.69,
-    "sc_probability": 0.67,
-    "vsc_probability": 0.0,
-    "sc_duration_mean": 7.5,
-    "overtake_difficulty": 0.92
-  },
-  "Portuguese Grand Prix": {
-    "total_laps": 66,
-    "base_lap_time": 83.36,
-    "lap_time_std": 1.33,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 27.17,
-    "sc_probability": 1.0,
-    "vsc_probability": 0.0,
-    "sc_duration_mean": 5.0,
-    "overtake_difficulty": 0.92
-  },
-  "Spanish Grand Prix": {
-    "total_laps": 66,
-    "base_lap_time": 83.43,
-    "lap_time_std": 1.38,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 23.36,
-    "sc_probability": 0.25,
-    "vsc_probability": 0.0,
-    "sc_duration_mean": 3.0,
-    "overtake_difficulty": 0.86
-  },
-  "Monaco Grand Prix": {
-    "total_laps": 74,
-    "base_lap_time": 81.08,
-    "lap_time_std": 5.01,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 23.28,
-    "sc_probability": 0.5,
-    "vsc_probability": 0.25,
-    "sc_duration_mean": 5.0,
-    "overtake_difficulty": 0.96
-  },
-  "Azerbaijan Grand Prix": {
-    "total_laps": 51,
-    "base_lap_time": 108.34,
-    "lap_time_std": 1.44,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 25.38,
-    "sc_probability": 0.5,
-    "vsc_probability": 0.5,
-    "sc_duration_mean": 6.5,
-    "overtake_difficulty": 0.89
-  },
-  "French Grand Prix": {
-    "total_laps": 53,
-    "base_lap_time": 99.81,
-    "lap_time_std": 1.21,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 26.28,
-    "sc_probability": 0.5,
-    "vsc_probability": 0.5,
-    "sc_duration_mean": 3.0,
-    "overtake_difficulty": 0.89
-  },
-  "Styrian Grand Prix": {
-    "total_laps": 71,
-    "base_lap_time": 70.61,
-    "lap_time_std": 1.19,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 22.0,
-    "sc_probability": 0.0,
-    "vsc_probability": 0.0,
-    "sc_duration_mean": 0.0,
-    "overtake_difficulty": 0.92
-  },
-  "Austrian Grand Prix": {
-    "total_laps": 71,
-    "base_lap_time": 70.68,
-    "lap_time_std": 0.99,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 22.99,
-    "sc_probability": 0.5,
-    "vsc_probability": 0.75,
-    "sc_duration_mean": 3.0,
-    "overtake_difficulty": 0.88
-  },
-  "British Grand Prix": {
-    "total_laps": 52,
-    "base_lap_time": 93.92,
-    "lap_time_std": 2.23,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 24.78,
-    "sc_probability": 0.75,
-    "vsc_probability": 0.25,
-    "sc_duration_mean": 4.33,
-    "overtake_difficulty": 0.89
-  },
-  "Hungarian Grand Prix": {
-    "total_laps": 70,
-    "base_lap_time": 84.29,
-    "lap_time_std": 1.25,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 22.2,
-    "sc_probability": 0.25,
-    "vsc_probability": 0.25,
-    "sc_duration_mean": 2.0,
-    "overtake_difficulty": 0.89
-  },
-  "Belgian Grand Prix": {
-    "total_laps": 44,
-    "base_lap_time": 112.19,
-    "lap_time_std": 1.52,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 19.06,
-    "sc_probability": 0.33,
-    "vsc_probability": 0.0,
-    "sc_duration_mean": 3.0,
-    "overtake_difficulty": 0.79
-  },
-  "Dutch Grand Prix": {
-    "total_laps": 72,
-    "base_lap_time": 77.01,
-    "lap_time_std": 1.98,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 24.43,
-    "sc_probability": 0.5,
-    "vsc_probability": 0.5,
-    "sc_duration_mean": 8.5,
-    "overtake_difficulty": 0.89
-  },
-  "Italian Grand Prix": {
-    "total_laps": 52,
-    "base_lap_time": 86.45,
-    "lap_time_std": 1.01,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 27.14,
-    "sc_probability": 0.5,
-    "vsc_probability": 0.5,
-    "sc_duration_mean": 7.0,
-    "overtake_difficulty": 0.87
-  },
-  "Russian Grand Prix": {
-    "total_laps": 53,
-    "base_lap_time": 101.63,
-    "lap_time_std": 2.06,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 26.39,
-    "sc_probability": 0.0,
-    "vsc_probability": 0.0,
-    "sc_duration_mean": 0.0,
-    "overtake_difficulty": 0.81
-  },
-  "Turkish Grand Prix": {
-    "total_laps": 58,
-    "base_lap_time": 95.17,
-    "lap_time_std": 1.42,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 21.85,
-    "sc_probability": 0.0,
-    "vsc_probability": 0.0,
-    "sc_duration_mean": 0.0,
-    "overtake_difficulty": 0.95
-  },
-  "United States Grand Prix": {
-    "total_laps": 56,
-    "base_lap_time": 102.02,
-    "lap_time_std": 1.42,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 22.07,
-    "sc_probability": 0.5,
-    "vsc_probability": 0.25,
-    "sc_duration_mean": 5.5,
-    "overtake_difficulty": 0.85
-  },
-  "Mexico City Grand Prix": {
-    "total_laps": 71,
-    "base_lap_time": 83.13,
-    "lap_time_std": 1.16,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 24.24,
-    "sc_probability": 0.75,
-    "vsc_probability": 0.5,
-    "sc_duration_mean": 4.67,
-    "overtake_difficulty": 0.92
-  },
-  "São Paulo Grand Prix": {
-    "total_laps": 70,
-    "base_lap_time": 78.1,
-    "lap_time_std": 1.35,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 25.65,
-    "sc_probability": 1.0,
-    "vsc_probability": 0.75,
-    "sc_duration_mean": 7.25,
-    "overtake_difficulty": 0.89
-  },
-  "Qatar Grand Prix": {
-    "total_laps": 57,
-    "base_lap_time": 87.94,
-    "lap_time_std": 1.69,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 28.6,
-    "sc_probability": 0.67,
-    "vsc_probability": 0.33,
-    "sc_duration_mean": 8.5,
-    "overtake_difficulty": 0.82
-  },
-  "Saudi Arabian Grand Prix": {
-    "total_laps": 50,
-    "base_lap_time": 94.86,
-    "lap_time_std": 1.8,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 24.06,
-    "sc_probability": 1.0,
-    "vsc_probability": 0.5,
-    "sc_duration_mean": 4.25,
-    "overtake_difficulty": 0.91
-  },
   "Abu Dhabi Grand Prix": {
     "total_laps": 58,
     "base_lap_time": 90.17,
     "lap_time_std": 1.17,
-    "track_deg_multiplier": 1.0,
     "pit_loss": 23.99,
-    "sc_probability": 0.25,
-    "vsc_probability": 0.5,
-    "sc_duration_mean": 6.0,
-    "overtake_difficulty": 0.86
+    "track_model": {
+      "track_length": 5281,
+      "segments": [
+        { "name": "Main Straight (Post Line)", "type": "straight", "length": 450 },
+        { "name": "T1-2 Braking + Rotation", "type": "braking", "length": 170, "severity": 0.9 },
+        { "name": "Sector 1 Flow", "type": "corner", "length": 780, "severity": 0.6 },
+        { "name": "Back Straight", "type": "straight", "length": 1000 },
+        { "name": "Chicane Braking", "type": "braking", "length": 170, "severity": 0.9 },
+        { "name": "Hotel Section", "type": "corner", "length": 1100, "severity": 0.7 },
+        { "name": "Final Sector Complex", "type": "corner", "length": 1161, "severity": 0.55 },
+        { "name": "Main Straight (Pre Line)", "type": "straight", "length": 450 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Main Straight DRS", "detection_point": 200, "activation_start": 250, "activation_end": 800 },
+      { "zone_number": 2, "name": "Back Straight DRS", "detection_point": 1600, "activation_start": 1700, "activation_end": 2600 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 4950,
+      "pit_speed_start": 5050,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 420,
+      "pit_speed_end": 350,
+      "pit_exit_point": 420,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 4,
+      "asphalt_grip": 3,
+      "asphalt_abrasion": 3,
+      "track_evolution": 4,
+      "tyre_stress": 3,
+      "braking": 4,
+      "lateral": 4,
+      "downforce": 3
+    }
   },
+
   "Australian Grand Prix": {
     "total_laps": 58,
     "base_lap_time": 83.22,
     "lap_time_std": 1.3,
-    "track_deg_multiplier": 1.0,
     "pit_loss": 24.36,
-    "sc_probability": 0.67,
-    "vsc_probability": 1.0,
-    "sc_duration_mean": 8.5,
-    "overtake_difficulty": 0.89
+    "track_model": {
+      "track_length": 5278,
+      "segments": [
+        { "name": "Main Straight", "type": "straight", "length": 420 },
+        { "name": "T1 Braking", "type": "braking", "length": 140, "severity": 0.85 },
+        { "name": "Sector 1 Sweepers", "type": "corner", "length": 980, "severity": 0.55 },
+        { "name": "Lakeside Straight", "type": "straight", "length": 760 },
+        { "name": "Chicane / Heavy Stop", "type": "braking", "length": 170, "severity": 0.9 },
+        { "name": "Fast Change of Direction", "type": "corner", "length": 980, "severity": 0.65 },
+        { "name": "Back Section Straight", "type": "straight", "length": 860 },
+        { "name": "Final Complex", "type": "corner", "length": 968, "severity": 0.6 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Main Straight", "detection_point": 120, "activation_start": 180, "activation_end": 620 },
+      { "zone_number": 2, "name": "Lakeside", "detection_point": 1200, "activation_start": 1280, "activation_end": 1760 },
+      { "zone_number": 3, "name": "Back Section", "detection_point": 3100, "activation_start": 3180, "activation_end": 3700 },
+      { "zone_number": 4, "name": "Pit-Exit Straight", "detection_point": 4700, "activation_start": 4760, "activation_end": 5150 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 4920,
+      "pit_speed_start": 5020,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 400,
+      "pit_speed_end": 260,
+      "pit_exit_point": 360,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 2,
+      "asphalt_grip": 2,
+      "asphalt_abrasion": 2,
+      "track_evolution": 3,
+      "tyre_stress": 3,
+      "braking": 2,
+      "lateral": 3,
+      "downforce": 3
+    }
   },
-  "Miami Grand Prix": {
+
+  "Austrian Grand Prix": {
+    "total_laps": 71,
+    "base_lap_time": 70.68,
+    "lap_time_std": 0.99,
+    "pit_loss": 22.99,
+    "track_model": {
+      "track_length": 4318,
+      "segments": [
+        { "name": "Main Straight", "type": "straight", "length": 530 },
+        { "name": "T1 Heavy Braking", "type": "braking", "length": 150, "severity": 0.95 },
+        { "name": "Uphill Flow", "type": "corner", "length": 620, "severity": 0.55 },
+        { "name": "Back Straight", "type": "straight", "length": 520 },
+        { "name": "T3 Hairpin Braking", "type": "braking", "length": 150, "severity": 0.95 },
+        { "name": "Middle Sector", "type": "corner", "length": 1180, "severity": 0.6 },
+        { "name": "Final Straight", "type": "straight", "length": 620 },
+        { "name": "Last Corners", "type": "corner", "length": 548, "severity": 0.55 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Main Straight", "detection_point": 4100, "activation_start": 60, "activation_end": 500 },
+      { "zone_number": 2, "name": "Uphill Straight", "detection_point": 650, "activation_start": 720, "activation_end": 1040 },
+      { "zone_number": 3, "name": "Back Straight", "detection_point": 1450, "activation_start": 1520, "activation_end": 1850 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 3990,
+      "pit_speed_start": 4090,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 360,
+      "pit_speed_end": 180,
+      "pit_exit_point": 280,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 2,
+      "asphalt_grip": 3,
+      "asphalt_abrasion": 3,
+      "track_evolution": 3,
+      "tyre_stress": 3,
+      "braking": 3,
+      "lateral": 3,
+      "downforce": 3
+    }
+  },
+
+  "Azerbaijan Grand Prix": {
+    "total_laps": 51,
+    "base_lap_time": 108.34,
+    "lap_time_std": 1.44,
+    "pit_loss": 25.38,
+    "track_model": {
+      "track_length": 6003,
+      "segments": [
+        { "name": "Main Straight", "type": "straight", "length": 900 },
+        { "name": "T1 Heavy Braking", "type": "braking", "length": 180, "severity": 0.95 },
+        { "name": "Old City Complex", "type": "corner", "length": 1600, "severity": 0.75 },
+        { "name": "Boulevard Straight", "type": "straight", "length": 2000 },
+        { "name": "End-of-Straight Stop", "type": "braking", "length": 200, "severity": 0.95 },
+        { "name": "Final Sector", "type": "corner", "length": 1123, "severity": 0.6 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Main Straight", "detection_point": 5600, "activation_start": 80, "activation_end": 780 },
+      { "zone_number": 2, "name": "Boulevard", "detection_point": 2400, "activation_start": 2600, "activation_end": 4450 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 5600,
+      "pit_speed_start": 5750,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 460,
+      "pit_speed_end": 260,
+      "pit_exit_point": 360,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 5,
+      "asphalt_grip": 2,
+      "asphalt_abrasion": 1,
+      "track_evolution": 5,
+      "tyre_stress": 3,
+      "braking": 4,
+      "lateral": 1,
+      "downforce": 2
+    }
+  },
+
+  "Bahrain Grand Prix": {
     "total_laps": 57,
-    "base_lap_time": 93.57,
-    "lap_time_std": 1.12,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 22.53,
-    "sc_probability": 0.67,
-    "vsc_probability": 0.67,
-    "sc_duration_mean": 6.0,
-    "overtake_difficulty": 0.9
+    "base_lap_time": 97.85,
+    "lap_time_std": 1.39,
+    "pit_loss": 25.59,
+    "track_model": {
+      "track_length": 5412,
+      "segments": [
+        { "name": "Main Straight", "type": "straight", "length": 820 },
+        { "name": "T1 Braking", "type": "braking", "length": 180, "severity": 0.95 },
+        { "name": "Sector 1 Corners", "type": "corner", "length": 820, "severity": 0.6 },
+        { "name": "Back Straight", "type": "straight", "length": 720 },
+        { "name": "T10 Heavy Stop", "type": "braking", "length": 170, "severity": 0.95 },
+        { "name": "Middle Sector", "type": "corner", "length": 1320, "severity": 0.65 },
+        { "name": "Run to Final Corner", "type": "straight", "length": 520 },
+        { "name": "Final Sector", "type": "corner", "length": 862, "severity": 0.55 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Main Straight", "detection_point": 5100, "activation_start": 100, "activation_end": 750 },
+      { "zone_number": 2, "name": "Back Straight", "detection_point": 1650, "activation_start": 1780, "activation_end": 2350 },
+      { "zone_number": 3, "name": "Run to T11", "detection_point": 2700, "activation_start": 2860, "activation_end": 3350 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 4920,
+      "pit_speed_start": 5050,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 430,
+      "pit_speed_end": 260,
+      "pit_exit_point": 380,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 4,
+      "asphalt_grip": 3,
+      "asphalt_abrasion": 5,
+      "track_evolution": 4,
+      "tyre_stress": 3,
+      "braking": 4,
+      "lateral": 3,
+      "downforce": 3
+    }
   },
+
+  "Belgian Grand Prix": {
+    "total_laps": 44,
+    "base_lap_time": 112.19,
+    "lap_time_std": 1.52,
+    "pit_loss": 19.06,
+    "track_model": {
+      "track_length": 7004,
+      "segments": [
+        { "name": "Pit Straight", "type": "straight", "length": 820 },
+        { "name": "La Source Braking", "type": "braking", "length": 220, "severity": 0.95 },
+        { "name": "Eau Rouge / Raidillon", "type": "corner", "length": 620, "severity": 0.85 },
+        { "name": "Kemmel Straight", "type": "straight", "length": 980 },
+        { "name": "Les Combes Braking", "type": "braking", "length": 220, "severity": 0.9 },
+        { "name": "Middle Sector", "type": "corner", "length": 2440, "severity": 0.7 },
+        { "name": "Stavelot to Bus Stop", "type": "straight", "length": 1080 },
+        { "name": "Final Chicane + Line", "type": "corner", "length": 622, "severity": 0.75 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Kemmel", "detection_point": 700, "activation_start": 920, "activation_end": 1650 },
+      { "zone_number": 2, "name": "Stavelot to Bus Stop", "detection_point": 4300, "activation_start": 4550, "activation_end": 5550 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 6550,
+      "pit_speed_start": 6700,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 520,
+      "pit_speed_end": 240,
+      "pit_exit_point": 360,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 4,
+      "asphalt_grip": 3,
+      "asphalt_abrasion": 3,
+      "track_evolution": 3,
+      "tyre_stress": 5,
+      "braking": 4,
+      "lateral": 5,
+      "downforce": 2
+    }
+  },
+
+  "British Grand Prix": {
+    "total_laps": 52,
+    "base_lap_time": 93.92,
+    "lap_time_std": 2.23,
+    "pit_loss": 24.78,
+    "track_model": {
+      "track_length": 5891,
+      "segments": [
+        { "name": "Hamilton Straight", "type": "straight", "length": 760 },
+        { "name": "Abbey/Village Braking", "type": "braking", "length": 200, "severity": 0.85 },
+        { "name": "Maggots/Becketts", "type": "corner", "length": 1100, "severity": 0.85 },
+        { "name": "Hangar Straight", "type": "straight", "length": 770 },
+        { "name": "Stowe Braking", "type": "braking", "length": 200, "severity": 0.85 },
+        { "name": "Vale/Club", "type": "corner", "length": 820, "severity": 0.75 },
+        { "name": "Wellington Straight", "type": "straight", "length": 700 },
+        { "name": "Brooklands/Luffield", "type": "corner", "length": 1341, "severity": 0.65 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Wellington", "detection_point": 3600, "activation_start": 3720, "activation_end": 4300 },
+      { "zone_number": 2, "name": "Hangar", "detection_point": 1900, "activation_start": 2120, "activation_end": 2750 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 5450,
+      "pit_speed_start": 5600,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 500,
+      "pit_speed_end": 230,
+      "pit_exit_point": 360,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 3,
+      "asphalt_grip": 4,
+      "asphalt_abrasion": 2,
+      "track_evolution": 2,
+      "tyre_stress": 5,
+      "braking": 2,
+      "lateral": 5,
+      "downforce": 4
+    }
+  },
+
   "Canadian Grand Prix": {
     "total_laps": 70,
     "base_lap_time": 81.09,
     "lap_time_std": 2.75,
-    "track_deg_multiplier": 1.0,
     "pit_loss": 24.97,
-    "sc_probability": 1.0,
-    "vsc_probability": 0.67,
-    "sc_duration_mean": 8.33,
-    "overtake_difficulty": 0.92
+    "track_model": {
+      "track_length": 4361,
+      "segments": [
+        { "name": "Start/Finish Straight", "type": "straight", "length": 420 },
+        { "name": "T1-2 Braking", "type": "braking", "length": 170, "severity": 0.9 },
+        { "name": "Sector 1", "type": "corner", "length": 740, "severity": 0.55 },
+        { "name": "Casino Straight", "type": "straight", "length": 520 },
+        { "name": "Hairpin Braking", "type": "braking", "length": 190, "severity": 0.95 },
+        { "name": "Back Straight (Wall of Champions)", "type": "straight", "length": 980 },
+        { "name": "Final Chicane", "type": "braking", "length": 170, "severity": 0.9 },
+        { "name": "Run to Line", "type": "corner", "length": 1171, "severity": 0.5 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Start/Finish", "detection_point": 3950, "activation_start": 60, "activation_end": 420 },
+      { "zone_number": 2, "name": "Casino Straight", "detection_point": 900, "activation_start": 1030, "activation_end": 1420 },
+      { "zone_number": 3, "name": "Back Straight", "detection_point": 2100, "activation_start": 2300, "activation_end": 3150 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 4020,
+      "pit_speed_start": 4120,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 380,
+      "pit_speed_end": 180,
+      "pit_exit_point": 280,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 4,
+      "asphalt_grip": 2,
+      "asphalt_abrasion": 1,
+      "track_evolution": 5,
+      "tyre_stress": 3,
+      "braking": 5,
+      "lateral": 1,
+      "downforce": 1
+    }
   },
-  "Singapore Grand Prix": {
-    "total_laps": 61,
-    "base_lap_time": 105.61,
-    "lap_time_std": 2.64,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 31.85,
-    "sc_probability": 0.67,
-    "vsc_probability": 0.67,
-    "sc_duration_mean": 6.5,
-    "overtake_difficulty": 0.92
-  },
-  "Japanese Grand Prix": {
-    "total_laps": 45,
-    "base_lap_time": 101.72,
-    "lap_time_std": 1.53,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 25.47,
-    "sc_probability": 0.67,
-    "vsc_probability": 0.33,
-    "sc_duration_mean": 3.0,
-    "overtake_difficulty": 0.82
-  },
-  "Las Vegas Grand Prix": {
-    "total_laps": 50,
-    "base_lap_time": 98.71,
-    "lap_time_std": 1.55,
-    "track_deg_multiplier": 1.0,
-    "pit_loss": 25.17,
-    "sc_probability": 0.5,
-    "vsc_probability": 0.5,
-    "sc_duration_mean": 7.0,
-    "overtake_difficulty": 0.77
-  },
+
   "Chinese Grand Prix": {
     "total_laps": 56,
     "base_lap_time": 101.54,
     "lap_time_std": 1.32,
-    "track_deg_multiplier": 1.0,
     "pit_loss": 25.68,
-    "sc_probability": 1.0,
-    "vsc_probability": 1.0,
-    "sc_duration_mean": 9.0,
-    "overtake_difficulty": 0.83
+    "track_model": {
+      "track_length": 5451,
+      "segments": [
+        { "name": "Main Straight", "type": "straight", "length": 900 },
+        { "name": "T1-2 Long Corner", "type": "corner", "length": 900, "severity": 0.7 },
+        { "name": "Sector 1", "type": "corner", "length": 900, "severity": 0.55 },
+        { "name": "Back Straight", "type": "straight", "length": 1100 },
+        { "name": "Hairpin Braking", "type": "braking", "length": 220, "severity": 0.95 },
+        { "name": "Final Sector", "type": "corner", "length": 1431, "severity": 0.55 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Main Straight", "detection_point": 5050, "activation_start": 90, "activation_end": 780 },
+      { "zone_number": 2, "name": "Back Straight", "detection_point": 2350, "activation_start": 2550, "activation_end": 3500 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 5050,
+      "pit_speed_start": 5200,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 430,
+      "pit_speed_end": 240,
+      "pit_exit_point": 360,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 3,
+      "asphalt_grip": 3,
+      "asphalt_abrasion": 3,
+      "track_evolution": 5,
+      "tyre_stress": 4,
+      "braking": 4,
+      "lateral": 4,
+      "downforce": 3
+    }
+  },
+
+  "Dutch Grand Prix": {
+    "total_laps": 72,
+    "base_lap_time": 77.01,
+    "lap_time_std": 1.98,
+    "pit_loss": 24.43,
+    "track_model": {
+      "track_length": 4259,
+      "segments": [
+        { "name": "Main Straight", "type": "straight", "length": 520 },
+        { "name": "T1 Braking", "type": "braking", "length": 150, "severity": 0.9 },
+        { "name": "Sector 1", "type": "corner", "length": 980, "severity": 0.7 },
+        { "name": "Back Straight", "type": "straight", "length": 650 },
+        { "name": "Middle Sector", "type": "corner", "length": 1150, "severity": 0.7 },
+        { "name": "Banked Final Turn", "type": "corner", "length": 809, "severity": 0.75 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Main Straight", "detection_point": 3950, "activation_start": 70, "activation_end": 480 },
+      { "zone_number": 2, "name": "Back Straight", "detection_point": 1500, "activation_start": 1620, "activation_end": 2050 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 3900,
+      "pit_speed_start": 4050,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 360,
+      "pit_speed_end": 220,
+      "pit_exit_point": 320,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 3,
+      "asphalt_grip": 3,
+      "asphalt_abrasion": 3,
+      "track_evolution": 4,
+      "tyre_stress": 5,
+      "braking": 3,
+      "lateral": 4,
+      "downforce": 4
+    }
+  },
+
+  "Emilia Romagna Grand Prix": {
+    "total_laps": 63,
+    "base_lap_time": 83.98,
+    "lap_time_std": 4.22,
+    "pit_loss": 32.69,
+    "track_model": {
+      "track_length": 4909,
+      "segments": [
+        { "name": "Main Straight", "type": "straight", "length": 520 },
+        { "name": "T1 Chicane Braking", "type": "braking", "length": 190, "severity": 0.95 },
+        { "name": "Sector 1 Flow", "type": "corner", "length": 1100, "severity": 0.7 },
+        { "name": "Back Straight", "type": "straight", "length": 760 },
+        { "name": "Acque Minerali Braking", "type": "braking", "length": 180, "severity": 0.9 },
+        { "name": "Final Sector", "type": "corner", "length": 2159, "severity": 0.75 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Main Straight", "detection_point": 4600, "activation_start": 80, "activation_end": 500 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 4550,
+      "pit_speed_start": 4680,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 470,
+      "pit_speed_end": 240,
+      "pit_exit_point": 360,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 2,
+      "asphalt_grip": 2,
+      "asphalt_abrasion": 2,
+      "track_evolution": 2,
+      "tyre_stress": 3,
+      "braking": 3,
+      "lateral": 3,
+      "downforce": 3
+    }
+  },
+
+  "French Grand Prix": {
+    "total_laps": 53,
+    "base_lap_time": 99.81,
+    "lap_time_std": 1.21,
+    "pit_loss": 26.28,
+    "track_model": {
+      "track_length": 5842,
+      "segments": [
+        { "name": "Main Straight", "type": "straight", "length": 1000 },
+        { "name": "T1 Braking", "type": "braking", "length": 200, "severity": 0.9 },
+        { "name": "Sector 1", "type": "corner", "length": 1200, "severity": 0.6 },
+        { "name": "Mistral Straight", "type": "straight", "length": 1400 },
+        { "name": "Chicane Braking", "type": "braking", "length": 200, "severity": 0.9 },
+        { "name": "Final Sector", "type": "corner", "length": 1842, "severity": 0.6 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Main Straight", "detection_point": 5450, "activation_start": 90, "activation_end": 820 },
+      { "zone_number": 2, "name": "Mistral", "detection_point": 2200, "activation_start": 2450, "activation_end": 3600 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 5450,
+      "pit_speed_start": 5600,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 420,
+      "pit_speed_end": 260,
+      "pit_exit_point": 380,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 3,
+      "asphalt_grip": 3,
+      "asphalt_abrasion": 3,
+      "track_evolution": 3,
+      "tyre_stress": 4,
+      "braking": 3,
+      "lateral": 4,
+      "downforce": 3
+    }
+  },
+
+  "Hungarian Grand Prix": {
+    "total_laps": 70,
+    "base_lap_time": 84.29,
+    "lap_time_std": 1.25,
+    "pit_loss": 22.2,
+    "track_model": {
+      "track_length": 4381,
+      "segments": [
+        { "name": "Main Straight", "type": "straight", "length": 720 },
+        { "name": "T1 Braking", "type": "braking", "length": 170, "severity": 0.9 },
+        { "name": "Twisty Sector 1", "type": "corner", "length": 1260, "severity": 0.75 },
+        { "name": "Short Straight", "type": "straight", "length": 520 },
+        { "name": "Technical Middle", "type": "corner", "length": 980, "severity": 0.75 },
+        { "name": "Final Sector", "type": "corner", "length": 731, "severity": 0.7 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Main Straight", "detection_point": 4100, "activation_start": 90, "activation_end": 640 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 4020,
+      "pit_speed_start": 4170,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 360,
+      "pit_speed_end": 240,
+      "pit_exit_point": 340,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 4,
+      "asphalt_grip": 3,
+      "asphalt_abrasion": 3,
+      "track_evolution": 4,
+      "tyre_stress": 3,
+      "braking": 3,
+      "lateral": 3,
+      "downforce": 5
+    }
+  },
+
+  "Italian Grand Prix": {
+    "total_laps": 52,
+    "base_lap_time": 86.45,
+    "lap_time_std": 1.01,
+    "pit_loss": 27.14,
+    "track_model": {
+      "track_length": 5793,
+      "segments": [
+        { "name": "Main Straight", "type": "straight", "length": 950 },
+        { "name": "T1 Braking", "type": "braking", "length": 220, "severity": 0.95 },
+        { "name": "Curva Grande", "type": "corner", "length": 780, "severity": 0.5 },
+        { "name": "Second Straight", "type": "straight", "length": 820 },
+        { "name": "Chicane Braking", "type": "braking", "length": 220, "severity": 0.95 },
+        { "name": "Lesmo Section", "type": "corner", "length": 980, "severity": 0.65 },
+        { "name": "Back Straight", "type": "straight", "length": 720 },
+        { "name": "Ascari/Parabolica", "type": "corner", "length": 1103, "severity": 0.7 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Main Straight", "detection_point": 5350, "activation_start": 100, "activation_end": 820 },
+      { "zone_number": 2, "name": "Second Straight", "detection_point": 1550, "activation_start": 1750, "activation_end": 2350 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 5400,
+      "pit_speed_start": 5550,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 460,
+      "pit_speed_end": 250,
+      "pit_exit_point": 380,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 3,
+      "asphalt_grip": 3,
+      "asphalt_abrasion": 2,
+      "track_evolution": 4,
+      "tyre_stress": 3,
+      "braking": 4,
+      "lateral": 2,
+      "downforce": 1
+    }
+  },
+
+  "Japanese Grand Prix": {
+    "total_laps": 45,
+    "base_lap_time": 101.72,
+    "lap_time_std": 1.53,
+    "pit_loss": 25.47,
+    "track_model": {
+      "track_length": 5807,
+      "segments": [
+        { "name": "Main Straight", "type": "straight", "length": 780 },
+        { "name": "T1 Braking", "type": "braking", "length": 210, "severity": 0.9 },
+        { "name": "Esses", "type": "corner", "length": 1450, "severity": 0.85 },
+        { "name": "Spoon Curve", "type": "corner", "length": 980, "severity": 0.75 },
+        { "name": "Back Straight", "type": "straight", "length": 920 },
+        { "name": "130R + Casio", "type": "corner", "length": 1467, "severity": 0.8 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Main Straight", "detection_point": 5450, "activation_start": 90, "activation_end": 740 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 5450,
+      "pit_speed_start": 5600,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 420,
+      "pit_speed_end": 260,
+      "pit_exit_point": 380,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 3,
+      "asphalt_grip": 4,
+      "asphalt_abrasion": 4,
+      "track_evolution": 3,
+      "tyre_stress": 5,
+      "braking": 2,
+      "lateral": 5,
+      "downforce": 4
+    }
+  },
+
+  "Las Vegas Grand Prix": {
+    "total_laps": 50,
+    "base_lap_time": 98.71,
+    "lap_time_std": 1.55,
+    "pit_loss": 25.17,
+    "track_model": {
+      "track_length": 6201,
+      "segments": [
+        { "name": "Pit Straight", "type": "straight", "length": 800 },
+        { "name": "T1 Braking", "type": "braking", "length": 200, "severity": 0.9 },
+        { "name": "Strip Straight", "type": "straight", "length": 1900 },
+        { "name": "End-of-Strip Braking", "type": "braking", "length": 220, "severity": 0.95 },
+        { "name": "Back Straight", "type": "straight", "length": 1500 },
+        { "name": "Final Sector", "type": "corner", "length": 1581, "severity": 0.6 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Strip", "detection_point": 700, "activation_start": 900, "activation_end": 2500 },
+      { "zone_number": 2, "name": "Back Straight", "detection_point": 3500, "activation_start": 3700, "activation_end": 5000 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 5850,
+      "pit_speed_start": 6000,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 430,
+      "pit_speed_end": 250,
+      "pit_exit_point": 360,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 2,
+      "asphalt_grip": 1,
+      "asphalt_abrasion": 3,
+      "track_evolution": 5,
+      "tyre_stress": 4,
+      "braking": 3,
+      "lateral": 2,
+      "downforce": 1
+    }
+  },
+
+  "Mexico City Grand Prix": {
+    "total_laps": 71,
+    "base_lap_time": 83.13,
+    "lap_time_std": 1.16,
+    "pit_loss": 24.24,
+    "track_model": {
+      "track_length": 4304,
+      "segments": [
+        { "name": "Main Straight", "type": "straight", "length": 1100 },
+        { "name": "T1 Braking", "type": "braking", "length": 220, "severity": 0.95 },
+        { "name": "Stadium Section", "type": "corner", "length": 900, "severity": 0.75 },
+        { "name": "Back Straight", "type": "straight", "length": 850 },
+        { "name": "Esses", "type": "corner", "length": 780, "severity": 0.65 },
+        { "name": "Final Sector", "type": "corner", "length": 454, "severity": 0.6 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Main Straight", "detection_point": 3900, "activation_start": 90, "activation_end": 980 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 3950,
+      "pit_speed_start": 4100,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 380,
+      "pit_speed_end": 240,
+      "pit_exit_point": 340,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 3,
+      "asphalt_grip": 2,
+      "asphalt_abrasion": 2,
+      "track_evolution": 5,
+      "tyre_stress": 2,
+      "braking": 3,
+      "lateral": 2,
+      "downforce": 5
+    }
+  },
+
+  "Miami Grand Prix": {
+    "total_laps": 57,
+    "base_lap_time": 93.57,
+    "lap_time_std": 1.12,
+    "pit_loss": 22.53,
+    "track_model": {
+      "track_length": 5412,
+      "segments": [
+        { "name": "Main Straight", "type": "straight", "length": 780 },
+        { "name": "T1 Braking", "type": "braking", "length": 190, "severity": 0.9 },
+        { "name": "Sector 1", "type": "corner", "length": 1050, "severity": 0.6 },
+        { "name": "Back Straight", "type": "straight", "length": 980 },
+        { "name": "Heavy Stop", "type": "braking", "length": 190, "severity": 0.9 },
+        { "name": "Technical Section", "type": "corner", "length": 1322, "severity": 0.7 },
+        { "name": "Run to Line", "type": "straight", "length": 900 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Main Straight", "detection_point": 5050, "activation_start": 100, "activation_end": 720 },
+      { "zone_number": 2, "name": "Back Straight", "detection_point": 1900, "activation_start": 2100, "activation_end": 2800 },
+      { "zone_number": 3, "name": "Short DRS", "detection_point": 3150, "activation_start": 3300, "activation_end": 3700 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 5050,
+      "pit_speed_start": 5200,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 420,
+      "pit_speed_end": 260,
+      "pit_exit_point": 380,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 3,
+      "asphalt_grip": 4,
+      "asphalt_abrasion": 2,
+      "track_evolution": 5,
+      "tyre_stress": 3,
+      "braking": 3,
+      "lateral": 3,
+      "downforce": 3
+    }
+  },
+
+  "Monaco Grand Prix": {
+    "total_laps": 74,
+    "base_lap_time": 81.08,
+    "lap_time_std": 5.01,
+    "pit_loss": 23.28,
+    "track_model": {
+      "track_length": 3337,
+      "segments": [
+        { "name": "Start/Finish", "type": "straight", "length": 520 },
+        { "name": "Sainte Devote Braking", "type": "braking", "length": 140, "severity": 0.9 },
+        { "name": "Hill Section", "type": "corner", "length": 820, "severity": 0.8 },
+        { "name": "Tunnel", "type": "straight", "length": 520 },
+        { "name": "Nouvelle Chicane Braking", "type": "braking", "length": 140, "severity": 0.95 },
+        { "name": "Harbour Section", "type": "corner", "length": 1197, "severity": 0.85 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Start/Finish", "detection_point": 2950, "activation_start": 80, "activation_end": 460 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 3000,
+      "pit_speed_start": 3120,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 300,
+      "pit_speed_end": 220,
+      "pit_exit_point": 300,
+      "service_time_mean": 2.6,
+      "service_time_std": 0.35,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 5,
+      "asphalt_grip": 2,
+      "asphalt_abrasion": 1,
+      "track_evolution": 5,
+      "tyre_stress": 1,
+      "braking": 2,
+      "lateral": 1,
+      "downforce": 5
+    }
+  },
+
+  "Portuguese Grand Prix": {
+    "total_laps": 66,
+    "base_lap_time": 83.36,
+    "lap_time_std": 1.33,
+    "pit_loss": 27.17,
+    "track_model": {
+      "track_length": 4653,
+      "segments": [
+        { "name": "Main Straight", "type": "straight", "length": 900 },
+        { "name": "T1 Braking", "type": "braking", "length": 180, "severity": 0.9 },
+        { "name": "Sector 1", "type": "corner", "length": 1150, "severity": 0.7 },
+        { "name": "Back Straight", "type": "straight", "length": 650 },
+        { "name": "Technical Middle", "type": "corner", "length": 1200, "severity": 0.75 },
+        { "name": "Final Sector", "type": "corner", "length": 573, "severity": 0.7 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Main Straight", "detection_point": 4200, "activation_start": 90, "activation_end": 820 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 4300,
+      "pit_speed_start": 4450,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 420,
+      "pit_speed_end": 240,
+      "pit_exit_point": 360,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 4,
+      "asphalt_grip": 2,
+      "asphalt_abrasion": 2,
+      "track_evolution": 4,
+      "tyre_stress": 4,
+      "braking": 4,
+      "lateral": 3,
+      "downforce": 4
+    }
+  },
+
+  "Qatar Grand Prix": {
+    "total_laps": 57,
+    "base_lap_time": 87.94,
+    "lap_time_std": 1.69,
+    "pit_loss": 28.6,
+    "track_model": {
+      "track_length": 5419,
+      "segments": [
+        { "name": "Main Straight", "type": "straight", "length": 1050 },
+        { "name": "T1 Braking", "type": "braking", "length": 200, "severity": 0.9 },
+        { "name": "High-Speed Sweepers", "type": "corner", "length": 2200, "severity": 0.75 },
+        { "name": "Back Straight", "type": "straight", "length": 720 },
+        { "name": "Final Sector", "type": "corner", "length": 1249, "severity": 0.75 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Main Straight", "detection_point": 5050, "activation_start": 110, "activation_end": 980 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 5050,
+      "pit_speed_start": 5200,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 430,
+      "pit_speed_end": 250,
+      "pit_exit_point": 380,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 3,
+      "asphalt_grip": 4,
+      "asphalt_abrasion": 2,
+      "track_evolution": 4,
+      "tyre_stress": 5,
+      "braking": 3,
+      "lateral": 5,
+      "downforce": 4
+    }
+  },
+
+  "Russian Grand Prix": {
+    "total_laps": 53,
+    "base_lap_time": 101.63,
+    "lap_time_std": 2.06,
+    "pit_loss": 26.39,
+    "track_model": {
+      "track_length": 5848,
+      "segments": [
+        { "name": "Main Straight", "type": "straight", "length": 900 },
+        { "name": "T2 Braking", "type": "braking", "length": 220, "severity": 0.9 },
+        { "name": "Middle Sector", "type": "corner", "length": 2400, "severity": 0.6 },
+        { "name": "Back Straight", "type": "straight", "length": 900 },
+        { "name": "Final Sector", "type": "corner", "length": 1428, "severity": 0.55 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Main Straight", "detection_point": 5450, "activation_start": 100, "activation_end": 820 },
+      { "zone_number": 2, "name": "Back Straight", "detection_point": 3200, "activation_start": 3400, "activation_end": 4200 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 5450,
+      "pit_speed_start": 5600,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 420,
+      "pit_speed_end": 260,
+      "pit_exit_point": 380,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 4,
+      "asphalt_grip": 3,
+      "asphalt_abrasion": 2,
+      "track_evolution": 4,
+      "tyre_stress": 2,
+      "braking": 3,
+      "lateral": 3,
+      "downforce": 4
+    }
+  },
+
+  "Saudi Arabian Grand Prix": {
+    "total_laps": 50,
+    "base_lap_time": 94.86,
+    "lap_time_std": 1.8,
+    "pit_loss": 24.06,
+    "track_model": {
+      "track_length": 6174,
+      "segments": [
+        { "name": "Main Straight", "type": "straight", "length": 900 },
+        { "name": "T1 Braking", "type": "braking", "length": 200, "severity": 0.9 },
+        { "name": "High-Speed Street Section", "type": "corner", "length": 2400, "severity": 0.8 },
+        { "name": "Back Straight", "type": "straight", "length": 1200 },
+        { "name": "Fast Final Sector", "type": "corner", "length": 1474, "severity": 0.75 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Main Straight", "detection_point": 5800, "activation_start": 120, "activation_end": 820 },
+      { "zone_number": 2, "name": "Back Straight", "detection_point": 3200, "activation_start": 3400, "activation_end": 4400 },
+      { "zone_number": 3, "name": "Short DRS", "detection_point": 4700, "activation_start": 4860, "activation_end": 5400 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 5800,
+      "pit_speed_start": 5950,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 420,
+      "pit_speed_end": 260,
+      "pit_exit_point": 380,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 2,
+      "asphalt_grip": 4,
+      "asphalt_abrasion": 2,
+      "track_evolution": 4,
+      "tyre_stress": 3,
+      "braking": 3,
+      "lateral": 4,
+      "downforce": 2
+    }
+  },
+
+  "São Paulo Grand Prix": {
+    "total_laps": 70,
+    "base_lap_time": 78.1,
+    "lap_time_std": 1.35,
+    "pit_loss": 25.65,
+    "track_model": {
+      "track_length": 4309,
+      "segments": [
+        { "name": "Main Straight", "type": "straight", "length": 650 },
+        { "name": "T1 Braking", "type": "braking", "length": 170, "severity": 0.9 },
+        { "name": "Infield Twists", "type": "corner", "length": 1400, "severity": 0.75 },
+        { "name": "Back Straight", "type": "straight", "length": 620 },
+        { "name": "Juncao Braking", "type": "braking", "length": 160, "severity": 0.9 },
+        { "name": "Final Sector", "type": "corner", "length": 1309, "severity": 0.7 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Main Straight", "detection_point": 3900, "activation_start": 90, "activation_end": 600 },
+      { "zone_number": 2, "name": "Back Straight", "detection_point": 2300, "activation_start": 2500, "activation_end": 2950 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 3900,
+      "pit_speed_start": 4050,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 400,
+      "pit_speed_end": 240,
+      "pit_exit_point": 360,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 3,
+      "asphalt_grip": 3,
+      "asphalt_abrasion": 2,
+      "track_evolution": 5,
+      "tyre_stress": 3,
+      "braking": 3,
+      "lateral": 3,
+      "downforce": 4
+    }
+  },
+
+  "Singapore Grand Prix": {
+    "total_laps": 61,
+    "base_lap_time": 105.61,
+    "lap_time_std": 2.64,
+    "pit_loss": 31.85,
+    "track_model": {
+      "track_length": 4928,
+      "segments": [
+        { "name": "Main Straight", "type": "straight", "length": 650 },
+        { "name": "T1 Braking", "type": "braking", "length": 180, "severity": 0.9 },
+        { "name": "Street Sector 1", "type": "corner", "length": 1500, "severity": 0.85 },
+        { "name": "Raffles Straight", "type": "straight", "length": 720 },
+        { "name": "Street Sector 2", "type": "corner", "length": 1200, "severity": 0.85 },
+        { "name": "Final Sector", "type": "corner", "length": 678, "severity": 0.85 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Main Straight", "detection_point": 4600, "activation_start": 90, "activation_end": 600 },
+      { "zone_number": 2, "name": "Raffles", "detection_point": 2250, "activation_start": 2400, "activation_end": 3000 },
+      { "zone_number": 3, "name": "Short DRS", "detection_point": 3200, "activation_start": 3320, "activation_end": 3720 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 4600,
+      "pit_speed_start": 4750,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 430,
+      "pit_speed_end": 240,
+      "pit_exit_point": 360,
+      "service_time_mean": 2.6,
+      "service_time_std": 0.35,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 4,
+      "asphalt_grip": 3,
+      "asphalt_abrasion": 3,
+      "track_evolution": 5,
+      "tyre_stress": 2,
+      "braking": 5,
+      "lateral": 2,
+      "downforce": 5
+    }
+  },
+
+  "Spanish Grand Prix": {
+    "total_laps": 66,
+    "base_lap_time": 83.43,
+    "lap_time_std": 1.38,
+    "pit_loss": 23.36,
+    "track_model": {
+      "track_length": 4675,
+      "segments": [
+        { "name": "Main Straight", "type": "straight", "length": 920 },
+        { "name": "T1 Braking", "type": "braking", "length": 190, "severity": 0.9 },
+        { "name": "Sector 1", "type": "corner", "length": 1200, "severity": 0.65 },
+        { "name": "Back Straight", "type": "straight", "length": 720 },
+        { "name": "Final Sector", "type": "corner", "length": 1645, "severity": 0.7 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Main Straight", "detection_point": 4300, "activation_start": 100, "activation_end": 850 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 4300,
+      "pit_speed_start": 4450,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 430,
+      "pit_speed_end": 250,
+      "pit_exit_point": 380,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 3,
+      "asphalt_grip": 3,
+      "asphalt_abrasion": 4,
+      "track_evolution": 3,
+      "tyre_stress": 5,
+      "braking": 3,
+      "lateral": 5,
+      "downforce": 4
+    }
+  },
+
+  "Turkish Grand Prix": {
+    "total_laps": 58,
+    "base_lap_time": 95.17,
+    "lap_time_std": 1.42,
+    "pit_loss": 21.85,
+    "track_model": {
+      "track_length": 5338,
+      "segments": [
+        { "name": "Main Straight", "type": "straight", "length": 760 },
+        { "name": "T1 Braking", "type": "braking", "length": 220, "severity": 0.9 },
+        { "name": "Sector 1", "type": "corner", "length": 1350, "severity": 0.75 },
+        { "name": "Back Straight", "type": "straight", "length": 820 },
+        { "name": "Sector 2", "type": "corner", "length": 1200, "severity": 0.75 },
+        { "name": "Final Sector", "type": "corner", "length": 988, "severity": 0.7 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Main Straight", "detection_point": 4950, "activation_start": 90, "activation_end": 720 },
+      { "zone_number": 2, "name": "Back Straight", "detection_point": 2500, "activation_start": 2720, "activation_end": 3320 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 4950,
+      "pit_speed_start": 5100,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 420,
+      "pit_speed_end": 250,
+      "pit_exit_point": 380,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 3,
+      "asphalt_grip": 3,
+      "asphalt_abrasion": 2,
+      "track_evolution": 5,
+      "tyre_stress": 3,
+      "braking": 3,
+      "lateral": 5,
+      "downforce": 4
+    }
+  },
+
+  "United States Grand Prix": {
+    "total_laps": 56,
+    "base_lap_time": 102.02,
+    "lap_time_std": 1.42,
+    "pit_loss": 22.07,
+    "track_model": {
+      "track_length": 5513,
+      "segments": [
+        { "name": "Main Straight", "type": "straight", "length": 950 },
+        { "name": "T1 Braking", "type": "braking", "length": 220, "severity": 0.9 },
+        { "name": "Esses", "type": "corner", "length": 1500, "severity": 0.85 },
+        { "name": "Back Straight", "type": "straight", "length": 1000 },
+        { "name": "Stadium Section", "type": "corner", "length": 1600, "severity": 0.75 },
+        { "name": "Final Corners", "type": "corner", "length": 243, "severity": 0.7 }
+      ]
+    },
+    "drs_zones": [
+      { "zone_number": 1, "name": "Back Straight", "detection_point": 2350, "activation_start": 2550, "activation_end": 3400 },
+      { "zone_number": 2, "name": "Main Straight", "detection_point": 5150, "activation_start": 100, "activation_end": 850 }
+    ],
+    "pit_lane": {
+      "enabled": true,
+      "pit_entry_point": 5150,
+      "pit_speed_start": 5300,
+      "pit_speed_limit_mps": 22.0,
+      "pit_lane_distance": 430,
+      "pit_speed_end": 260,
+      "pit_exit_point": 380,
+      "service_time_mean": 2.5,
+      "service_time_std": 0.3,
+      "min_separation_m_for_no_congestion": 20.0,
+      "stacking_window_m": 5.0,
+      "stacking_penalty_s": 1.2
+    },
+    "characteristics": {
+      "traction": 4,
+      "asphalt_grip": 3,
+      "asphalt_abrasion": 3,
+      "track_evolution": 4,
+      "tyre_stress": 4,
+      "braking": 3,
+      "lateral": 4,
+      "downforce": 4
+    }
   }
 }
