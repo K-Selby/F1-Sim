@@ -61,6 +61,11 @@ class RaceManager:
         self.track_deg_multiplier = min(max(self.track_deg_multiplier, 0.80), 1.25)
 
         self.segment_boundaries = self.build_segment_boundaries()
+
+        # Make DRS activation windows match real F1 behaviour:
+        # clamp activation_start/end to actual straight segment intervals
+        self.normalise_drs_zones()
+
         self.teams, self.cars = self.build_grid()
 
     # ==========================================================
@@ -256,7 +261,9 @@ class RaceManager:
     # TICK STEP (time + spatial)
     # ==========================================================
     def step_tick(self, dt: float):
+        # Update traffic/gaps/dirty-air first (NO overtake triggers here)
         self.apply_spatial_dirty_air()
+
         self.sim_time += dt
 
         def crossed_point(prev_pos: float, curr_pos: float, point: float) -> bool:
@@ -264,6 +271,15 @@ class RaceManager:
             if prev_pos <= curr_pos:
                 return prev_pos < point <= curr_pos
             return point > prev_pos or point <= curr_pos
+
+        def in_window(pos: float, start: float, end: float) -> bool:
+            """
+            True if pos lies inside [start, end] on a circular track.
+            Supports windows that wrap across start/finish by allowing end < start.
+            """
+            if end >= start:
+                return start <= pos <= end
+            return pos >= start or pos <= end
 
         # DRS enabled conditions (simplified)
         drs_enabled = (self.lap_number >= 2) and (self.track_state == "GREEN") and (self.weather_state == "DRY")
@@ -277,20 +293,29 @@ class RaceManager:
                 car.drs_eligible_lap = {}
 
             # ----------------------------
-            # PIT LANE: time penalty, no spatial progress
+            # PIT LANE: time penalty + slow spatial progress
             # ----------------------------
             if car.in_pit_lane:
                 car.pit_time_remaining -= dt
                 car.current_lap_time += dt
 
-                # Car is effectively stationary for the pit-time penalty
-                car.last_speed_mps = 0.0
+                pit_distance = self.pit_speed * dt
+                crossed_line = car.advance_position(pit_distance, self.track_length)
+                car.last_speed_mps = self.pit_speed
 
+                # If the car crosses S/F while in the pit lane, finalize the lap time
+                if crossed_line:
+                    car.total_time += car.current_lap_time
+                    car.current_lap_time = 0.0
+
+                    if car.lap_count >= self.total_laps and self.winner_finish_time is None:
+                        self.winner_finish_time = car.total_time
+
+                # Finish pit stop -> apply tyre change
                 if car.pit_time_remaining <= 0:
                     car.in_pit_lane = False
                     car.pit_time_remaining = 0.0
 
-                    # Apply tyre change when pit completes
                     if getattr(car, "next_compound", None) is not None:
                         car.tyre_state.compound = car.next_compound
                         car.tyre_state.age_laps = 0
@@ -298,6 +323,7 @@ class RaceManager:
 
                 continue
 
+            # Cooldown tick-down
             if car.overtake_cooldown > 0:
                 car.overtake_cooldown = max(0.0, car.overtake_cooldown - dt)
 
@@ -306,13 +332,15 @@ class RaceManager:
 
             segment = self.get_segment_for_position(car.track_position)
 
-            # Determine whether DRS is active *right now* (inside activation zone and eligible)
+            # ----------------------------
+            # DRS ACTIVE NOW? (activation zone + eligibility stamp)
+            # ----------------------------
             car.drs_active = False
             if drs_enabled and segment.get("type", "straight") == "straight":
                 for zone in self.drs_zones:
                     znum = int(zone["zone_number"])
 
-                    # Eligible if earned this lap OR previous lap (covers start/finish activation straight case)
+                    # Eligible if earned this lap OR previous lap (covers S/F edge cases)
                     stamp = car.drs_eligible_lap.get(znum, None)
                     if stamp is None:
                         continue
@@ -321,10 +349,19 @@ class RaceManager:
 
                     a0 = float(zone["activation_start"])
                     a1 = float(zone["activation_end"])
-                    if a0 <= car.track_position <= a1:
+
+                    if in_window(car.track_position, a0, a1):
                         car.drs_active = True
                         break
 
+            # ----------------------------
+            # OVERTAKE TRIGGER (now uses current-tick drs_active)
+            # ----------------------------
+            self.maybe_trigger_overtake(car, segment)
+
+            # ----------------------------
+            # SPEED + MOVE
+            # ----------------------------
             speed = car.compute_speed(
                 segment=segment,
                 track_length=self.track_length,
@@ -341,21 +378,23 @@ class RaceManager:
             crossed_line = car.advance_position(distance, self.track_length)
             car.current_lap_time += dt
 
-            # After moving, check if we crossed any DRS detection points this tick
+            # ----------------------------
+            # DRS ELIGIBILITY: detection point logic
+            # ----------------------------
             if drs_enabled and car.car_ahead is not None:
                 for zone in self.drs_zones:
                     znum = int(zone["zone_number"])
                     detect = float(zone["detection_point"])
                     if crossed_point(car.prev_track_position, car.track_position, detect):
-                        # Approximate 1.0s rule using distance gap / current speed
                         gap_s = car.gap_ahead / max(car.last_speed_mps, 1e-6)
                         if gap_s <= 1.0:
-                            # Earn eligibility for this zone, stamped with current lap_count
                             car.drs_eligible_lap[znum] = car.lap_count
                         else:
-                            # Missed 1.0s rule at detection -> remove eligibility for that zone
                             car.drs_eligible_lap.pop(znum, None)
 
+            # ----------------------------
+            # Lap complete
+            # ----------------------------
             if crossed_line:
                 car.total_time += car.current_lap_time
                 car.current_lap_time = 0.0
@@ -436,13 +475,13 @@ class RaceManager:
     def on_new_lap(self):
         print(f"--- LAP {self.lap_number} COMPLETE ---\n")
 
-        # Prune DRS eligibility so it effectively resets each lap,
-        # but keep "last lap" to support start/finish activation straights.
+        # Prune DRS eligibility: keep only stamps from this lap or the immediately previous lap
+        # (supports start/finish activation edge cases without letting eligibility linger)
         for car in self.cars:
             d = getattr(car, "drs_eligible_lap", None)
             if isinstance(d, dict):
                 for znum, stamp in list(d.items()):
-                    if stamp < (car.lap_count - 1):
+                    if stamp < (self.lap_number - 1):
                         d.pop(znum, None)
 
         for car in self.cars:
@@ -461,7 +500,6 @@ class RaceManager:
             if car.pending_pit and not car.retired:
                 self.apply_pit_stop(car)
 
-        # Print tower once per lap (avoids duplicate mid-lap towers)
         self.print_timing_tower()
 
     def print_timing_tower(self):
@@ -568,7 +606,7 @@ class RaceManager:
 
         self.cars_pitting_this_lap += 1
 
-        # Pit is now modelled as a pure time penalty (no spatial progress while pitting)
+        # Pit is modelled as time penalty + pit-lane traversal handled in step_tick
         car.in_pit_lane = True
         car.pit_time_remaining = pit_time_total
 
@@ -578,12 +616,12 @@ class RaceManager:
             f"| race_total={car.total_time:.2f}s"
         )
 
-        # Defer tyre change until pit stop finishes
+        # ✅ Defer tyre change until pit stop finishes
         car.next_compound = car.pit_compound
-
-        # Clear pit request flags now
-        car.pending_pit = False
         car.pit_compound = None
+
+        # Clear pit request flag now
+        car.pending_pit = False
     
     # ==========================================================
     # Traffic Logic
@@ -592,7 +630,8 @@ class RaceManager:
         """
         Traffic model:
         - soft speed modifiers (converted into time deltas inside CarAgent via seg_frac)
-        - overtake triggers only at interaction points (DRS/straights/braking)
+        - computes nearest neighbours + gaps for DRS eligibility and racecraft
+        (Overtake attempts are triggered in step_tick AFTER DRS state is computed.)
         """
         active_cars = [c for c in self.cars if not c.retired and not c.in_pit_lane]
         active_cars.sort(key=lambda c: self.get_progress(c), reverse=True)
@@ -630,24 +669,11 @@ class RaceManager:
                 car.traffic_penalty = 0.20
                 car.slipstream_bonus = 0.12
                 car.following_intensity = 0.8
+                
             elif car.gap_ahead < 25:
                 car.traffic_penalty = 0.10
                 car.slipstream_bonus = 0.08
                 car.following_intensity = 0.4
-
-            # Overtake trigger only if both cars free (not already side-by-side)
-            if (car.car_ahead and car.side_by_side_with is None and car.car_ahead.side_by_side_with is None):
-
-                segment = self.get_segment_for_position(car.track_position)
-
-                # Simple circuit-specific difficulty (use downforce/traction as proxy if present)
-                traction = float(self.characteristics.get("traction", 3))
-                downforce = float(self.characteristics.get("downforce", 3))
-                # Higher traction/downforce typically makes following easier; lower makes it harder.
-                overtake_difficulty = 1.0 + 0.05 * (3.0 - min(traction, downforce))
-
-                if car.attempt_overtake(segment=segment, drs_available=car.drs_active, overtake_difficulty=overtake_difficulty):
-                    self.start_side_by_side(car, car.car_ahead)
             
     def start_side_by_side(self, attacker: CarAgent, defender: CarAgent):
         if attacker.side_by_side_with is not None:
@@ -658,6 +684,103 @@ class RaceManager:
 
         attacker.side_by_side_ticks = 5
         defender.side_by_side_ticks = 5
+
+    def normalise_drs_zones(self) -> None:
+        """
+        Clamp each DRS zone's activation window to the parts of the track that are
+        actually 'straight' segments. Supports activation windows that wrap across
+        start/finish (activation_end < activation_start).
+
+        Detection points are NOT changed (they can be in corners/braking, as in real F1).
+        """
+        if not self.drs_zones:
+            return
+
+        # Build list of straight intervals [(start, end), ...]
+        straight_intervals: list[tuple[float, float]] = []
+        for seg in self.segment_boundaries:
+            seg_type = seg["data"].get("type", "straight")
+            if seg_type == "straight":
+                straight_intervals.append((float(seg["start"]), float(seg["end"])))
+
+        if not straight_intervals:
+            return
+
+        def overlap_len(a0: float, a1: float, b0: float, b1: float) -> float:
+            return max(0.0, min(a1, b1) - max(a0, b0))
+
+        def window_to_intervals(start: float, end: float) -> list[tuple[float, float]]:
+            # Convert possibly-wrapping window into linear intervals
+            if end >= start:
+                return [(start, end)]
+            # wrap: [start, track_length) and [0, end]
+            return [(start, float(self.track_length)), (0.0, end)]
+
+        new_zones = []
+        for zone in self.drs_zones:
+            try:
+                a0 = float(zone["activation_start"])
+                a1 = float(zone["activation_end"])
+            except (KeyError, ValueError, TypeError):
+                new_zones.append(zone)
+                continue
+
+            if a0 == a1:
+                new_zones.append(zone)
+                continue
+
+            # Search best overlap between (possibly wrapped) activation window and straights
+            best = None  # (overlap_length, new_start, new_end)
+            for wa0, wa1 in window_to_intervals(a0, a1):
+                for s0, s1 in straight_intervals:
+                    ol = overlap_len(wa0, wa1, s0, s1)
+                    if ol > 0:
+                        ns = max(wa0, s0)
+                        ne = min(wa1, s1)
+                        if best is None or ol > best[0]:
+                            best = (ol, ns, ne)
+
+            if best is None:
+                # No straight overlap; keep as-is
+                new_zones.append(zone)
+                continue
+
+            _, ns, ne = best
+            z = dict(zone)
+            z["activation_start"] = ns
+            z["activation_end"] = ne
+            new_zones.append(z)
+
+        self.drs_zones = new_zones
+
+    def maybe_trigger_overtake(self, car: CarAgent, segment: dict) -> None:
+        """
+        Trigger an overtake attempt (enter side-by-side) only at realistic interaction points,
+        using the car's CURRENT-TICK drs_active state.
+        """
+        if car.retired or car.in_pit_lane:
+            return
+        if car.car_ahead is None:
+            return
+        if car.side_by_side_with is not None or car.car_ahead.side_by_side_with is not None:
+            return
+
+        # Only consider overtakes at straights/braking zones (realistic interaction points)
+        seg_type = segment.get("type", "straight")
+        if seg_type not in ("straight", "braking"):
+            return
+
+        # Simple circuit-specific difficulty (use downforce/traction as proxy if present)
+        traction = float(self.characteristics.get("traction", 3))
+        downforce = float(self.characteristics.get("downforce", 3))
+        overtake_difficulty = 1.0 + 0.05 * (3.0 - min(traction, downforce))
+
+        if car.attempt_overtake(
+            segment=segment,
+            drs_available=car.drs_active,
+            overtake_difficulty=overtake_difficulty
+        ):
+            self.start_side_by_side(car, car.car_ahead)
 
     # ==========================================================
     # FINAL OUTPUT

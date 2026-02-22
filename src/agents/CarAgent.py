@@ -212,8 +212,8 @@ class CarAgent:
 
     def attempt_overtake(self, segment: dict, drs_available: bool, overtake_difficulty: float) -> bool:
         """
-        Overtake attempts are evaluated at interaction points (straights/braking),
-        with higher success probability if DRS is available.
+        Overtake attempts are evaluated at realistic interaction points (straights/braking),
+        with higher success probability if DRS is available on straights.
         """
         if self.retired or self.car_ahead is None:
             return False
@@ -222,12 +222,15 @@ class CarAgent:
             return False
 
         seg_type = segment.get("type", "straight")
-        interaction_point = (seg_type in ("straight", "braking")) or drs_available
-        if not interaction_point:
+
+        # Realistic: overtakes primarily happen on straights or into braking zones
+        if seg_type not in ("straight", "braking"):
             return False
 
-        # Must be very close (wheel-to-wheel initiation)
-        if self.gap_ahead > self.car_length:
+        # Must be close enough to actually attempt (wheel-to-wheel initiation)
+        # Allow a *slightly* larger initiation window on straights when DRS is active.
+        max_gap = (1.5 * self.car_length) if (drs_available and seg_type == "straight") else (1.1 * self.car_length)
+        if self.gap_ahead > max_gap:
             return False
 
         attacker_pace = self.calibration.mu_team
@@ -238,18 +241,16 @@ class CarAgent:
         tyre_advantage = (self.car_ahead.tyre_state.age_laps - self.tyre_state.age_laps) * 0.02
 
         # Base probability tuned conservative
-        base_probability = 0.10
+        base_probability = 0.08
         base_probability += max(0.0, pace_delta * 0.35)
         base_probability += max(0.0, tyre_advantage)
 
-        # DRS boost increases probability on straights
+        # DRS boost applies only on straights
         if drs_available and seg_type == "straight":
-            base_probability += 0.10
+            base_probability += 0.12
 
         # Circuit difficulty factor (1.0 baseline; >1 harder)
-        # Clamp impact so it doesn't dominate.
         base_probability /= max(0.7, min(overtake_difficulty, 1.5))
-
         base_probability = min(max(base_probability, 0.02), 0.50)
 
         success = random.random() < base_probability
@@ -257,7 +258,7 @@ class CarAgent:
             self.overtake_cooldown = 2.0
 
         return success
-
+    
     def defend_position(self) -> float:
         """
         Returns defensive speed modifier.
