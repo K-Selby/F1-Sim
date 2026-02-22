@@ -205,7 +205,7 @@ class CarAgent:
         self.instruction = instruction
 
     # ==========================================================
-    # RACECRAFT PLACEHOLDERS
+    # RACECRAFT 
     # ==========================================================
     def adjust_for_traffic(self, lap_time: float) -> float:
         return lap_time
@@ -267,6 +267,89 @@ class CarAgent:
             # Defending reduces own pace slightly
             return -0.5  # m/s penalty
         return 0.0
+
+    def tick_cooldowns(self, dt: float) -> None:
+        """
+        Tick down cooldown timers for this car.
+        """
+        if self.overtake_cooldown > 0:
+            self.overtake_cooldown = max(0.0, self.overtake_cooldown - dt)
+
+
+    def update_pit_lane_tick(self, dt: float, pit_lane_speed_mps: float, track_length: float) -> bool:
+        """
+        Advance pit timer and move along the track at pit-lane speed.
+        Returns True if the car crossed the start/finish line during this pit tick.
+        """
+        self.pit_time_remaining -= dt
+        self.current_lap_time += dt
+
+        pit_distance = pit_lane_speed_mps * dt
+        crossed_line = self.advance_position(pit_distance, track_length)
+        self.last_speed_mps = pit_lane_speed_mps
+
+        return crossed_line
+
+
+    def complete_pit_if_done(self) -> None:
+        """
+        If pit time has elapsed, exit pit lane and apply deferred tyre change.
+        """
+        if self.pit_time_remaining <= 0:
+            self.in_pit_lane = False
+            self.pit_time_remaining = 0.0
+
+            if getattr(self, "next_compound", None) is not None:
+                self.tyre_state.compound = self.next_compound
+                self.tyre_state.age_laps = 0
+                self.next_compound = None
+
+
+    def update_drs_active(self, drs_enabled: bool, segment_type: str, track_position: float, drs_zones: list[dict], in_window_fn) -> None:
+        """
+        Update self.drs_active based on: global DRS enabled, current segment type,
+        activation window, and stored eligibility stamp for each zone.
+        """
+        self.drs_active = False
+        if not drs_enabled or segment_type != "straight":
+            return
+
+        for zone in drs_zones:
+            znum = int(zone["zone_number"])
+            stamp = self.drs_eligible_lap.get(znum)
+
+            # Eligible if earned this lap OR previous lap (covers S/F edge cases)
+            if stamp is None or stamp not in (self.lap_count, self.lap_count - 1):
+                continue
+
+            a0 = float(zone["activation_start"])
+            a1 = float(zone["activation_end"])
+
+            if in_window_fn(track_position, a0, a1):
+                self.drs_active = True
+                return
+
+
+    def update_drs_eligibility(self, drs_enabled: bool, has_car_ahead: bool, gap_ahead_m: float, last_speed_mps: float, drs_zones: list[dict], did_cross_marker_fn, prev_pos: float, curr_pos: float) -> None:
+        """
+        Update eligibility stamps when crossing detection points.
+        Uses a simple 1.0s rule approximation: gap_s = gap_m / speed_mps.
+        """
+        if not drs_enabled or not has_car_ahead:
+            return
+
+        speed = max(last_speed_mps, 1e-6)
+
+        for zone in drs_zones:
+            znum = int(zone["zone_number"])
+            detect = float(zone["detection_point"])
+
+            if did_cross_marker_fn(prev_pos, curr_pos, detect):
+                gap_s = gap_ahead_m / speed
+                if gap_s <= 1.0:
+                    self.drs_eligible_lap[znum] = self.lap_count
+                else:
+                    self.drs_eligible_lap.pop(znum, None)
 
     # ==========================================================
     # RELIABILITY

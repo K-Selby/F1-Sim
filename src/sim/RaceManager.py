@@ -143,6 +143,131 @@ class RaceManager:
         return teams, cars
 
     # ==========================================================
+    # HELPER METHODS
+    # ==========================================================
+    def is_drs_enabled(self) -> bool:
+        """
+        Global DRS enable rule (race control): enabled from lap 3 onward in this simplified model,
+        only under GREEN and DRY.
+        """
+        return (self.lap_number >= 2) and (self.track_state == "GREEN") and (self.weather_state == "DRY")
+
+    @staticmethod
+    def did_cross_marker(prev_pos: float, curr_pos: float, marker_pos: float) -> bool:
+        """
+        True if we crossed marker_pos moving from prev_pos to curr_pos on a circular track.
+        """
+        if prev_pos <= curr_pos:
+            return prev_pos < marker_pos <= curr_pos
+        # wrap-around
+        return marker_pos > prev_pos or marker_pos <= curr_pos
+
+    def is_pos_in_circular_window(self, pos: float, start: float, end: float) -> bool:
+        """
+        True if pos lies inside [start, end] on a circular track.
+        Supports windows that wrap across start/finish (end < start).
+        """
+        if end >= start:
+            return start <= pos <= end
+        return pos >= start or pos <= end
+
+    def step_car_tick(self, car: CarAgent, dt: float, drs_enabled: bool) -> None:
+        """
+        Step a single car for this tick (pit lane or on-track).
+        """
+        # Cooldowns tick down regardless of state (but harmless in pit)
+        car.tick_cooldowns(dt)
+
+        # Finished cars do nothing
+        if car.lap_count >= self.total_laps:
+            return
+
+        if car.in_pit_lane:
+            self.handle_pit_lane_tick(car, dt)
+        else:
+            self.handle_on_track_tick(car, dt, drs_enabled)
+
+    def handle_pit_lane_tick(self, car: CarAgent, dt: float) -> None:
+        """
+        Pit lane tick: apply time penalty, move at pit-lane speed, finalise lap if S/F is crossed,
+        and apply tyre change when pit completes.
+        """
+        crossed_line = car.update_pit_lane_tick(dt, self.pit_speed, self.track_length)
+
+        if crossed_line:
+            self.finalise_lap_if_crossed(car, crossed_line=True, apply_tyre_wear=False)
+
+        car.complete_pit_if_done()
+
+    def handle_on_track_tick(self, car: CarAgent, dt: float, drs_enabled: bool) -> None:
+        """
+        On-track tick: compute DRS state, maybe trigger overtake, compute speed, move car,
+        update DRS eligibility, and finalise lap if crossed.
+        """
+        segment = self.get_segment_for_position(car.track_position)
+        seg_type = segment.get("type", "straight")
+
+        # 1) Update DRS active NOW (car mutates itself)
+        car.update_drs_active(
+            drs_enabled=drs_enabled,
+            segment_type=seg_type,
+            track_position=car.track_position,
+            drs_zones=self.drs_zones,
+            in_window_fn=self.is_pos_in_circular_window,
+        )
+
+        # 2) Overtake trigger uses *current tick* drs_active
+        self.maybe_trigger_overtake(car, segment)
+
+        # 3) Speed + move
+        speed = car.compute_speed(
+            segment=segment,
+            track_length=self.track_length,
+            base_lap_time=self.base_lap_time,
+            lap_time_std=self.lap_time_std,
+            evolution_level=self.evolution_level,
+            track_deg_multiplier=self.track_deg_multiplier,
+            drs_available=car.drs_active,
+        )
+        car.last_speed_mps = speed
+
+        distance = speed * dt
+        crossed_line = car.advance_position(distance, self.track_length)
+        car.current_lap_time += dt
+
+        # 4) DRS eligibility at detection points (car mutates itself)
+        car.update_drs_eligibility(
+            drs_enabled=drs_enabled,
+            has_car_ahead=(car.car_ahead is not None),
+            gap_ahead_m=car.gap_ahead,
+            last_speed_mps=car.last_speed_mps,
+            drs_zones=self.drs_zones,
+            did_cross_marker_fn=self.did_cross_marker,
+            prev_pos=car.prev_track_position,
+            curr_pos=car.track_position,
+        )
+
+        # 5) Lap complete
+        if crossed_line:
+            self.finalise_lap_if_crossed(car, crossed_line=True, apply_tyre_wear=True)
+
+    def finalise_lap_if_crossed(self, car: CarAgent, crossed_line: bool, apply_tyre_wear: bool) -> None:
+        """
+        Finalise lap time, reset lap timer, optionally apply tyre wear, and set winner finish time.
+        """
+        if not crossed_line:
+            return
+
+        car.total_time += car.current_lap_time
+        car.current_lap_time = 0.0
+
+        if apply_tyre_wear:
+            car.update_tyre_wear(self.track_deg_multiplier)
+
+        if car.lap_count >= self.total_laps and self.winner_finish_time is None:
+            self.winner_finish_time = car.total_time
+
+    # ==========================================================
     # SEGMENT BOUNDARIES
     # ==========================================================
     def build_segment_boundaries(self):
@@ -233,6 +358,27 @@ class RaceManager:
                 track_deg_multiplier=self.track_deg_multiplier,
             )
 
+    def update_global_lap_and_events(self) -> None:
+        """
+        Update race lap counter based on on-road leader progress, trigger on_new_lap,
+        and end race when all cars are finished/retired after a winner exists.
+        """
+        leader = max(
+            [c for c in self.cars if not c.retired],
+            key=lambda c: (c.lap_count, c.track_position),
+            default=None,
+        )
+
+        if leader is not None:
+            new_global_lap = leader.lap_count
+            if new_global_lap > self.lap_number:
+                self.lap_number = new_global_lap
+                self.on_new_lap()
+
+        if self.winner_finish_time is not None:
+            if all(c.lap_count >= self.total_laps or c.retired for c in self.cars):
+                self.race_finished = True
+
     # ==========================================================
     # DETERMINISTIC TICK RUN (no sleep)
     # ==========================================================
@@ -265,209 +411,19 @@ class RaceManager:
         self.apply_spatial_dirty_air()
 
         self.sim_time += dt
+        drs_enabled = self.is_drs_enabled()
 
-        def crossed_point(prev_pos: float, curr_pos: float, point: float) -> bool:
-            # Handle wrap-around (start/finish)
-            if prev_pos <= curr_pos:
-                return prev_pos < point <= curr_pos
-            return point > prev_pos or point <= curr_pos
-
-        def in_window(pos: float, start: float, end: float) -> bool:
-            """
-            True if pos lies inside [start, end] on a circular track.
-            Supports windows that wrap across start/finish by allowing end < start.
-            """
-            if end >= start:
-                return start <= pos <= end
-            return pos >= start or pos <= end
-
-        # DRS enabled conditions (simplified)
-        drs_enabled = (self.lap_number >= 2) and (self.track_state == "GREEN") and (self.weather_state == "DRY")
-
+        # Step each car
         for car in self.cars:
             if car.retired:
                 continue
+            self.step_car_tick(car, dt, drs_enabled)
 
-            # Guarantee attribute exists even if older cars were created before the change
-            if not hasattr(car, "drs_eligible_lap"):
-                car.drs_eligible_lap = {}
+        # Resolve pairwise battles + swaps
+        self.resolve_side_by_side_battles()
 
-            # ----------------------------
-            # PIT LANE: time penalty + slow spatial progress
-            # ----------------------------
-            if car.in_pit_lane:
-                car.pit_time_remaining -= dt
-                car.current_lap_time += dt
-
-                pit_distance = self.pit_speed * dt
-                crossed_line = car.advance_position(pit_distance, self.track_length)
-                car.last_speed_mps = self.pit_speed
-
-                # If the car crosses S/F while in the pit lane, finalize the lap time
-                if crossed_line:
-                    car.total_time += car.current_lap_time
-                    car.current_lap_time = 0.0
-
-                    if car.lap_count >= self.total_laps and self.winner_finish_time is None:
-                        self.winner_finish_time = car.total_time
-
-                # Finish pit stop -> apply tyre change
-                if car.pit_time_remaining <= 0:
-                    car.in_pit_lane = False
-                    car.pit_time_remaining = 0.0
-
-                    if getattr(car, "next_compound", None) is not None:
-                        car.tyre_state.compound = car.next_compound
-                        car.tyre_state.age_laps = 0
-                        car.next_compound = None
-
-                continue
-
-            # Cooldown tick-down
-            if car.overtake_cooldown > 0:
-                car.overtake_cooldown = max(0.0, car.overtake_cooldown - dt)
-
-            if car.lap_count >= self.total_laps:
-                continue
-
-            segment = self.get_segment_for_position(car.track_position)
-
-            # ----------------------------
-            # DRS ACTIVE NOW? (activation zone + eligibility stamp)
-            # ----------------------------
-            car.drs_active = False
-            if drs_enabled and segment.get("type", "straight") == "straight":
-                for zone in self.drs_zones:
-                    znum = int(zone["zone_number"])
-
-                    # Eligible if earned this lap OR previous lap (covers S/F edge cases)
-                    stamp = car.drs_eligible_lap.get(znum, None)
-                    if stamp is None:
-                        continue
-                    if stamp not in (car.lap_count, car.lap_count - 1):
-                        continue
-
-                    a0 = float(zone["activation_start"])
-                    a1 = float(zone["activation_end"])
-
-                    if in_window(car.track_position, a0, a1):
-                        car.drs_active = True
-                        break
-
-            # ----------------------------
-            # OVERTAKE TRIGGER (now uses current-tick drs_active)
-            # ----------------------------
-            self.maybe_trigger_overtake(car, segment)
-
-            # ----------------------------
-            # SPEED + MOVE
-            # ----------------------------
-            speed = car.compute_speed(
-                segment=segment,
-                track_length=self.track_length,
-                base_lap_time=self.base_lap_time,
-                lap_time_std=self.lap_time_std,
-                evolution_level=self.evolution_level,
-                track_deg_multiplier=self.track_deg_multiplier,
-                drs_available=car.drs_active,
-            )
-
-            car.last_speed_mps = speed
-
-            distance = speed * dt
-            crossed_line = car.advance_position(distance, self.track_length)
-            car.current_lap_time += dt
-
-            # ----------------------------
-            # DRS ELIGIBILITY: detection point logic
-            # ----------------------------
-            if drs_enabled and car.car_ahead is not None:
-                for zone in self.drs_zones:
-                    znum = int(zone["zone_number"])
-                    detect = float(zone["detection_point"])
-                    if crossed_point(car.prev_track_position, car.track_position, detect):
-                        gap_s = car.gap_ahead / max(car.last_speed_mps, 1e-6)
-                        if gap_s <= 1.0:
-                            car.drs_eligible_lap[znum] = car.lap_count
-                        else:
-                            car.drs_eligible_lap.pop(znum, None)
-
-            # ----------------------------
-            # Lap complete
-            # ----------------------------
-            if crossed_line:
-                car.total_time += car.current_lap_time
-                car.current_lap_time = 0.0
-                car.update_tyre_wear(self.track_deg_multiplier)
-
-                if car.lap_count >= self.total_laps and self.winner_finish_time is None:
-                    self.winner_finish_time = car.total_time
-
-        # Resolve side-by-side battles (unchanged)
-        processed_pairs = set()
-        for car in self.cars:
-            if car.side_by_side_with is None:
-                continue
-
-            opponent = car.side_by_side_with
-            pair_id = tuple(sorted([car.car_id, opponent.car_id]))
-            if pair_id in processed_pairs:
-                continue
-            processed_pairs.add(pair_id)
-
-            car.side_by_side_ticks -= 1
-            opponent.side_by_side_ticks -= 1
-            if car.side_by_side_ticks > 0:
-                continue
-
-            segment = self.get_segment_for_position(car.track_position)
-
-            speed_car = car.compute_speed(
-                segment,
-                self.track_length,
-                self.base_lap_time,
-                self.lap_time_std,
-                self.evolution_level,
-                self.track_deg_multiplier,
-                car.drs_active,
-            )
-            speed_opponent = opponent.compute_speed(
-                segment,
-                self.track_length,
-                self.base_lap_time,
-                self.lap_time_std,
-                self.evolution_level,
-                self.track_deg_multiplier,
-                opponent.drs_active,
-            )
-
-            speed_car += random.gauss(0, 0.5)
-            speed_opponent += random.gauss(0, 0.5)
-
-            winner, loser = (car, opponent) if speed_car > speed_opponent else (opponent, car)
-
-            reference_progress = max(self.get_progress(winner), self.get_progress(loser))
-            winner_new = reference_progress + (winner.car_length * 1.2)
-            loser_new = winner_new - (winner.car_length * 1.5)
-
-            winner.track_position = winner_new % self.track_length
-            loser.track_position = loser_new % self.track_length
-
-            winner.overtake_cooldown = 2.0
-            loser.overtake_cooldown = 3.0
-            winner.side_by_side_with = None
-            loser.side_by_side_with = None
-
-        leader = max([c for c in self.cars if not c.retired], key=lambda c: (c.lap_count, c.track_position), default=None)
-        if leader is not None:
-            new_global_lap = leader.lap_count
-            if new_global_lap > self.lap_number:
-                self.lap_number = new_global_lap
-                self.on_new_lap()
-
-        if self.winner_finish_time is not None:
-            if all(c.lap_count >= self.total_laps or c.retired for c in self.cars):
-                self.race_finished = True
+        # Lap progression + lap events
+        self.update_global_lap_and_events()
             
     # ==========================================================
     # LAP EVENTS (broadcast/strategy/pit/reliability/evolution)
@@ -475,8 +431,7 @@ class RaceManager:
     def on_new_lap(self):
         print(f"--- LAP {self.lap_number} COMPLETE ---\n")
 
-        # Prune DRS eligibility: keep only stamps from this lap or the immediately previous lap
-        # (supports start/finish activation edge cases without letting eligibility linger)
+        # Keep only stamps from this lap or immediately previous lap (S/F edge case support)
         for car in self.cars:
             d = getattr(car, "drs_eligible_lap", None)
             if isinstance(d, dict):
@@ -606,7 +561,7 @@ class RaceManager:
 
         self.cars_pitting_this_lap += 1
 
-        # Pit is modelled as time penalty + pit-lane traversal handled in step_tick
+        # Pit is modelled as time penalty + pit-lane traversal handled per-tick
         car.in_pit_lane = True
         car.pit_time_remaining = pit_time_total
 
@@ -616,11 +571,9 @@ class RaceManager:
             f"| race_total={car.total_time:.2f}s"
         )
 
-        # ✅ Defer tyre change until pit stop finishes
+        # Defer tyre change until pit finishes
         car.next_compound = car.pit_compound
         car.pit_compound = None
-
-        # Clear pit request flag now
         car.pending_pit = False
     
     # ==========================================================
@@ -684,6 +637,65 @@ class RaceManager:
 
         attacker.side_by_side_ticks = 5
         defender.side_by_side_ticks = 5
+
+    def resolve_side_by_side_battles(self) -> None:
+        """
+        Resolve side-by-side battles when their tick timer expires and perform the position swap.
+        """
+        processed_pairs = set()
+
+        for car in self.cars:
+            if car.side_by_side_with is None:
+                continue
+
+            opponent = car.side_by_side_with
+            pair_id = tuple(sorted([car.car_id, opponent.car_id]))
+            if pair_id in processed_pairs:
+                continue
+            processed_pairs.add(pair_id)
+
+            car.side_by_side_ticks -= 1
+            opponent.side_by_side_ticks -= 1
+            if car.side_by_side_ticks > 0:
+                continue
+
+            segment = self.get_segment_for_position(car.track_position)
+
+            speed_car = car.compute_speed(
+                segment,
+                self.track_length,
+                self.base_lap_time,
+                self.lap_time_std,
+                self.evolution_level,
+                self.track_deg_multiplier,
+                car.drs_active,
+            )
+            speed_opponent = opponent.compute_speed(
+                segment,
+                self.track_length,
+                self.base_lap_time,
+                self.lap_time_std,
+                self.evolution_level,
+                self.track_deg_multiplier,
+                opponent.drs_active,
+            )
+
+            speed_car += random.gauss(0, 0.5)
+            speed_opponent += random.gauss(0, 0.5)
+
+            winner, loser = (car, opponent) if speed_car > speed_opponent else (opponent, car)
+
+            reference_progress = max(self.get_progress(winner), self.get_progress(loser))
+            winner_new = reference_progress + (winner.car_length * 1.2)
+            loser_new = winner_new - (winner.car_length * 1.5)
+
+            winner.track_position = winner_new % self.track_length
+            loser.track_position = loser_new % self.track_length
+
+            winner.overtake_cooldown = 2.0
+            loser.overtake_cooldown = 3.0
+            winner.side_by_side_with = None
+            loser.side_by_side_with = None
 
     def normalise_drs_zones(self) -> None:
         """
