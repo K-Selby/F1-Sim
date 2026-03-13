@@ -103,7 +103,7 @@ class TeamAgent:
         code_to_label = {v: k for k, v in self.compound_map.items()}  # "C4" -> "MEDIUM"
 
         for car in [self.car_a, self.car_b]:
-            if car.retired:
+            if car.retired or car.pending_pit or car.in_pit_lane:
                 continue
 
             current_code = car.tyre_state.compound
@@ -179,6 +179,8 @@ class TeamAgent:
 
     def issue_pit_decision(self) -> None:
         for car, compound_code in self.pit_candidates:
+            if car.retired or car.pending_pit or car.in_pit_lane:
+                continue
 
             if self.last_pit_lap == self.current_lap:
                 return  # double stack prevention

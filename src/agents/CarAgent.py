@@ -31,10 +31,21 @@ class CarAgent:
 
         # Pit / strategy flags
         self.pending_pit: bool = False
-        self.pit_compound: Optional[str] = None     # check these 2
-        self.next_compound: Optional[str] = None      #Thsi one as well
+        self.pit_compound: Optional[str] = None
+        self.next_compound: Optional[str] = None
         self.in_pit_lane: bool = False
-        self.pit_time_remaining: float = 0.0
+
+        # -----------------------------
+        # Separate pit-lane spatial state
+        # -----------------------------
+        self.pit_lane_position_m: float = 0.0          # current position inside pit lane
+        self.pit_lane_total_m: float = 0.0             # total pit-lane distance
+        self.pit_box_position_m: float = 0.0           # where the pit box sits in pit lane
+        self.pit_exit_track_pos: float = 0.0           # where car rejoins main track
+        self.pit_line_position_m: float | None = None  # where S/F lies inside pit lane, if applicable
+        self.pit_line_crossed: bool = False            # stop double-counting the lap
+        self.pit_service_remaining_s: float = 0.0      # stationary service time left
+        self.pit_phase: str = "none"                   # none | to_box | service | to_exit
 
         # Traffic effects (set by RaceManager)
         self.traffic_penalty = 0.0
@@ -49,8 +60,8 @@ class CarAgent:
         self.car_behind: Optional[CarAgent] = None
         self.gap_ahead: float = float("inf")
         self.gap_behind: float = float("inf")
+
         # DRS eligibility is decided at each zone's detection point.
-        # We store a lap "stamp" per zone so pit-straight DRS works when detection is before S/F.
         self.drs_eligible_lap: dict[int, int] = {}   # {zone_number: lap_count_at_detection}
         self.drs_active: bool = False
 
@@ -198,11 +209,36 @@ class CarAgent:
     # PIT & TEAM INTERACTION
     # ==========================================================
     def pit(self, new_compound: str) -> None:
+        if self.retired or self.in_pit_lane or self.pending_pit:
+            return
+        
         self.pending_pit = True
         self.pit_compound = new_compound
 
     def apply_team_instruction(self, instruction: str) -> None:
         self.instruction = instruction
+
+    def start_pit_stop(self, pit_lane_total_m: float, pit_box_position_m: float, pit_exit_track_pos: float, pit_service_time_s: float, pit_line_position_m: float | None) -> None:
+        """
+        Move car into separate pit-lane space.
+        From this point it no longer affects on-track traffic/DRS/overtakes.
+        """
+        self.in_pit_lane = True
+
+        # Reset pit-lane spatial state
+        self.pit_lane_position_m = 0.0
+        self.pit_lane_total_m = float(max(0.0, pit_lane_total_m))
+        self.pit_box_position_m = float(min(self.pit_lane_total_m, max(0.0, pit_box_position_m)))
+        self.pit_exit_track_pos = float(pit_exit_track_pos)
+        self.pit_line_position_m = pit_line_position_m
+        self.pit_line_crossed = False
+
+        # Service is done once the car reaches its box
+        self.pit_service_remaining_s = float(max(0.0, pit_service_time_s))
+        self.pit_phase = "to_box"
+
+        # Car is now fully removed from on-track physics
+        self.last_speed_mps = 0.0
 
     # ==========================================================
     # RACECRAFT 
@@ -275,35 +311,98 @@ class CarAgent:
         if self.overtake_cooldown > 0:
             self.overtake_cooldown = max(0.0, self.overtake_cooldown - dt)
 
+    def update_pit_lane_tick(self, dt: float, pit_lane_speed_mps: float) -> bool:
+        """
+        Advance the car inside separate pit-lane space.
 
-    def update_pit_lane_tick(self, dt: float, pit_lane_speed_mps: float, track_length: float) -> bool:
+        Returns True only when the car crosses the start/finish line
+        inside the pit lane.
         """
-        Advance pit timer and move along the track at pit-lane speed.
-        Returns True if the car crossed the start/finish line during this pit tick.
-        """
-        self.pit_time_remaining -= dt
         self.current_lap_time += dt
+        crossed_pit_line = False
 
-        pit_distance = pit_lane_speed_mps * dt
-        crossed_line = self.advance_position(pit_distance, track_length)
-        self.last_speed_mps = pit_lane_speed_mps
+        # Helper to check if we crossed the pit-lane start/finish position
+        def check_pit_line(prev_pos: float, curr_pos: float) -> bool:
+            if self.pit_line_position_m is None or self.pit_line_crossed:
+                return False
+            return prev_pos < self.pit_line_position_m <= curr_pos
 
-        return crossed_line
+        # 1) Drive from pit entry to pit box
+        if self.pit_phase == "to_box":
+            prev_pos = self.pit_lane_position_m
+            move_dist = pit_lane_speed_mps * dt
+            self.pit_lane_position_m = min(self.pit_box_position_m, self.pit_lane_position_m + move_dist)
+            self.last_speed_mps = pit_lane_speed_mps
 
+            if check_pit_line(prev_pos, self.pit_lane_position_m):
+                self.pit_line_crossed = True
+                crossed_pit_line = True
 
-    def complete_pit_if_done(self) -> None:
+            if self.pit_lane_position_m >= self.pit_box_position_m:
+                self.pit_phase = "service"
+                self.last_speed_mps = 0.0
+
+            return crossed_pit_line
+
+        # 2) Stationary service at the box
+        if self.pit_phase == "service":
+            self.pit_service_remaining_s = max(0.0, self.pit_service_remaining_s - dt)
+            self.last_speed_mps = 0.0
+
+            if self.pit_service_remaining_s <= 0.0:
+                self.pit_phase = "to_exit"
+
+            return False
+
+        # 3) Drive from box to pit exit
+        if self.pit_phase == "to_exit":
+            prev_pos = self.pit_lane_position_m
+            move_dist = pit_lane_speed_mps * dt
+            self.pit_lane_position_m = min(self.pit_lane_total_m, self.pit_lane_position_m + move_dist)
+            self.last_speed_mps = pit_lane_speed_mps
+
+            if check_pit_line(prev_pos, self.pit_lane_position_m):
+                self.pit_line_crossed = True
+                crossed_pit_line = True
+
+            return crossed_pit_line
+
+        self.last_speed_mps = 0.0
+        return False
+
+    def complete_pit_if_done(self) -> bool:
         """
-        If pit time has elapsed, exit pit lane and apply deferred tyre change.
+        Finish the pit stop only after the car has reached pit exit.
+        Returns True when the car rejoins the main track.
         """
-        if self.pit_time_remaining <= 0:
-            self.in_pit_lane = False
-            self.pit_time_remaining = 0.0
+        if self.pit_phase != "to_exit":
+            return False
 
-            if getattr(self, "next_compound", None) is not None:
-                self.tyre_state.compound = self.next_compound
-                self.tyre_state.age_laps = 0
-                self.next_compound = None
+        if self.pit_lane_position_m < self.pit_lane_total_m:
+            return False
 
+        # Rejoin main track
+        self.in_pit_lane = False
+        self.track_position = self.pit_exit_track_pos
+        self.prev_track_position = self.track_position
+
+        # Apply deferred tyre change
+        if self.next_compound is not None:
+            self.tyre_state.compound = self.next_compound
+            self.tyre_state.age_laps = 0
+            self.next_compound = None
+
+        # Reset pit-lane state
+        self.pit_lane_position_m = 0.0
+        self.pit_lane_total_m = 0.0
+        self.pit_box_position_m = 0.0
+        self.pit_exit_track_pos = 0.0
+        self.pit_line_position_m = None
+        self.pit_line_crossed = False
+        self.pit_service_remaining_s = 0.0
+        self.pit_phase = "none"
+
+        return True
 
     def update_drs_active(self, drs_enabled: bool, segment_type: str, track_position: float, drs_zones: list[dict], in_window_fn) -> None:
         """
@@ -328,7 +427,6 @@ class CarAgent:
             if in_window_fn(track_position, a0, a1):
                 self.drs_active = True
                 return
-
 
     def update_drs_eligibility(self, drs_enabled: bool, has_car_ahead: bool, gap_ahead_m: float, last_speed_mps: float, drs_zones: list[dict], did_cross_marker_fn, prev_pos: float, curr_pos: float) -> None:
         """

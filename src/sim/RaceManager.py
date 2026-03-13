@@ -21,7 +21,7 @@ class RaceManager:
         self.base_lap_time = base_lap_time
         self.lap_time_std = lap_time_std
         self.pit_loss = pit_loss
-        self.pit_speed = 22.0  # TODO: move to circuit json later
+        self.pit_speed = 22.0  # fallback if config missing
 
         self.sim_time: float = 0.0
         self.dt: float = 0.1
@@ -29,7 +29,7 @@ class RaceManager:
         self.lap_number = 0
         self.race_finished = False
         self.track_state = "GREEN"
-        self.weather_state = "DRY" # configuration + weather change if time allows
+        self.weather_state = "DRY"
         self.evolution_level = 0.0
         self.winner_finish_time: float | None = None
 
@@ -53,17 +53,45 @@ class RaceManager:
         self.drs_zones = circuit_data.get("drs_zones", [])
         self.characteristics = circuit_data.get("characteristics", {})
 
-        # Track degradation multiplier from characteristics (abrasion + tyre stress)
-        # Baseline is ~1.0 at value 3; higher values increase wear modestly.
+        # Track degradation multiplier from characteristics
         abrasion = float(self.characteristics.get("asphalt_abrasion", 3))
         tyre_stress = float(self.characteristics.get("tyre_stress", 3))
         self.track_deg_multiplier = 1.0 + 0.03 * (abrasion - 3.0) + 0.03 * (tyre_stress - 3.0)
         self.track_deg_multiplier = min(max(self.track_deg_multiplier, 0.80), 1.25)
 
+        # -----------------------------
+        # Pit-lane geometry from circuit JSON
+        # -----------------------------
+        pit_cfg = circuit_data.get("pit_lane", {}) or {}
+        self.pit_enabled = bool(pit_cfg.get("enabled", False))
+        self.pit_entry_point = float(pit_cfg.get("pit_entry_point", 0.0))
+        self.pit_exit_point = float(pit_cfg.get("pit_exit_point", 0.0))
+        self.pit_lane_distance = float(pit_cfg.get("pit_lane_distance", 0.0))
+        self.pit_speed = float(pit_cfg.get("pit_speed_limit_mps", self.pit_speed))
+        self.pit_service_time_mean = float(pit_cfg.get("service_time_mean", 2.5))
+        self.pit_service_time_std = float(pit_cfg.get("service_time_std", 0.3))
+        self.pit_box_position_m = float(pit_cfg.get("pit_box_position_m", self.pit_lane_distance * 0.45))
+
+        # NEW: pit-lane flow settings
+        self.pit_lane_min_gap = 8.0          # moving gap between pit-lane cars
+        self.pit_stack_hold_gap = 6.0        # where teammate waits before the box
+        self.team_box_busy: dict[str, CarAgent] = {}
+
+        # If pit entry is after the start/finish and pit exit is before it,
+        # then the pit lane crosses the line.
+        self.pit_crosses_finish = self.pit_entry_point > self.pit_exit_point
+
+        # Position of S/F inside pit lane measured from pit entry.
+        if self.pit_crosses_finish:
+            self.pit_line_position_m = self.track_length - self.pit_entry_point
+            if self.pit_line_position_m > self.pit_lane_distance:
+                self.pit_line_position_m = None
+        else:
+            self.pit_line_position_m = None
+
         self.segment_boundaries = self.build_segment_boundaries()
 
-        # Make DRS activation windows match real F1 behaviour:
-        # clamp activation_start/end to actual straight segment intervals
+        # Make DRS activation windows match real F1 behaviour
         self.normalise_drs_zones()
 
         self.teams, self.cars = self.build_grid()
@@ -189,25 +217,28 @@ class RaceManager:
 
     def handle_pit_lane_tick(self, car: CarAgent, dt: float) -> None:
         """
-        Pit lane tick: apply time penalty, move at pit-lane speed, finalise lap if S/F is crossed,
-        and apply tyre change when pit completes.
+        Step a car inside the separate pit lane.
+        The car is removed from main-track physics while in here.
         """
-        crossed_line = car.update_pit_lane_tick(dt, self.pit_speed, self.track_length)
+        crossed_line = car.update_pit_lane_tick(dt, self.pit_speed)
 
+        # Count the lap only if the pit lane itself crosses the start/finish
         if crossed_line:
+            car.lap_count += 1
             self.finalise_lap_if_crossed(car, crossed_line=True, apply_tyre_wear=False)
 
+        # Rejoin track when the pit-lane journey is complete
         car.complete_pit_if_done()
 
     def handle_on_track_tick(self, car: CarAgent, dt: float, drs_enabled: bool) -> None:
         """
         On-track tick: compute DRS state, maybe trigger overtake, compute speed, move car,
-        update DRS eligibility, and finalise lap if crossed.
+        update DRS eligibility, check pit entry, and finalise lap if crossed.
         """
         segment = self.get_segment_for_position(car.track_position)
         seg_type = segment.get("type", "straight")
 
-        # 1) Update DRS active NOW (car mutates itself)
+        # 1) Update DRS active NOW
         car.update_drs_active(
             drs_enabled=drs_enabled,
             segment_type=seg_type,
@@ -216,7 +247,7 @@ class RaceManager:
             in_window_fn=self.is_pos_in_circular_window,
         )
 
-        # 2) Overtake trigger uses *current tick* drs_active
+        # 2) Overtake trigger uses current tick DRS state
         self.maybe_trigger_overtake(car, segment)
 
         # 3) Speed + move
@@ -235,7 +266,7 @@ class RaceManager:
         crossed_line = car.advance_position(distance, self.track_length)
         car.current_lap_time += dt
 
-        # 4) DRS eligibility at detection points (car mutates itself)
+        # 4) DRS eligibility at detection points
         car.update_drs_eligibility(
             drs_enabled=drs_enabled,
             has_car_ahead=(car.car_ahead is not None),
@@ -247,8 +278,11 @@ class RaceManager:
             curr_pos=car.track_position,
         )
 
-        # 5) Lap complete
-        if crossed_line:
+        # 5) If this car is due to pit, remove it from track when it reaches pit entry
+        self.maybe_enter_pit_lane(car)
+
+        # 6) Normal lap completion on the main track
+        if crossed_line and not car.in_pit_lane:
             self.finalise_lap_if_crossed(car, crossed_line=True, apply_tyre_wear=True)
 
     def finalise_lap_if_crossed(self, car: CarAgent, crossed_line: bool, apply_tyre_wear: bool) -> None:
@@ -266,6 +300,22 @@ class RaceManager:
 
         if car.lap_count >= self.total_laps and self.winner_finish_time is None:
             self.winner_finish_time = car.total_time
+
+    def maybe_enter_pit_lane(self, car: CarAgent) -> None:
+        """
+        Move a scheduled car into the pit lane only when it reaches pit entry.
+        """
+        if not self.pit_enabled:
+            return
+        if not car.pending_pit:
+            return
+        if car.in_pit_lane or car.retired:
+            return
+
+        if not self.did_cross_marker(car.prev_track_position, car.track_position, self.pit_entry_point):
+            return
+
+        self.apply_pit_stop(car)
 
     # ==========================================================
     # SEGMENT BOUNDARIES
@@ -307,7 +357,34 @@ class RaceManager:
         return self.segment_boundaries[-1]["data"]
 
     def get_progress(self, car: CarAgent) -> float:
-        return (car.lap_count * self.track_length) + car.track_position
+        """
+        Returns race progress in metres.
+
+        On-track cars use normal lap progress.
+        Pit-lane cars use an equivalent progress that moves from pit entry to pit exit,
+        so the timing tower can rank them correctly while they are in the pit lane.
+        """
+        base_progress = car.lap_count * self.track_length
+
+        if not car.in_pit_lane:
+            return base_progress + car.track_position
+
+        # Map pit-lane progress onto the equivalent race path from pit entry to pit exit
+        pit_frac = 0.0
+        if car.pit_lane_total_m > 0:
+            pit_frac = car.pit_lane_position_m / car.pit_lane_total_m
+
+        # Distance along the race route from pit entry to pit exit
+        if self.pit_exit_point >= self.pit_entry_point:
+            race_distance_entry_to_exit = self.pit_exit_point - self.pit_entry_point
+        else:
+            race_distance_entry_to_exit = (self.track_length - self.pit_entry_point) + self.pit_exit_point
+
+        equivalent_track_pos = (
+            self.pit_entry_point + (pit_frac * race_distance_entry_to_exit)
+        ) % self.track_length
+
+        return base_progress + equivalent_track_pos
 
     # ==========================================================
     # PUBLIC STATE + BROADCAST
@@ -431,7 +508,7 @@ class RaceManager:
     def on_new_lap(self):
         print(f"--- LAP {self.lap_number} COMPLETE ---\n")
 
-        # Keep only stamps from this lap or immediately previous lap (S/F edge case support)
+        # Keep only stamps from this lap or immediately previous lap
         for car in self.cars:
             d = getattr(car, "drs_eligible_lap", None)
             if isinstance(d, dict):
@@ -451,9 +528,9 @@ class RaceManager:
         for team in self.teams:
             team.decide()
 
-        for car in self.cars:
-            if car.pending_pit and not car.retired:
-                self.apply_pit_stop(car)
+        # IMPORTANT:
+        # Do NOT force pit entry here anymore.
+        # Cars now enter the pit only when they physically reach pit_entry_point.
 
         self.print_timing_tower()
 
@@ -462,10 +539,7 @@ class RaceManager:
         finished = [c for c in active if c.lap_count >= self.total_laps]
         running = [c for c in active if c.lap_count < self.total_laps]
 
-        # Finished: time-based
         finished.sort(key=lambda c: c.total_time)
-
-        # Running: on-road order is progress-based
         running.sort(key=lambda c: self.get_progress(c), reverse=True)
 
         print("\n--- Timing Tower (Mixed) ---")
@@ -474,7 +548,6 @@ class RaceManager:
         winner_time = finished[0].total_time if finished else None
         winner_progress_total = self.total_laps * self.track_length if winner_time is not None else None
 
-        # 1) FINISHED first
         for car in finished:
             if winner_time is not None and position == 1:
                 gap_str = self.format_time(car.total_time)
@@ -486,16 +559,39 @@ class RaceManager:
             print(f"P{position:02d} {car.car_id:<5} | FINISHED {gap_str}")
             position += 1
 
-        # 2) RUNNING next
         if running:
             leader = running[0]
             leader_prog = self.get_progress(leader)
 
-            def fmt_gap_progress(gap_m: float, speed_mps: float) -> str:
+            def fmt_gap_progress(gap_m: float, speed_mps: float, car: CarAgent | None = None) -> str:
                 laps_down = int(gap_m // self.track_length)
                 rem_m = gap_m - (laps_down * self.track_length)
 
-                speed_mps = max(speed_mps, 1e-6)
+                # If car is at least one full lap down, show only lap count
+                if laps_down > 0:
+                    return f"+{laps_down} LAP" if laps_down == 1 else f"+{laps_down} LAPS"
+
+                # For pit cars or stationary cars, avoid fake time estimates
+                if car is not None and car.in_pit_lane:
+                    return f"+{rem_m:,.0f}m"
+
+                if speed_mps <= 1.0:
+                    return f"+{rem_m:,.0f}m"
+
+                est_s = rem_m / speed_mps
+                return f"+{rem_m:,.0f}m (~{est_s:.2f}s)"
+
+                # For pit cars or stationary cars, do not invent absurd time estimates
+                if car is not None and car.in_pit_lane:
+                    if laps_down > 0:
+                        return f"+{laps_down}L +{rem_m:,.0f}m"
+                    return f"+{rem_m:,.0f}m"
+
+                if speed_mps <= 1.0:
+                    if laps_down > 0:
+                        return f"+{laps_down}L +{rem_m:,.0f}m"
+                    return f"+{rem_m:,.0f}m"
+
                 est_s = rem_m / speed_mps
 
                 if laps_down > 0:
@@ -503,37 +599,33 @@ class RaceManager:
                 return f"+{rem_m:,.0f}m (~{est_s:.2f}s)"
 
             for i, car in enumerate(running):
-                # Status for the car itself
-                if car.in_pit_lane:
-                    status = f"IN PIT ({max(0.0, car.pit_time_remaining):.1f}s)"
-                else:
-                    status = None
-
                 prog = self.get_progress(car)
 
-                # Ahead gap (on-road, progress-based)
                 if i == 0:
                     gap_ahead_str = "-"
                 else:
                     ahead = running[i - 1]
                     gap_ahead_m = max(0.0, self.get_progress(ahead) - prog)
-                    gap_ahead_str = fmt_gap_progress(gap_ahead_m, car.last_speed_mps)
+                    gap_ahead_str = fmt_gap_progress(gap_ahead_m, car.last_speed_mps, car)
 
-                # Reference gap
                 if winner_time is not None and winner_progress_total is not None:
-                    # After winner exists, use progress deficit to finished distance (stable mid-lap)
                     gap_to_winner_m = max(0.0, winner_progress_total - prog)
                     ref_label = "Winner"
-                    gap_ref_str = fmt_gap_progress(gap_to_winner_m, car.last_speed_mps)
+                    gap_ref_str = fmt_gap_progress(gap_to_winner_m, car.last_speed_mps, car)
                 else:
-                    # Before winner exists, show gap to on-road leader
                     gap_to_leader_m = max(0.0, leader_prog - prog)
                     ref_label = "Leader"
-                    gap_ref_str = "LEADER" if i == 0 else fmt_gap_progress(gap_to_leader_m, car.last_speed_mps)
+                    gap_ref_str = "LEADER" if i == 0 else fmt_gap_progress(gap_to_leader_m, car.last_speed_mps, car)
 
-                # If the car itself is in the pit, override the "Ahead" display with status (but keep ref gap meaningful)
-                if status is not None:
-                    gap_ahead_str = status
+                # Override ahead display for pit-lane cars
+                if car.in_pit_lane:
+                    if car.pit_phase == "to_box":
+                        pit_status = "IN PIT (to box)"
+                    elif car.pit_phase == "service":
+                        pit_status = f"IN PIT ({car.pit_service_remaining_s:.1f}s)"
+                    else:
+                        pit_status = "IN PIT (to exit)"
+                    gap_ahead_str = pit_status
 
                 print(
                     f"P{position:02d} "
@@ -543,35 +635,39 @@ class RaceManager:
                 )
                 position += 1
 
-        # 3) DNFs last
         dnfs = [c for c in self.cars if c.retired]
         for car in dnfs:
             print(f"P{position:02d} {car.car_id:<5} | DNF")
             position += 1
-
+    
     # ==========================================================
     # PIT STOP APPLICATION (ENVIRONMENT RESPONSIBILITY)
     # ==========================================================
     def apply_pit_stop(self, car: CarAgent) -> None:
-        pit_loss = self.pit_loss
-
-        congestion_per_extra_car = 1.5
-        congestion = self.cars_pitting_this_lap * congestion_per_extra_car
-        pit_time_total = pit_loss + congestion
-
+        """
+        Start a spatial pit stop using circuit pit-lane geometry.
+        Service time should represent only the stationary box time,
+        not the whole pit-loss figure.
+        """
         self.cars_pitting_this_lap += 1
 
-        # Pit is modelled as time penalty + pit-lane traversal handled per-tick
-        car.in_pit_lane = True
-        car.pit_time_remaining = pit_time_total
+        # Stationary stop time only
+        service_time = max(0.0, random.gauss(self.pit_service_time_mean, self.pit_service_time_std))
 
-        print(
-            f"[Lap {self.lap_number+1}] {car.team_id} | {car.car_id} PIT "
-            f"| base={pit_loss:.2f}s cong={congestion:.2f}s total_pit={pit_time_total:.2f}s "
-            f"| race_total={car.total_time:.2f}s"
+        car.start_pit_stop(
+            pit_lane_total_m=self.pit_lane_distance,
+            pit_box_position_m=self.pit_box_position_m,
+            pit_exit_track_pos=self.pit_exit_point,
+            pit_service_time_s=service_time,
+            pit_line_position_m=self.pit_line_position_m,
         )
 
-        # Defer tyre change until pit finishes
+        print(
+            f"[Lap {self.lap_number+1}] {car.team_id} | {car.car_id} ENTER PIT "
+            f"| service={service_time:.2f}s lane={self.pit_lane_distance:.0f}m"
+        )
+
+        # Defer compound swap until pit stop is complete
         car.next_compound = car.pit_compound
         car.pit_compound = None
         car.pending_pit = False
