@@ -57,29 +57,48 @@ class TyreModel:
             raise KeyError(f"Unknown compound passed to TyreModel: {compound}")
 
         spec = self._tyres[compound]
-
         delta = 0.0
 
         # -----------------------------
-        # Warmup phase
+        # Phase 1: Warmup
         # -----------------------------
         if age < spec.warmup_laps:
-            warmup_progress = age / spec.warmup_laps
-            warmup_penalty = spec.warmup_start_penalty * (1 - warmup_progress)
+            warmup_progress = age / max(1, spec.warmup_laps)
+            warmup_penalty = spec.warmup_start_penalty * (1.0 - warmup_progress)
             delta += warmup_penalty
 
         # -----------------------------
-        # Degradation phase
+        # Phase 2: Peak window
+        # Small reward once tyre is switched on
+        # -----------------------------
+        if spec.warmup_laps <= age <= spec.peak_life:
+            peak_window = max(1, spec.peak_life - spec.warmup_laps + 1)
+            peak_progress = (age - spec.warmup_laps) / peak_window
+
+            # Small peak benefit in the middle of the best operating window
+            peak_bonus = 0.08 * (1.0 - abs((peak_progress * 2.0) - 1.0))
+            delta -= peak_bonus
+
+        # -----------------------------
+        # Phase 3: Wear build-up
         # -----------------------------
         if age > spec.peak_life:
             deg_age = age - spec.peak_life
-
             degradation = (
                 spec.deg_linear * deg_age +
                 spec.deg_quadratic * (deg_age ** 2)
             )
-
             delta += degradation
+
+        # -----------------------------
+        # Phase 4: Tyre cliff
+        # Adds stronger late-stint fall-off
+        # -----------------------------
+        cliff_start = spec.peak_life + max(2, spec.warmup_laps)
+        if age > cliff_start:
+            cliff_age = age - cliff_start
+            cliff_penalty = 0.03 * (cliff_age ** 2)
+            delta += cliff_penalty
 
         # -----------------------------
         # Track + Team scaling

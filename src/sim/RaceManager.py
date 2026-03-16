@@ -317,6 +317,15 @@ class RaceManager:
 
         self.apply_pit_stop(car)
 
+    def set_car_progress(self, car: CarAgent, progress_m: float) -> None:
+        """
+        Set a car's absolute race progress safely, keeping lap_count and track_position aligned.
+        """
+        progress_m = max(0.0, progress_m)
+        car.lap_count = int(progress_m // self.track_length)
+        car.track_position = progress_m % self.track_length
+        car.prev_track_position = car.track_position
+
     # ==========================================================
     # SEGMENT BOUNDARIES
     # ==========================================================
@@ -392,10 +401,10 @@ class RaceManager:
     def build_car_snapshots(self) -> List[CarSnapshot]:
         snapshots: List[CarSnapshot] = []
 
-        for car in self.cars:
-            if car.retired:
-                continue
+        active_cars = [car for car in self.cars if not car.retired]
+        active_cars.sort(key=lambda c: self.get_progress(c), reverse=True)
 
+        for car in active_cars:
             live_time = car.total_time + car.current_lap_time
 
             snapshots.append(
@@ -407,8 +416,6 @@ class RaceManager:
                     tyre_age=car.tyre_state.age_laps,
                 )
             )
-
-        snapshots.sort(key=lambda s: s.total_time)
 
         return snapshots
 
@@ -737,6 +744,7 @@ class RaceManager:
     def resolve_side_by_side_battles(self) -> None:
         """
         Resolve side-by-side battles when their tick timer expires and perform the position swap.
+        Keeps lap_count and track_position consistent.
         """
         processed_pairs = set()
 
@@ -752,6 +760,7 @@ class RaceManager:
 
             car.side_by_side_ticks -= 1
             opponent.side_by_side_ticks -= 1
+
             if car.side_by_side_ticks > 0:
                 continue
 
@@ -781,12 +790,15 @@ class RaceManager:
 
             winner, loser = (car, opponent) if speed_car > speed_opponent else (opponent, car)
 
-            reference_progress = max(self.get_progress(winner), self.get_progress(loser))
-            winner_new = reference_progress + (winner.car_length * 1.2)
-            loser_new = winner_new - (winner.car_length * 1.5)
+            winner_progress = self.get_progress(winner)
+            loser_progress = self.get_progress(loser)
+            reference_progress = max(winner_progress, loser_progress)
 
-            winner.track_position = winner_new % self.track_length
-            loser.track_position = loser_new % self.track_length
+            winner_new_progress = reference_progress + (winner.car_length * 1.2)
+            loser_new_progress = winner_new_progress - (winner.car_length * 1.5)
+
+            self.set_car_progress(winner, winner_new_progress)
+            self.set_car_progress(loser, loser_new_progress)
 
             winner.overtake_cooldown = 2.0
             loser.overtake_cooldown = 3.0
