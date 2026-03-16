@@ -528,7 +528,10 @@ class RaceManager:
                 car.retired = True
                 print(f"[Lap {self.lap_number}] {car.car_id} RETIRES (Mechanical)")
 
-        self.evolution_level = min(1.0, self.evolution_level + 0.015)
+        race_progress = self.lap_number / max(1, self.total_laps)
+
+        # Early and mid-race rubbering-in, then it flattens off
+        self.evolution_level = min(1.0, 1.0 - ((1.0 - race_progress) ** 2.2))
         self.cars_pitting_this_lap = 0
 
         self.broadcast_public_signals()

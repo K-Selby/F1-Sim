@@ -135,8 +135,8 @@ class CarAgent:
 
         # Track evolution reduces lap time over the race
         # (simple linear effect; keep small so it doesn't dominate calibration)
-        evolution_multiplier = 1.0 - (0.02 * evolution_level)
-        effective_lap_time *= max(0.90, evolution_multiplier)
+        # Small capped grip gain from track rubbering-in
+        effective_lap_time *= (1.0 - (0.012 * evolution_level))
 
         # Convert to baseline clean speed (m/s)
         base_speed = track_length / max(effective_lap_time, 1e-6)
