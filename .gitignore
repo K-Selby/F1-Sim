@@ -17,3 +17,6 @@ UI/screens/__pycache__/simulation.cpython-312.pyc
 src/models/__pycache__/TyreModel.cpython-312.pyc
 configs/sim_configuration.json
 src/.DS_Store
+.DS_Store
+src/UI/API/__pycache__
+src/UI/screens/__pycache__

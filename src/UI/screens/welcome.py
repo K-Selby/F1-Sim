@@ -77,14 +77,14 @@ class Title:
 
             if distance < self.influence_radius:
                 intensity = 1 - (distance / self.influence_radius)
-                r = int(dot_colour[0] + (red[0] - dot_colour[0]) * intensity)
-                g = int(dot_colour[1] + (red[1] - dot_colour[1]) * intensity)
-                b = int(dot_colour[2] + (red[2] - dot_colour[2]) * intensity)
+                r = int(grey_2[0] + (red[0] - grey_2[0]) * intensity)
+                g = int(grey_2[1] + (red[1] - grey_2[1]) * intensity)
+                b = int(grey_2[2] + (red[2] - grey_2[2]) * intensity)
                 color = (r, g, b)
 
                 radius = 3 + (6 * intensity)
             else:
-                color = dot_colour
+                color = grey_2
                 radius = 3
             
             pygame.draw.circle(self.screen, color, (dot_x, dot_y), int(radius))
