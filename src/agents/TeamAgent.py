@@ -48,17 +48,7 @@ class TeamAgent:
     # ==========================================================
     # OBSERVATION
     # ==========================================================
-    def observe(
-    self,
-    race_view: List[CarSnapshot],
-    lap: int,
-    track_state: str,
-    pit_loss: float,
-    base_lap_time: float,
-    tyre_model: TyreModel,
-    total_laps: int,
-    track_deg_multiplier: float
-    ) -> None:
+    def observe(self, race_view: List[CarSnapshot], lap: int, track_state: str, pit_loss: float, base_lap_time: float, tyre_model: TyreModel, total_laps: int, track_deg_multiplier: float) -> None:
         self.race_view = race_view
         self.current_lap = lap
         self.track_state = track_state
@@ -401,10 +391,4 @@ class TeamAgent:
         for car, compound_code in self.pit_candidates:
             if car.retired or car.pending_pit or car.in_pit_lane:
                 continue
-
-            label = getattr(self, "_code_to_label", {}).get(compound_code, compound_code)
-            print(
-                f"[Lap {self.current_lap}] {self.team_id} orders "
-                f"{car.car_id} to PIT for {label} ({compound_code})"
-            )
             car.pit(compound_code)

@@ -1,6 +1,6 @@
-# screens/welcome.py
+# src/ui/screens/welcome.py
 
-from API.imports import *
+from src.UI.API.imports import *
 
 # Create Title screen
 class Title:

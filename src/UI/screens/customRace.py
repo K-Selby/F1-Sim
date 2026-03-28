@@ -1,6 +1,6 @@
-# screens/customRace.py
+# src/ui/screens/customRace.py
 
-from API.imports import *
+from src.UI.API.imports import *
 
 class CustomeRace:
     def __init__(self, s_Mode, screen):
@@ -898,7 +898,7 @@ class CustomeRace:
 
     def save_sim_configuration(self, values):
         # Make sure the folder exists
-        folder_path = "data/SimConfigurations"
+        folder_path = "data/RaceData/SimulationConfigs"
         os.makedirs(folder_path, exist_ok=True)
 
         # Create timestamp for filename
@@ -918,6 +918,8 @@ class CustomeRace:
         # Write json file
         with open(file_path, "w") as file:
             json.dump(config_data, file, indent=4)
+            
+        return file_path
 
     # Render Custom Race Screen
     def render(self):
@@ -1068,6 +1070,7 @@ class CustomeRace:
         
     # Update Loop
     def update(self):
+        filepath = ""
         mouse_pos = pygame.mouse.get_pos()
         
         # Recalculate card layout when resizing
@@ -1126,7 +1129,7 @@ class CustomeRace:
                     is_complete, values = self.validate_simulation_settings()
 
                     if is_complete:
-                        self.save_sim_configuration(values)
+                        filepath = self.save_sim_configuration(values)
                         self.s_Mode = "Simulation"
                 
                 for button in self.button[:1]:
@@ -1276,4 +1279,4 @@ class CustomeRace:
         pygame.display.flip()
         fpsClock.tick(FPS)
 
-        return self.s_Mode, self.screen
+        return self.s_Mode, self.screen, filepath

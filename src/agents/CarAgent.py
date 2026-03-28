@@ -19,12 +19,9 @@ class CarAgent:
         self.team_id = team_id
         self.calibration = calibration
         self.car_length = 5.5  # metres (F1 approx)
-
         self.tyre_state = tyre_state
         self.tyre_model = tyre_model
-
         self.instruction: Optional[str] = None
-
         self.total_time: float = 0.0
         self.current_lap_time: float = 0.0
         self.retired: bool = False
@@ -35,9 +32,7 @@ class CarAgent:
         self.next_compound: Optional[str] = None
         self.in_pit_lane: bool = False
 
-        # -----------------------------
         # Separate pit-lane spatial state
-        # -----------------------------
         self.pit_lane_position_m: float = 0.0          # current position inside pit lane
         self.pit_lane_total_m: float = 0.0             # total pit-lane distance
         self.pit_box_position_m: float = 0.0           # where the pit box sits in pit lane
@@ -52,7 +47,6 @@ class CarAgent:
         self.slipstream_bonus = 0.0
         self.following_intensity = 0.0
         self.last_speed_mps: float = 0.0
-        
         self.side_by_side_with: Optional[CarAgent] = None
         self.side_by_side_ticks: int = 0
         self.overtake_cooldown: float = 0.0
@@ -68,6 +62,8 @@ class CarAgent:
         # Spatial state
         self.track_position: float = 0.0
         self.lap_count: int = 0
+        self.completed_laps: list[dict] = []
+        self.has_taken_race_start = False
         
         # Driver variance (persists per lap)
         self.lap_execution_noise: float = 0.0
@@ -79,6 +75,7 @@ class CarAgent:
     def set_grid_position(self, grid_offset_m: float, track_length: float) -> None:
         self.track_position = grid_offset_m % track_length
         self.lap_count = 0
+        self.has_taken_race_start = False
 
         # DRS state (managed by RaceManager using circuit JSON)
         self.drs_eligible_lap = {}   # reset all zone eligibility stamps

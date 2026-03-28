@@ -1,6 +1,6 @@
-# screens/home.py
+# src/ui/screens/home.py
 
-from API.imports import *
+from src.UI.API.imports import *
 
 class Home:
     def __init__(self, s_Mode, screen):
