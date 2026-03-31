@@ -10,7 +10,7 @@ class Simulation:
         self.dots = []
         self.dot_spacing = 40
         self.influence_radius = 150
-        self.timing_update_interval = 2.0
+        self.timing_update_interval = 1.0
         self.last_timing_update = 0.0
         self.cached_classification = []
         self.sim_finished = False
@@ -19,19 +19,33 @@ class Simulation:
         self.custom_speed_input_active = False
         self.custom_speed_input = ""
         self.speed_buttons = []
+        self.position_history = {}
+        self.last_position_history_lap = 0
+        self.team_colours = {
+            "Red Bull Racing": (30, 65, 255),
+            "Ferrari": (220, 0, 0),
+            "Mercedes": (0, 210, 190),
+            "McLaren": (255, 135, 0),
+            "Aston Martin": (0, 110, 70),
+            "Alpine": (255, 105, 180),
+            "Williams": (0, 90, 255),
+            "RB": (70, 90, 255),
+            "Kick Sauber": (0, 180, 70),
+            "Haas F1 Team": (180, 180, 180),
+        }
         self.create_dots()
         self.create_speed_buttons()
-        # Build race manager 
         self.rm = main(filepath)
         self.rm.write_to_log("Simulation started.")
         self.rm.broadcast_public_signals()
         for team in self.rm.teams:
             team.decide()
-            
+        
         self.gp_title = self.rm.grandprix
         self.circuit_subtitle = f"{self.rm.circuit_name} -- {self.rm.season}"
         self.lap_text = f"Lap {self.rm.lap_number + 1}/{self.rm.total_laps}"
         self.cached_classification = self.get_live_classification()
+        self.initialise_position_history()
 
     def create_dots(self):
         self.dots.clear()
@@ -194,13 +208,13 @@ class Simulation:
         return classification
 
     def draw_timing_tower(self):
-        title_font = pygame.font.Font(font_name, int(self.screen_y / 28))
+        title_font = pygame.font.Font(font_name, int(self.screen_y / 40))
         header_font = pygame.font.Font(font_name, int(self.screen_y / 55))
         row_font = pygame.font.Font(font_name, int(self.screen_y / 62))
 
-        tower_width = self.screen_x / 3.8
+        tower_width = self.screen_x / 7
         tower_height = self.screen_y / 1.225
-        tower_x = self.screen_x / 7.2
+        tower_x = self.screen_x / 13
         tower_y = self.screen_y / 1.775
         
         r, g, b, = box_colour_2
@@ -212,15 +226,18 @@ class Simulation:
         self.screen.blit(tower_surface, tower_rect)
 
         # Title
-        title_surface = title_font.render("Live Timing Tower", True, white)
-        title_rect = title_surface.get_rect(center=(tower_x, tower_height / 4.3))
+        title_surface = title_font.render("Live Timing", True, white)
+        title_surface_2 = title_font.render("Tower", True, white)
+        title_rect = title_surface.get_rect(center=(tower_x, tower_height / 4.6))
+        title_rect_2 = title_surface_2.get_rect(center=(tower_x, tower_height / 4.6 + int(self.screen_y/40)))
         self.screen.blit(title_surface, title_rect)
+        self.screen.blit(title_surface_2, title_rect_2)
 
         # Headers
         header_y = tower_height / 3.55
-        pos_x = tower_width / 8
-        drv_x = tower_width / 3
-        gap_x = tower_width / 1.2
+        pos_x = tower_x - tower_width / 2.75
+        drv_x = tower_x - tower_width / 20
+        gap_x = tower_x + tower_width / 3
         pos_header = header_font.render("POS", True, grey)
         drv_header = header_font.render("DRIVER", True, grey)
         gap_header = header_font.render("GAP", True, grey)
@@ -237,7 +254,7 @@ class Simulation:
         classification = self.cached_classification
 
         row_start_y = tower_height / 3.1
-        row_height = tower_width / 13
+        row_height = tower_height / 23
 
         for index, entry in enumerate(classification):
             row_y = row_start_y + (index * row_height)
@@ -266,9 +283,9 @@ class Simulation:
             driver_surface = row_font.render(entry["driver"], True, text_colour)
             gap_surface = row_font.render(entry["gap_ahead"], True, gap_colour)
             
-            pos_surface_rect = pos_surface.get_rect(center=(tower_width / 8, row_y))
-            driver_surface_rect = driver_surface.get_rect(center=(tower_width / 3, row_y))
-            gap_surface_rect = gap_surface.get_rect(center=(tower_width / 1.2, row_y))
+            pos_surface_rect = pos_surface.get_rect(center=(tower_x - tower_width / 2.75, row_y))
+            driver_surface_rect = driver_surface.get_rect(center=(tower_x - tower_width / 20, row_y))
+            gap_surface_rect = gap_surface.get_rect(center=(tower_x + tower_width / 3, row_y))
 
             self.screen.blit(pos_surface, pos_surface_rect)
             self.screen.blit(driver_surface, driver_surface_rect)
@@ -346,13 +363,6 @@ class Simulation:
 
         self.sim_speed = 1.0
 
-    def render(self):
-        self.screen.fill(background_colour)
-        self.update_dots()
-        self.draw_title_bar()
-        self.draw_timing_tower()
-        self.draw_speed_controls()
-
     def draw_speed_controls(self):
         button_font = pygame.font.Font(font_name, int(self.screen_y / 48))
         input_font = pygame.font.Font(font_name, int(self.screen_y / 46))
@@ -380,6 +390,144 @@ class Simulation:
 
             text_rect = text_surface.get_rect(center=rect.center)
             self.screen.blit(text_surface, text_rect)
+
+    def initialise_position_history(self):
+        self.position_history.clear()
+
+        for car in self.rm.cars:
+            self.position_history[car.car_id] = []
+
+        self.last_position_history_lap = 0
+
+        # Save initial starting order as lap 0
+        starting_order = sorted(self.rm.cars, key=lambda car: self.rm.get_progress(car), reverse=True)
+
+        for position, car in enumerate(starting_order, start=1):
+            self.position_history[car.car_id].append((1.0, position))
+        
+    def update_position_history(self):
+        latest_logged_lap = self.rm.last_logged_completed_lap
+
+        while self.last_position_history_lap < latest_logged_lap:
+            lap_to_store = self.last_position_history_lap + 1
+            lap_rows = []
+
+            for car in self.rm.cars:
+                lap_record = self.rm.get_lap_record(car, lap_to_store)
+                if lap_record is not None:
+                    lap_rows.append({
+                        "car": car,
+                        "total_time": lap_record["total_time"]
+                    })
+
+            lap_rows.sort(key=lambda row: row["total_time"])
+
+            for position, row in enumerate(lap_rows, start=1):
+                car = row["car"]
+                self.position_history[car.car_id].append((float(lap_to_store), position))
+
+            self.last_position_history_lap = lap_to_store
+           
+    def draw_position_graph(self):
+        graph_width = self.screen_x / 2
+        graph_height = self.screen_y / 2
+        graph_x = self.screen_x / 1.35
+        graph_y = self.screen_y / 1.5
+
+        title_font = pygame.font.Font(font_name, int(self.screen_y / 35))
+        axis_font = pygame.font.Font(font_name, int(self.screen_y / 58))
+        label_font = pygame.font.Font(font_name, int(self.screen_y / 70))
+
+        r, g, b = box_colour_2
+
+        graph_surface = pygame.Surface((graph_width, graph_height), pygame.SRCALPHA)
+        pygame.draw.rect(graph_surface, (r, g, b, 210), graph_surface.get_rect(), border_radius=18)
+        graph_rect = graph_surface.get_rect(center=(graph_x, graph_y))
+        self.screen.blit(graph_surface, graph_rect)
+
+        title_surface = title_font.render("Position Graph", True, white)
+        title_rect = title_surface.get_rect(center=(graph_x, (graph_y + graph_height / 2) / 2.05))
+        self.screen.blit(title_surface, title_rect)
+
+        padding_left = graph_width * 0.05
+        padding_right = graph_width * 0.025
+        padding_top = graph_height * 0.125
+        padding_bottom = graph_height * 0.0575
+
+        plot_left = graph_x - graph_width / 2 + padding_left
+        plot_right = graph_x + graph_width / 2 - padding_right
+        plot_top = graph_y - graph_height / 2 + padding_top
+        plot_bottom = graph_y + graph_height / 2 - padding_bottom
+
+        plot_width = plot_right - plot_left
+        plot_height = plot_bottom - plot_top
+
+        # axes
+        pygame.draw.line(self.screen, white, (plot_left, plot_top), (plot_left, plot_bottom), 2)
+        pygame.draw.line(self.screen, white, (plot_left, plot_bottom), (plot_right, plot_bottom), 2)
+
+        min_lap = 1
+        max_lap = max(min_lap, self.rm.total_laps)
+
+        # y-axis labels
+        display_slots = len(self.rm.cars) + 1
+
+        for pos in range(1, len(self.rm.cars) + 1):
+            y = plot_top + ((pos - 1) / (display_slots - 1)) * plot_height
+
+            pygame.draw.line(self.screen, grey_2, (plot_left, y), (plot_right, y), 1)
+
+            label_surface = axis_font.render(str(pos), True, grey)
+            label_rect = label_surface.get_rect(midright=(plot_left - 8, y))
+            self.screen.blit(label_surface, label_rect)
+
+        # x-axis labels
+        lap_step = 5
+        for lap in range(min_lap, max_lap + 1, lap_step):
+            x = plot_left + ((lap - min_lap) / max(1, (max_lap - min_lap))) * plot_width
+
+            pygame.draw.line(self.screen, grey_2, (x, plot_top), (x, plot_bottom), 1)
+
+            label_surface = axis_font.render(str(lap), True, grey)
+            label_rect = label_surface.get_rect(midtop=(x, plot_bottom + 6))
+            self.screen.blit(label_surface, label_rect)
+
+        # plot driver lines / points
+        for car in self.rm.cars:
+            colour = self.team_colours.get(car.team_id, white)
+            history = self.position_history.get(car.car_id, [])
+
+            if len(history) == 0:
+                continue
+
+            points = []
+            for lap_x, pos in history:
+                if lap_x < min_lap:
+                    continue
+
+                x = plot_left + ((lap_x - min_lap) / max(1, (max_lap - min_lap))) * plot_width
+                y = plot_top + ((pos - 1) / (display_slots - 1)) * plot_height
+                points.append((x, y))
+
+            if len(points) == 0:
+                continue
+
+            if len(points) >= 2:
+                pygame.draw.lines(self.screen, colour, False, points, 2)
+
+            pygame.draw.circle(self.screen, colour, (int(points[-1][0]), int(points[-1][1])), 3)
+
+            label_surface = label_font.render(car.car_id, True, colour)
+            label_rect = label_surface.get_rect(midleft=(points[-1][0] + 6, points[-1][1]))
+            self.screen.blit(label_surface, label_rect)
+
+    def render(self):
+        self.screen.fill(background_colour)
+        self.update_dots()
+        self.draw_title_bar()
+        self.draw_timing_tower()
+        self.draw_speed_controls()
+        self.draw_position_graph()
 
     def update(self):
         mouse_pos = pygame.mouse.get_pos()
@@ -448,6 +596,7 @@ class Simulation:
         if not self.rm.race_finished:
             sim_dt = self.rm.dt * self.sim_speed
             self.rm.step_tick(sim_dt)
+            self.update_position_history()
 
             if (self.rm.sim_time - self.last_timing_update) >= self.timing_update_interval:
                 self.cached_classification = self.get_live_classification()
