@@ -554,6 +554,16 @@ class Simulation:
         lines.append(current_line)
         return lines
         
+    def format_lap_time(self, seconds):
+        # this is for lap times, so no hours
+        minutes = int(seconds // 60)
+        secs = int(seconds % 60)
+        millis = int((seconds - int(seconds)) * 1000)
+
+        if minutes > 0:
+            return f"{minutes}:{secs:02d}.{millis:03d}"
+        return f"{secs}.{millis:03d}"
+        
     def update_fastest_lap_events(self):
         for car in self.rm.cars:
             if not car.completed_laps:
@@ -567,7 +577,9 @@ class Simulation:
                 if self.fastest_lap_time is None or car.car_id != self.fastest_lap_driver or abs(lap_time - self.fastest_lap_time) > 0.001:
                     self.fastest_lap_time = lap_time
                     self.fastest_lap_driver = car.car_id
-                    self.add_event_message(f"FASTEST LAP: {car.car_id} set a {self.rm.format_time(lap_time)} on Lap {lap_number}")
+                    # use lap time format here instead of full race time format
+                    formatted_lap_time = self.format_lap_time(lap_time)
+                    self.add_event_message(f"FASTEST LAP: {car.car_id} set a {formatted_lap_time} on Lap {lap_number}")
                     
     def update_race_event_messages(self):
         self.update_fastest_lap_events()
