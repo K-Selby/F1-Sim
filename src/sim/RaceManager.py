@@ -124,7 +124,7 @@ class RaceManager:
         teams: List[TeamAgent] = []
         cars: List[CarAgent] = []
 
-        start_compound = self.compound_map["MEDIUM"]
+        start_compound = self.compound_map["SOFT"]
 
         # Store cars by config driver_id so we can apply custom grid order
         cars_by_config_id = {}

@@ -236,6 +236,10 @@ class CarAgent:
 
         # Car is now fully removed from on-track physics
         self.last_speed_mps = 0.0
+        
+        self.last_pit_service_time_s = float(max(0.0, pit_service_time_s))
+        self.current_pit_entry_sim_time = None
+        self.last_pit_total_time_s = 0.0
 
     # ==========================================================
     # RACECRAFT 
