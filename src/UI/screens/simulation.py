@@ -34,6 +34,11 @@ class Simulation:
         self.winner_announced = False
         self.podium_announced = set()
         self.final_lap_announced = False
+        # graph tabs
+        self.graph_tabs = ["Driver Position", "Tyre Stints", "Lap Time", "Circuit Map"]
+        self.active_graph_tab = "Driver Position"
+        self.graph_tab_buttons = []
+        self.create_graph_tab_buttons()
         self.create_dots()
         self.create_speed_buttons()
         self.rm = main(filepath)
@@ -84,7 +89,7 @@ class Simulation:
 
     def draw_title_bar(self):
         title_bar_height = self.screen_y / 8.5
-        title_bar_width = self.screen_x / 2
+        title_bar_width = self.screen_x / 1.25
         title_font = pygame.font.Font(font_name, int(self.screen_y / 18))
         subtitle_font = pygame.font.Font(font_name, int(self.screen_y / 48))
         lap_font = pygame.font.Font(font_name, int(self.screen_y / 42))
@@ -218,7 +223,7 @@ class Simulation:
         tower_width = self.screen_x / 7
         tower_height = self.screen_y / 1.225
         tower_x = self.screen_x / 13
-        tower_y = self.screen_y / 2.4
+        tower_y = self.screen_y / 1.8
         
         r, g, b, = box_colour_2
 
@@ -231,13 +236,13 @@ class Simulation:
         # Title
         title_surface = title_font.render("Live Timing", True, white)
         title_surface_2 = title_font.render("Tower", True, white)
-        title_rect = title_surface.get_rect(center=(tower_x, (tower_y + tower_height / 2) / 25))
-        title_rect_2 = title_surface_2.get_rect(center=(tower_x, (tower_y + tower_height / 2) / 25 + int(self.screen_y/40)))
+        title_rect = title_surface.get_rect(center=(tower_x, (tower_y + tower_height / 2) / 5.8))
+        title_rect_2 = title_surface_2.get_rect(center=(tower_x, (tower_y + tower_height / 2) / 5.8 + int(self.screen_y/40)))
         self.screen.blit(title_surface, title_rect)
         self.screen.blit(title_surface_2, title_rect_2)
 
         # Headers
-        header_y = (tower_y + tower_height / 2) / 9.8
+        header_y = (tower_y + tower_height / 2) / 4.25
         pos_x = tower_x - tower_width / 2.75
         drv_x = tower_x - tower_width / 20
         gap_x = tower_x + tower_width / 3
@@ -256,7 +261,7 @@ class Simulation:
         # Rows
         classification = self.cached_classification
 
-        row_start_y = (tower_y + tower_height / 2) / 7
+        row_start_y = (tower_y + tower_height / 2) / 3.8
         row_height = tower_height / 23
 
         for index, entry in enumerate(classification):
@@ -394,6 +399,75 @@ class Simulation:
             text_rect = text_surface.get_rect(center=rect.center)
             self.screen.blit(text_surface, text_rect)
 
+    def create_graph_tab_buttons(self):
+        graph_width = self.screen_x / 1.8
+        graph_height = self.screen_y / 1.5
+        graph_x = self.screen_x / 2.2
+        graph_y = self.screen_y / 1.8
+
+        tab_height = self.screen_y / 20
+        tab_y = graph_y - tab_height / 2 - graph_height / 2.25
+
+        total_width = graph_width - graph_width / 20
+        gap = 4
+        tab_width = (total_width - (gap * (len(self.graph_tabs) - 1))) / len(self.graph_tabs)
+        start_x = graph_x - total_width / 2
+
+        self.graph_tab_buttons.clear()
+
+        for index, tab_name in enumerate(self.graph_tabs):
+            x = start_x + index * (tab_width + gap)
+            rect = pygame.Rect(x, tab_y, tab_width, tab_height)
+
+            self.graph_tab_buttons.append({
+                "name": tab_name,
+                "rect": rect,
+                "hover": False
+            })
+
+    def get_shared_graph_area(self):
+        # all graphs use this same box
+        graph_width = self.screen_x / 1.8
+        graph_height = self.screen_y / 1.5
+        graph_x = self.screen_x / 2.2
+        graph_y = self.screen_y / 1.8
+
+        return graph_x, graph_y, graph_width, graph_height
+    
+    def draw_graph_tabs(self):
+        tab_font = pygame.font.Font(font_name, int(self.screen_y / 62))
+
+        for button in self.graph_tab_buttons:
+            rect = button["rect"]
+
+            # simple tab colours
+            if button["name"] == self.active_graph_tab:
+                colour = red_2
+            elif button["hover"]:
+                colour = box_hover_2
+            else:
+                colour = box_colour_2
+
+            pygame.draw.rect(self.screen, colour, rect, border_radius=10)
+            pygame.draw.rect(self.screen, white, rect, 2, border_radius=10)
+
+            text_surface = tab_font.render(button["name"], True, white)
+            text_rect = text_surface.get_rect(center=rect.center)
+            self.screen.blit(text_surface, text_rect)
+            
+    def draw_active_graph_panel(self):
+        if self.active_graph_tab == "Driver Position":
+            self.draw_position_graph()
+
+        elif self.active_graph_tab == "Tyre Stints":
+            self.draw_tyre_stint_graph()
+
+        elif self.active_graph_tab == "Lap Time":
+            self.draw_lap_time_graph()
+
+        elif self.active_graph_tab == "Circuit Map":
+            self.draw_circuit_map_graph()
+            
     def initialise_position_history(self):
         self.position_history.clear()
 
@@ -432,12 +506,9 @@ class Simulation:
             self.last_position_history_lap = lap_to_store
            
     def draw_position_graph(self):
-        graph_width = self.screen_x / 2
-        graph_height = self.screen_y / 2
-        graph_x = self.screen_x / 1.35
-        graph_y = self.screen_y / 1.5
-
-        title_font = pygame.font.Font(font_name, int(self.screen_y / 35))
+        # all graphs use the same panel
+        graph_x, graph_y, graph_width, graph_height = self.get_shared_graph_area()
+        
         axis_font = pygame.font.Font(font_name, int(self.screen_y / 58))
         label_font = pygame.font.Font(font_name, int(self.screen_y / 70))
 
@@ -447,10 +518,6 @@ class Simulation:
         pygame.draw.rect(graph_surface, (r, g, b, 210), graph_surface.get_rect(), border_radius=18)
         graph_rect = graph_surface.get_rect(center=(graph_x, graph_y))
         self.screen.blit(graph_surface, graph_rect)
-
-        title_surface = title_font.render("Position Graph", True, white)
-        title_rect = title_surface.get_rect(center=(graph_x, (graph_y + graph_height / 2) / 2.05))
-        self.screen.blit(title_surface, title_rect)
 
         padding_left = graph_width * 0.05
         padding_right = graph_width * 0.025
@@ -657,12 +724,12 @@ class Simulation:
             self.previous_finished[car_id] = current_finished
 
     def draw_event_box(self):
-        box_width = self.screen_x / 3
-        box_height = self.screen_y / 6.25
-        box_x = self.screen_x / 5.8
-        box_y = self.screen_y / 1.1
+        box_width = self.screen_x / 4.25
+        box_height = self.screen_y / 1.225
+        box_x = self.screen_x / 1.14
+        box_y = self.screen_y / 1.8
 
-        title_font = pygame.font.Font(font_name, int(self.screen_y / 55))
+        title_font = pygame.font.Font(font_name, int(self.screen_y / 40))
         row_font = pygame.font.Font(font_name, int(self.screen_y / 80))
 
         r, g, b = box_colour_2
@@ -674,7 +741,7 @@ class Simulation:
 
         # Title
         title_surface = title_font.render("Race Events", True, white)
-        title_rect = title_surface.get_rect(center=(box_x, box_y - box_height / 2 + box_height / 10))
+        title_rect = title_surface.get_rect(center=(box_x, box_y - box_height / 2 + box_height / 25))
         self.screen.blit(title_surface, title_rect)
 
         padding_x = box_width * 0.05
@@ -775,13 +842,27 @@ class Simulation:
 
         return stints
     
-    def draw_tyre_stint_graph(self):
-        graph_width = self.screen_x / 2.8
-        graph_height = self.screen_y / 2.0
-        graph_x = self.screen_x / 3.1
-        graph_y = self.screen_y / 1.95
+    def update_tyre_graph_order(self):
+        # keep tyre graph driver order matched to current race order
+        self.tyre_graph_order = [
+            entry["driver"]
+            for entry in self.cached_classification
+            if entry["status"] != "dnf"
+        ]
 
-        title_font = pygame.font.Font(font_name, int(self.screen_y / 36))
+        # add any DNF cars at the bottom
+        dnf_drivers = [
+            entry["driver"]
+            for entry in self.cached_classification
+            if entry["status"] == "dnf"
+        ]
+
+        self.tyre_graph_order.extend(dnf_drivers)
+    
+    def draw_tyre_stint_graph(self):
+        # all graphs use the same panel
+        graph_x, graph_y, graph_width, graph_height = self.get_shared_graph_area()
+
         axis_font = pygame.font.Font(font_name, int(self.screen_y / 70))
         row_font = pygame.font.Font(font_name, int(self.screen_y / 78))
         stint_font = pygame.font.Font(font_name, int(self.screen_y / 85))
@@ -793,14 +874,10 @@ class Simulation:
         graph_rect = graph_surface.get_rect(center=(graph_x, graph_y))
         self.screen.blit(graph_surface, graph_rect)
 
-        title_surface = title_font.render("Tyre Stint Graph", True, white)
-        title_rect = title_surface.get_rect(center=(graph_x, graph_y - graph_height / 2 + graph_height / 15))
-        self.screen.blit(title_surface, title_rect)
-
-        padding_left = graph_width * 0.1
-        padding_right = graph_width * 0.04
-        padding_top = graph_height * 0.1
-        padding_bottom = graph_height * 0.05
+        padding_left = graph_width * 0.065
+        padding_right = graph_width * 0.025
+        padding_top = graph_height * 0.125
+        padding_bottom = graph_height * 0.0575
 
         plot_left = graph_x - graph_width / 2 + padding_left
         plot_right = graph_x + graph_width / 2 - padding_right
@@ -886,15 +963,183 @@ class Simulation:
                     text_rect = text_surface.get_rect(center=bar_rect.center)
                     self.screen.blit(text_surface, text_rect)
 
+    def get_lap_time_axis_max(self):
+        # start the y axis ceiling at 1:30
+        axis_max = 90.0
+
+        # if any slower lap exists, grow the axis
+        for car in self.rm.cars:
+            for lap_record in car.completed_laps:
+                axis_max = max(axis_max, lap_record["lap_time"])
+
+        # round up to the next 5 second block
+        step = 5.0
+        axis_max = math.ceil(axis_max / step) * step
+
+        return axis_max
+
+    def get_lap_axis_step(self, max_lap):
+        # small number of laps = show every lap
+        if max_lap <= 10:
+            return 1
+        elif max_lap <= 20:
+            return 2
+        elif max_lap <= 40:
+            return 5
+        return 10
+
+    def get_lap_time_axis_range(self):
+        lap_times = []
+
+        for car in self.rm.cars:
+            for lap_record in car.completed_laps:
+                lap_times.append(lap_record["lap_time"])
+
+        if not lap_times:
+            return 80.0, 90.0
+
+        raw_min = min(lap_times)
+        raw_max = max(lap_times)
+
+        padding = 0.5
+        axis_min = math.floor((raw_min - padding) / 1.0) * 1.0
+        axis_max = math.ceil((raw_max + padding) / 1.0) * 1.0
+
+        return axis_min, axis_max
+
+    def draw_lap_time_graph(self):
+        graph_x, graph_y, graph_width, graph_height = self.get_shared_graph_area()
+
+        axis_font = pygame.font.Font(font_name, int(self.screen_y / 58))
+        label_font = pygame.font.Font(font_name, int(self.screen_y / 80))
+
+        r, g, b = box_colour_2
+
+        graph_surface = pygame.Surface((graph_width, graph_height), pygame.SRCALPHA)
+        pygame.draw.rect(graph_surface, (r, g, b, 210), graph_surface.get_rect(), border_radius=18)
+        graph_rect = graph_surface.get_rect(center=(graph_x, graph_y))
+        self.screen.blit(graph_surface, graph_rect)
+
+        padding_left = graph_width * 0.11
+        padding_right = graph_width * 0.025
+        padding_top = graph_height * 0.125
+        padding_bottom = graph_height * 0.0575
+
+        plot_left = graph_x - graph_width / 2 + padding_left
+        plot_right = graph_x + graph_width / 2 - padding_right
+        plot_top = graph_y - graph_height / 2 + padding_top
+        plot_bottom = graph_y + graph_height / 2 - padding_bottom
+
+        plot_width = plot_right - plot_left
+        plot_height = plot_bottom - plot_top
+
+        pygame.draw.line(self.screen, white, (plot_left, plot_top), (plot_left, plot_bottom), 2)
+        pygame.draw.line(self.screen, white, (plot_left, plot_bottom), (plot_right, plot_bottom), 2)
+
+        # display laps starting at 1
+        raw_max_lap = self.rm.last_logged_completed_lap
+        max_lap = max(1, raw_max_lap - 1)
+
+        y_axis_min, y_axis_max = self.get_lap_time_axis_range()
+        y_step = 0.5
+
+        # y-axis labels and grid
+        y_value = y_axis_min
+        while y_value <= y_axis_max:
+            y = plot_bottom - ((y_value - y_axis_min) / max(1.0, (y_axis_max - y_axis_min))) * plot_height
+
+            pygame.draw.line(self.screen, grey_2, (plot_left, y), (plot_right, y), 1)
+
+            label_surface = axis_font.render(self.format_lap_time(y_value), True, grey)
+            label_rect = label_surface.get_rect(midright=(plot_left - 8, y))
+            self.screen.blit(label_surface, label_rect)
+
+            y_value += y_step
+
+        # x-axis labels and grid
+        lap_step = self.get_lap_axis_step(max_lap)
+
+        for lap in range(1, max_lap + 1, lap_step):
+            if max_lap == 1:
+                x = plot_left
+            else:
+                x = plot_left + ((lap - 1) / max(1, (max_lap - 1))) * plot_width
+
+            pygame.draw.line(self.screen, grey_2, (x, plot_top), (x, plot_bottom), 1)
+
+            label_surface = axis_font.render(str(lap), True, grey)
+            label_rect = label_surface.get_rect(midtop=(x, plot_bottom + 6))
+            self.screen.blit(label_surface, label_rect)
+
+        # always show latest display lap on the right
+        if max_lap > 1 and max_lap % lap_step != 0:
+            x = plot_right
+            pygame.draw.line(self.screen, grey_2, (x, plot_top), (x, plot_bottom), 1)
+
+            label_surface = axis_font.render(str(max_lap), True, grey)
+            label_rect = label_surface.get_rect(midtop=(x, plot_bottom + 6))
+            self.screen.blit(label_surface, label_rect)
+
+        # draw each driver's lap time line
+        for car in self.rm.cars:
+            colour = team_colours.get(car.team_id, white)
+            points = []
+
+            for lap_record in car.completed_laps:
+                raw_lap_number = lap_record["lap"]
+                lap_time = lap_record["lap_time"]
+
+                # convert raw lap numbering to display lap numbering
+                display_lap_number = raw_lap_number - 1
+
+                if display_lap_number < 1:
+                    continue
+                if display_lap_number > max_lap:
+                    continue
+
+                if max_lap == 1:
+                    x = plot_left
+                else:
+                    x = plot_left + ((display_lap_number - 1) / max(1, (max_lap - 1))) * plot_width
+
+                y = plot_bottom - ((lap_time - y_axis_min) / max(1.0, (y_axis_max - y_axis_min))) * plot_height
+                points.append((x, y))
+
+            if len(points) >= 2:
+                pygame.draw.lines(self.screen, colour, False, points, 2)
+
+            if len(points) >= 1:
+                pygame.draw.circle(self.screen, colour, (int(points[-1][0]), int(points[-1][1])), 3)
+
+                label_surface = label_font.render(car.car_id, True, colour)
+                label_rect = label_surface.get_rect(midleft=(points[-1][0] + 6, points[-1][1]))
+                self.screen.blit(label_surface, label_rect)
+
+    def draw_circuit_map_graph(self):
+        graph_x, graph_y, graph_width, graph_height = self.get_shared_graph_area()
+
+        text_font = pygame.font.Font(font_name, int(self.screen_y / 55))
+
+        r, g, b = box_colour_2
+
+        graph_surface = pygame.Surface((graph_width, graph_height), pygame.SRCALPHA)
+        pygame.draw.rect(graph_surface, (r, g, b, 210), graph_surface.get_rect(), border_radius=18)
+        graph_rect = graph_surface.get_rect(center=(graph_x, graph_y))
+        self.screen.blit(graph_surface, graph_rect)
+
+        info_surface = text_font.render("Circuit map graph coming next", True, grey)
+        info_rect = info_surface.get_rect(center=(graph_x, graph_y))
+        self.screen.blit(info_surface, info_rect)
+
     def render(self):
         self.screen.fill(background_colour)
         self.update_dots()
         self.draw_title_bar()
         self.draw_timing_tower()
         self.draw_speed_controls()
-        self.draw_position_graph()
+        self.draw_active_graph_panel()
+        self.draw_graph_tabs()
         self.draw_event_box()
-        self.draw_tyre_stint_graph()
 
     def update(self):
         mouse_pos = pygame.mouse.get_pos()
@@ -905,9 +1150,13 @@ class Simulation:
             self.screen_x, self.screen_y = new_w, new_h
             self.create_dots()
             self.create_speed_buttons()
+            self.create_graph_tab_buttons()
 
         # Hover states
         for button in self.speed_buttons:
+            button["hover"] = button["rect"].collidepoint(mouse_pos)
+            
+        for button in self.graph_tab_buttons:
             button["hover"] = button["rect"].collidepoint(mouse_pos)
 
         for event in pygame.event.get():
@@ -916,6 +1165,13 @@ class Simulation:
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 clicked_speed_button = False
+                clicked_graph_tab = False
+
+                for button in self.graph_tab_buttons:
+                    if button["rect"].collidepoint(mouse_pos):
+                        self.active_graph_tab = button["name"]
+                        clicked_graph_tab = True
+                        break
 
                 for button in self.speed_buttons:
                     if button["rect"].collidepoint(mouse_pos):
@@ -968,6 +1224,7 @@ class Simulation:
 
             if (self.rm.sim_time - self.last_timing_update) >= self.timing_update_interval:
                 self.cached_classification = self.get_live_classification()
+                self.update_tyre_graph_order()
                 self.last_timing_update = self.rm.sim_time
 
         elif not self.sim_finished:
@@ -975,6 +1232,7 @@ class Simulation:
             self.rm.log_final_classification()
             self.cached_classification = self.get_live_classification()
             self.update_race_event_messages()
+            self.update_tyre_graph_order()
 
         self.render()
         pygame.display.flip()
