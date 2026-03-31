@@ -34,16 +34,17 @@ class Simulation:
         self.winner_announced = False
         self.podium_announced = set()
         self.final_lap_announced = False
-        # graph tabs
         self.graph_tabs = ["Driver Position", "Tyre Stints", "Lap Time", "Circuit Map"]
         self.active_graph_tab = "Driver Position"
         self.graph_tab_buttons = []
+        self.circuit_image = None
         self.create_graph_tab_buttons()
         self.create_dots()
         self.create_speed_buttons()
         self.rm = main(filepath)
         self.rm.write_to_log("Simulation started.")
         self.rm.broadcast_public_signals()
+        self.load_circuit_image()
         for team in self.rm.teams:
             team.decide()
         
@@ -1115,11 +1116,46 @@ class Simulation:
                 label_rect = label_surface.get_rect(midleft=(points[-1][0] + 6, points[-1][1]))
                 self.screen.blit(label_surface, label_rect)
 
-    def draw_circuit_map_graph(self):
+    def load_circuit_image(self):
+        # build file path from GP name
+        gp_name = self.rm.grandprix.replace(" Grand Prix", "").strip()
+        folder_name = gp_name.replace(" ", "_")
+        file_name = f"{folder_name}_Circuit.webp.png"
+        image_path = f"data/CircuitDiagarms/{folder_name}/{file_name}"
+
+        try:
+            self.circuit_image = pygame.image.load(image_path).convert_alpha()
+        except pygame.error:
+            self.circuit_image = None
+
+    def get_scaled_circuit_layout(self):
         graph_x, graph_y, graph_width, graph_height = self.get_shared_graph_area()
 
-        text_font = pygame.font.Font(font_name, int(self.screen_y / 55))
+        padding_x = graph_width * 0.05
+        padding_y = graph_height * 0.08
 
+        image_area_width = graph_width - (padding_x * 2)
+        image_area_height = graph_height - (padding_y * 2)
+
+        if self.circuit_image is None:
+            return None, None, None
+
+        original_width, original_height = self.circuit_image.get_size()
+
+        scale = min(image_area_width / original_width, image_area_height / original_height)
+
+        scaled_width = int(original_width * scale)
+        scaled_height = int(original_height * scale)
+
+        image_rect = pygame.Rect(0, 0, scaled_width, scaled_height)
+        image_rect.center = (graph_x, graph_y)
+
+        return scale, (scaled_width, scaled_height), image_rect
+
+    def draw_circuit_map_graph(self):
+        # panel background
+        graph_x, graph_y, graph_width, graph_height = self.get_shared_graph_area()
+        text_font = pygame.font.Font(font_name, int(self.screen_y / 55))
         r, g, b = box_colour_2
 
         graph_surface = pygame.Surface((graph_width, graph_height), pygame.SRCALPHA)
@@ -1127,10 +1163,18 @@ class Simulation:
         graph_rect = graph_surface.get_rect(center=(graph_x, graph_y))
         self.screen.blit(graph_surface, graph_rect)
 
-        info_surface = text_font.render("Circuit map graph coming next", True, grey)
-        info_rect = info_surface.get_rect(center=(graph_x, graph_y))
-        self.screen.blit(info_surface, info_rect)
+        # no image found
+        if self.circuit_image is None:
+            info_surface = text_font.render("Circuit image not found", True, grey)
+            info_rect = info_surface.get_rect(center=(graph_x, graph_y))
+            self.screen.blit(info_surface, info_rect)
+            return
 
+        # scale and draw image only
+        scale, scaled_size, image_rect = self.get_scaled_circuit_layout()
+        scaled_image = pygame.transform.smoothscale(self.circuit_image, scaled_size)
+        self.screen.blit(scaled_image, image_rect)
+        
     def render(self):
         self.screen.fill(background_colour)
         self.update_dots()

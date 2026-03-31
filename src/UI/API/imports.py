@@ -6,6 +6,9 @@ import os
 import math
 from datetime import datetime
 from threading import Timer
+import numpy as np
+from skimage.morphology import skeletonize
+from collections import deque
 
 # Frames per second setting
 FPS = 120
