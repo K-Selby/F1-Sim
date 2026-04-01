@@ -1,0 +1,528 @@
+{
+  "COTA": [
+    {
+      "year": 2021,
+      "event_name": "Pre-Season Test",
+      "used_existing": false
+    },
+    {
+      "year": 2021,
+      "event_name": "United States Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2022,
+      "event_name": "Pre-Season Test",
+      "used_existing": false
+    },
+    {
+      "year": 2022,
+      "event_name": "United States Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2023,
+      "event_name": "United States Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2024,
+      "event_name": "United States Grand Prix",
+      "used_existing": true
+    }
+  ],
+  "Bahrain": [
+    {
+      "year": 2021,
+      "event_name": "Bahrain Grand Prix",
+      "used_existing": false
+    },
+    {
+      "year": 2022,
+      "event_name": "Bahrain Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2023,
+      "event_name": "Bahrain Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2024,
+      "event_name": "Bahrain Grand Prix",
+      "used_existing": true
+    }
+  ],
+  "Imola": [
+    {
+      "year": 2021,
+      "event_name": "Emilia Romagna Grand Prix",
+      "used_existing": false
+    },
+    {
+      "year": 2022,
+      "event_name": "Emilia Romagna Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2024,
+      "event_name": "Emilia Romagna Grand Prix",
+      "used_existing": true
+    }
+  ],
+  "Portimao": [
+    {
+      "year": 2021,
+      "event_name": "Portuguese Grand Prix",
+      "used_existing": false
+    }
+  ],
+  "Barcelona": [
+    {
+      "year": 2021,
+      "event_name": "Spanish Grand Prix",
+      "used_existing": false
+    },
+    {
+      "year": 2022,
+      "event_name": "Spanish Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2023,
+      "event_name": "Spanish Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2024,
+      "event_name": "Spanish Grand Prix",
+      "used_existing": true
+    }
+  ],
+  "Monaco": [
+    {
+      "year": 2021,
+      "event_name": "Monaco Grand Prix",
+      "used_existing": false
+    },
+    {
+      "year": 2022,
+      "event_name": "Monaco Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2023,
+      "event_name": "Monaco Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2024,
+      "event_name": "Monaco Grand Prix",
+      "used_existing": true
+    }
+  ],
+  "Baku": [
+    {
+      "year": 2021,
+      "event_name": "Azerbaijan Grand Prix",
+      "used_existing": false
+    },
+    {
+      "year": 2022,
+      "event_name": "Azerbaijan Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2023,
+      "event_name": "Azerbaijan Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2024,
+      "event_name": "Azerbaijan Grand Prix",
+      "used_existing": true
+    }
+  ],
+  "PaulRicard": [
+    {
+      "year": 2021,
+      "event_name": "French Grand Prix",
+      "used_existing": false
+    },
+    {
+      "year": 2022,
+      "event_name": "French Grand Prix",
+      "used_existing": true
+    }
+  ],
+  "Austria": [
+    {
+      "year": 2021,
+      "event_name": "Styrian Grand Prix",
+      "used_existing": false
+    },
+    {
+      "year": 2021,
+      "event_name": "Austrian Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2022,
+      "event_name": "Austrian Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2023,
+      "event_name": "Austrian Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2024,
+      "event_name": "Austrian Grand Prix",
+      "used_existing": true
+    }
+  ],
+  "Silverstone": [
+    {
+      "year": 2021,
+      "event_name": "British Grand Prix",
+      "used_existing": false
+    },
+    {
+      "year": 2022,
+      "event_name": "Pre-Season Track Session",
+      "used_existing": false
+    },
+    {
+      "year": 2022,
+      "event_name": "British Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2023,
+      "event_name": "Pre-Season Testing",
+      "used_existing": false
+    },
+    {
+      "year": 2023,
+      "event_name": "British Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2024,
+      "event_name": "British Grand Prix",
+      "used_existing": true
+    }
+  ],
+  "Hungaroring": [
+    {
+      "year": 2021,
+      "event_name": "Hungarian Grand Prix",
+      "used_existing": false
+    },
+    {
+      "year": 2022,
+      "event_name": "Hungarian Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2023,
+      "event_name": "Hungarian Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2024,
+      "event_name": "Hungarian Grand Prix",
+      "used_existing": true
+    }
+  ],
+  "Zandvoort": [
+    {
+      "year": 2021,
+      "event_name": "Dutch Grand Prix",
+      "used_existing": false
+    },
+    {
+      "year": 2022,
+      "event_name": "Dutch Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2023,
+      "event_name": "Dutch Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2024,
+      "event_name": "Dutch Grand Prix",
+      "used_existing": true
+    }
+  ],
+  "Monza": [
+    {
+      "year": 2021,
+      "event_name": "Italian Grand Prix",
+      "used_existing": false
+    },
+    {
+      "year": 2022,
+      "event_name": "Italian Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2023,
+      "event_name": "Italian Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2024,
+      "event_name": "Italian Grand Prix",
+      "used_existing": true
+    }
+  ],
+  "Sochi": [
+    {
+      "year": 2021,
+      "event_name": "Russian Grand Prix",
+      "used_existing": false
+    }
+  ],
+  "Istanbul": [
+    {
+      "year": 2021,
+      "event_name": "Turkish Grand Prix",
+      "used_existing": false
+    }
+  ],
+  "Mexico": [
+    {
+      "year": 2021,
+      "event_name": "Mexico City Grand Prix",
+      "used_existing": false
+    },
+    {
+      "year": 2022,
+      "event_name": "Mexico City Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2023,
+      "event_name": "Mexico City Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2024,
+      "event_name": "Mexico City Grand Prix",
+      "used_existing": true
+    }
+  ],
+  "Interlagos": [
+    {
+      "year": 2021,
+      "event_name": "S\u00e3o Paulo Grand Prix",
+      "used_existing": false
+    },
+    {
+      "year": 2022,
+      "event_name": "S\u00e3o Paulo Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2023,
+      "event_name": "S\u00e3o Paulo Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2024,
+      "event_name": "S\u00e3o Paulo Grand Prix",
+      "used_existing": true
+    }
+  ],
+  "Qatar": [
+    {
+      "year": 2021,
+      "event_name": "Qatar Grand Prix",
+      "used_existing": false
+    },
+    {
+      "year": 2023,
+      "event_name": "Qatar Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2024,
+      "event_name": "Qatar Grand Prix",
+      "used_existing": true
+    }
+  ],
+  "Jeddah": [
+    {
+      "year": 2021,
+      "event_name": "Saudi Arabian Grand Prix",
+      "used_existing": false
+    },
+    {
+      "year": 2022,
+      "event_name": "Saudi Arabian Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2023,
+      "event_name": "Saudi Arabian Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2024,
+      "event_name": "Saudi Arabian Grand Prix",
+      "used_existing": true
+    }
+  ],
+  "AbuDhabi": [
+    {
+      "year": 2021,
+      "event_name": "Abu Dhabi Grand Prix",
+      "used_existing": false
+    },
+    {
+      "year": 2022,
+      "event_name": "Abu Dhabi Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2023,
+      "event_name": "Abu Dhabi Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2024,
+      "event_name": "Abu Dhabi Grand Prix",
+      "used_existing": true
+    }
+  ],
+  "Melbourne": [
+    {
+      "year": 2022,
+      "event_name": "Australian Grand Prix",
+      "used_existing": false
+    },
+    {
+      "year": 2023,
+      "event_name": "Australian Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2024,
+      "event_name": "Australian Grand Prix",
+      "used_existing": true
+    }
+  ],
+  "Miami": [
+    {
+      "year": 2022,
+      "event_name": "Miami Grand Prix",
+      "used_existing": false
+    },
+    {
+      "year": 2023,
+      "event_name": "Miami Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2024,
+      "event_name": "Miami Grand Prix",
+      "used_existing": true
+    }
+  ],
+  "Montreal": [
+    {
+      "year": 2022,
+      "event_name": "Canadian Grand Prix",
+      "used_existing": false
+    },
+    {
+      "year": 2023,
+      "event_name": "Canadian Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2024,
+      "event_name": "Canadian Grand Prix",
+      "used_existing": true
+    }
+  ],
+  "Spa": [
+    {
+      "year": 2022,
+      "event_name": "Belgian Grand Prix",
+      "used_existing": false
+    },
+    {
+      "year": 2023,
+      "event_name": "Belgian Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2024,
+      "event_name": "Belgian Grand Prix",
+      "used_existing": true
+    }
+  ],
+  "Singapore": [
+    {
+      "year": 2022,
+      "event_name": "Singapore Grand Prix",
+      "used_existing": false
+    },
+    {
+      "year": 2023,
+      "event_name": "Singapore Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2024,
+      "event_name": "Pre-Season Testing",
+      "used_existing": false
+    },
+    {
+      "year": 2024,
+      "event_name": "Singapore Grand Prix",
+      "used_existing": true
+    }
+  ],
+  "Suzuka": [
+    {
+      "year": 2022,
+      "event_name": "Japanese Grand Prix",
+      "used_existing": false
+    },
+    {
+      "year": 2023,
+      "event_name": "Japanese Grand Prix",
+      "used_existing": true
+    },
+    {
+      "year": 2024,
+      "event_name": "Japanese Grand Prix",
+      "used_existing": true
+    }
+  ],
+  "LasVegas": [
+    {
+      "year": 2023,
+      "event_name": "Las Vegas Grand Prix",
+      "used_existing": false
+    },
+    {
+      "year": 2024,
+      "event_name": "Las Vegas Grand Prix",
+      "used_existing": true
+    }
+  ],
+  "ChineseGrandPrix": [
+    {
+      "year": 2024,
+      "event_name": "Chinese Grand Prix",
+      "used_existing": false
+    }
+  ]
+}

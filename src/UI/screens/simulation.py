@@ -38,13 +38,17 @@ class Simulation:
         self.active_graph_tab = "Driver Position"
         self.graph_tab_buttons = []
         self.circuit_image = None
+        self.circuit_points = []
+        self.circuit_lengths = []
+        self.circuit_total_length = 0.0
         self.create_graph_tab_buttons()
         self.create_dots()
         self.create_speed_buttons()
         self.rm = main(filepath)
         self.rm.write_to_log("Simulation started.")
         self.rm.broadcast_public_signals()
-        self.load_circuit_image()
+        self.load_circuit_points()
+        self.build_circuit_lengths()
         for team in self.rm.teams:
             team.decide()
         
@@ -1116,46 +1120,180 @@ class Simulation:
                 label_rect = label_surface.get_rect(midleft=(points[-1][0] + 6, points[-1][1]))
                 self.screen.blit(label_surface, label_rect)
 
-    def load_circuit_image(self):
-        # build file path from GP name
-        gp_name = self.rm.grandprix.replace(" Grand Prix", "").strip()
-        folder_name = gp_name.replace(" ", "_")
-        file_name = f"{folder_name}_Circuit.webp.png"
-        image_path = f"data/CircuitDiagarms/{folder_name}/{file_name}"
+    def load_circuit_points(self):
+        gp_name = self.rm.grandprix.strip()
+
+        name_map = {
+            "Bahrain Grand Prix": "Bahrain",
+            "Saudi Arabian Grand Prix": "Jeddah",
+            "Australian Grand Prix": "Melbourne",
+            "Azerbaijan Grand Prix": "Baku",
+            "Miami Grand Prix": "Miami",
+            "Emilia Romagna Grand Prix": "Imola",
+            "Monaco Grand Prix": "Monaco",
+            "Spanish Grand Prix": "Barcelona",
+            "Canadian Grand Prix": "Montreal",
+            "Austrian Grand Prix": "Austria",
+            "British Grand Prix": "Silverstone",
+            "Hungarian Grand Prix": "Hungaroring",
+            "Belgian Grand Prix": "Spa",
+            "Dutch Grand Prix": "Zandvoort",
+            "Italian Grand Prix": "Monza",
+            "Singapore Grand Prix": "Singapore",
+            "Japanese Grand Prix": "Suzuka",
+            "Qatar Grand Prix": "Qatar",
+            "United States Grand Prix": "COTA",
+            "Mexico City Grand Prix": "Mexico",
+            "São Paulo Grand Prix": "Interlagos",
+            "Las Vegas Grand Prix": "LasVegas",
+            "Abu Dhabi Grand Prix": "AbuDhabi",
+            "French Grand Prix": "PaulRicard",
+            "Portuguese Grand Prix": "Portimao",
+            "Turkish Grand Prix": "Istanbul",
+            "Russian Grand Prix": "Sochi",
+            "Styrian Grand Prix": "Austria",
+            "Tuscan Grand Prix": "Mugello",
+            "70th Anniversary Grand Prix": "Silverstone",
+            "Eifel Grand Prix": "Nurburgring",
+        }
+
+        circuit_name = name_map.get(gp_name, gp_name.replace(" Grand Prix", "").replace(" ", ""))
+        json_path = Path("data/circuit_json") / f"{circuit_name}.json"
+
+        self.circuit_points = []
+
+        if not json_path.exists():
+            print(f"Circuit JSON not found: {json_path}")
+            return
 
         try:
-            self.circuit_image = pygame.image.load(image_path).convert_alpha()
-        except pygame.error:
-            self.circuit_image = None
+            with open(json_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
 
-    def get_scaled_circuit_layout(self):
+            self.circuit_points = [
+                (point["x"], point["y"])
+                for point in data.get("track_points", [])
+            ]
+
+            print(f"Loaded {len(self.circuit_points)} circuit points from {json_path}")
+
+        except Exception as e:
+            print(f"Failed to load circuit JSON: {e}")
+            self.circuit_points = []
+
+    def get_scaled_circuit_points(self):
+        if not self.circuit_points:
+            return []
+
         graph_x, graph_y, graph_width, graph_height = self.get_shared_graph_area()
 
-        padding_x = graph_width * 0.05
-        padding_y = graph_height * 0.08
+        padding_x = graph_width * 0.08
+        padding_y = graph_height * 0.10
 
-        image_area_width = graph_width - (padding_x * 2)
-        image_area_height = graph_height - (padding_y * 2)
+        plot_width = graph_width - (padding_x * 2)
+        plot_height = graph_height - (padding_y * 2)
 
-        if self.circuit_image is None:
-            return None, None, None
+        xs = [p[0] for p in self.circuit_points]
+        ys = [p[1] for p in self.circuit_points]
 
-        original_width, original_height = self.circuit_image.get_size()
+        min_x, max_x = min(xs), max(xs)
+        min_y, max_y = min(ys), max(ys)
 
-        scale = min(image_area_width / original_width, image_area_height / original_height)
+        circuit_width = max(max_x - min_x, 0.001)
+        circuit_height = max(max_y - min_y, 0.001)
 
-        scaled_width = int(original_width * scale)
-        scaled_height = int(original_height * scale)
+        scale = min(plot_width / circuit_width, plot_height / circuit_height)
 
-        image_rect = pygame.Rect(0, 0, scaled_width, scaled_height)
-        image_rect.center = (graph_x, graph_y)
+        centre_x = (min_x + max_x) / 2
+        centre_y = (min_y + max_y) / 2
 
-        return scale, (scaled_width, scaled_height), image_rect
+        scaled_points = []
+        for x, y in self.circuit_points:
+            draw_x = graph_x + ((x - centre_x) * scale)
+            draw_y = graph_y - ((y - centre_y) * scale)
+            scaled_points.append((draw_x, draw_y))
+
+        return scaled_points
+
+    def build_circuit_lengths(self):
+        self.circuit_lengths = []
+        self.circuit_total_length = 0.0
+
+        if len(self.circuit_points) < 2:
+            return
+
+        self.circuit_lengths = [0.0]
+
+        for i in range(1, len(self.circuit_points)):
+            x1, y1 = self.circuit_points[i - 1]
+            x2, y2 = self.circuit_points[i]
+            seg_len = math.hypot(x2 - x1, y2 - y1)
+            self.circuit_total_length += seg_len
+            self.circuit_lengths.append(self.circuit_total_length)
+
+        # close the loop
+        x1, y1 = self.circuit_points[-1]
+        x2, y2 = self.circuit_points[0]
+        self.circuit_total_length += math.hypot(x2 - x1, y2 - y1)
+
+    def get_car_track_fraction(self, car):
+        progress = float(self.rm.get_progress(car))
+
+        # case 1: progress is already lap-based
+        if progress <= (self.rm.total_laps + 1):
+            fraction = progress % 1.0
+            return fraction
+
+        # case 2: simulator exposes track length
+        if hasattr(self.rm, "track_length") and self.rm.track_length:
+            fraction = (progress % self.rm.track_length) / self.rm.track_length
+            return fraction
+
+        # fallback
+        fraction = progress % 1.0
+        return fraction
+
+    def get_point_on_circuit(self, fraction, scaled_points):
+        if not scaled_points or self.circuit_total_length <= 0:
+            return None
+
+        target_length = fraction * self.circuit_total_length
+
+        for i in range(1, len(self.circuit_lengths)):
+            if self.circuit_lengths[i] >= target_length:
+                prev_len = self.circuit_lengths[i - 1]
+                next_len = self.circuit_lengths[i]
+
+                x1, y1 = scaled_points[i - 1]
+                x2, y2 = scaled_points[i]
+
+                seg_len = next_len - prev_len
+                if seg_len <= 0:
+                    return (x1, y1)
+
+                t = (target_length - prev_len) / seg_len
+                px = x1 + (x2 - x1) * t
+                py = y1 + (y2 - y1) * t
+                return (px, py)
+
+        # closing segment
+        prev_len = self.circuit_lengths[-1]
+        x1, y1 = scaled_points[-1]
+        x2, y2 = scaled_points[0]
+
+        seg_len = self.circuit_total_length - prev_len
+        if seg_len <= 0:
+            return (x1, y1)
+
+        t = (target_length - prev_len) / seg_len
+        px = x1 + (x2 - x1) * t
+        py = y1 + (y2 - y1) * t
+        return (px, py)
 
     def draw_circuit_map_graph(self):
-        # panel background
         graph_x, graph_y, graph_width, graph_height = self.get_shared_graph_area()
         text_font = pygame.font.Font(font_name, int(self.screen_y / 55))
+        car_font = pygame.font.Font(font_name, int(self.screen_y / 60))
         r, g, b = box_colour_2
 
         graph_surface = pygame.Surface((graph_width, graph_height), pygame.SRCALPHA)
@@ -1163,17 +1301,40 @@ class Simulation:
         graph_rect = graph_surface.get_rect(center=(graph_x, graph_y))
         self.screen.blit(graph_surface, graph_rect)
 
-        # no image found
-        if self.circuit_image is None:
-            info_surface = text_font.render("Circuit image not found", True, grey)
+        if not self.circuit_points:
+            info_surface = text_font.render("Circuit data not found", True, grey)
             info_rect = info_surface.get_rect(center=(graph_x, graph_y))
             self.screen.blit(info_surface, info_rect)
             return
 
-        # scale and draw image only
-        scale, scaled_size, image_rect = self.get_scaled_circuit_layout()
-        scaled_image = pygame.transform.smoothscale(self.circuit_image, scaled_size)
-        self.screen.blit(scaled_image, image_rect)
+        scaled_points = self.get_scaled_circuit_points()
+
+        if len(scaled_points) >= 2:
+            pygame.draw.lines(self.screen, white, True, scaled_points, 4)
+
+            start_x, start_y = scaled_points[0]
+            pygame.draw.circle(self.screen, green, (int(start_x), int(start_y)), 6)
+
+            # draw cars
+            for car in self.rm.cars:
+                if car.retired:
+                    continue
+
+                fraction = self.get_car_track_fraction(car)
+                point = self.get_point_on_circuit(fraction, scaled_points)
+
+                if point is None:
+                    continue
+
+                px, py = point
+                car_colour = team_colours.get(car.team_id, white)
+
+                pygame.draw.circle(self.screen, car_colour, (int(px), int(py)), self.screen_x / 100)
+                pygame.draw.circle(self.screen, black, (int(px), int(py)), self.screen_x / 100, 3)
+
+                label_surface = car_font.render(car.car_id, True, red_3)
+                label_rect = label_surface.get_rect(midleft=(px + 10, py))
+                self.screen.blit(label_surface, label_rect)
         
     def render(self):
         self.screen.fill(background_colour)
