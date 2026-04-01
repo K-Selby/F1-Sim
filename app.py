@@ -9,7 +9,6 @@ from src.UI.screens.simulation import Simulation
 pygame.init()
 
 screen_x, screen_y = pygame.display.set_mode().get_size()
-print(screen_x, screen_y)
 
 screen = pygame.display.set_mode((screen_x, screen_y), pygame.RESIZABLE)
 pygame.display.set_caption('F1 Strategy Simulator')
@@ -42,7 +41,6 @@ def main(s_Mode, screen, filepath):
             s_Mode, screen = Siumulation_Screen.update()
         
         if s_Mode == 'Quit':
-            print('Quit')
             pygame.quit()
             sys.exit()
             

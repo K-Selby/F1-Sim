@@ -46,8 +46,8 @@ class Home:
 
         modes = [
             "CustomRace",
-            "RaceReplays",
-            "SeededRaces"
+            "Home",
+            "Home"
         ]
 
         colours = [red, blue, purple]

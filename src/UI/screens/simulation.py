@@ -10,6 +10,12 @@ class Simulation:
         self.dots = []
         self.dot_spacing = 40
         self.influence_radius = 150
+        self.return_text = "Return to Home"
+        self.start_text = "Start Race"
+        self.return_image = pygame.image.load("data/UI/Images/return.png")
+        self.start_image = pygame.image.load("data/UI/Images/play_circle.png")
+        self.race_started = False
+        self.button = []
         self.timing_update_interval = 1.0
         self.last_timing_update = 0.0
         self.cached_classification = []
@@ -19,6 +25,8 @@ class Simulation:
         self.custom_speed_input_active = False
         self.custom_speed_input = ""
         self.speed_buttons = []
+        self.rewind_image = pygame.image.load("data/UI/Images/fast_rewind.png")
+        self.forward_image = pygame.image.load("data/UI/Images/fast_forward.png")
         self.position_history = {}
         self.last_position_history_lap = 0
         self.event_messages = []
@@ -44,6 +52,7 @@ class Simulation:
         self.create_graph_tab_buttons()
         self.create_dots()
         self.create_speed_buttons()
+        self.create_buttons()
         self.rm = main(filepath)
         self.rm.write_to_log("Simulation started.")
         self.rm.broadcast_public_signals()
@@ -123,6 +132,112 @@ class Simulation:
         lap_surface = lap_font.render(lap_text, True, white)
         lap_rect = lap_surface.get_rect(center=(self.screen_x / 2, title_bar_height / 1.15))
         self.screen.blit(lap_surface, lap_rect)
+
+    def create_buttons(self):
+        self.button.clear()
+
+        button_width = self.screen_x / 3.5
+        button_height = self.screen_y / 16
+        start_x = self.screen_x / 2 - button_width / 2
+        y = self.screen_y / 7
+
+        base_rect = pygame.Rect(start_x, y, button_width, button_height)
+
+        # Start Race button
+        self.button.append({
+            "base_rect": base_rect.copy(),
+            "rect": base_rect.copy(),
+            "title": self.start_text,
+            "hover": False,
+            "colour": box_colour_2,
+            "hover_colour": box_hover_2,
+            "scale": 1.0,
+            "image": self.start_image,
+            "mode": "StartRace"
+        })
+
+        # Return to Home button
+        self.button.append({
+            "base_rect": base_rect.copy(),
+            "rect": base_rect.copy(),
+            "title": self.return_text,
+            "hover": False,
+            "colour": box_colour_2,
+            "hover_colour": box_hover_2,
+            "scale": 1.0,
+            "image": self.return_image,
+            "mode": "Home"
+        })
+
+    def update_top_buttons(self, mouse_pos):
+        for button in self.button:
+            button["hover"] = button["rect"].collidepoint(mouse_pos)
+
+            if button["hover"]:
+                target_scale = 1.05
+            else:
+                target_scale = 1.0
+
+            button["scale"] += (target_scale - button["scale"]) * 0.1
+
+            base = button["base_rect"]
+            new_width = base.width * button["scale"]
+            new_height = base.height * button["scale"]
+
+            button["rect"] = pygame.Rect(
+                base.centerx - new_width / 2,
+                base.centery - new_height / 2,
+                new_width,
+                new_height
+            )
+            
+    def draw_top_button(self):
+        active_button = None
+
+        if not self.race_started:
+            active_button = self.button[0]   # Start Race
+        elif self.sim_finished:
+            active_button = self.button[1]   # Return to Home
+
+        if active_button is None:
+            return
+
+        button_font = pygame.font.Font(font_name, int(self.screen_y / 22.14))
+        button = active_button
+
+        button_surface = pygame.Surface((button["rect"].width, button["rect"].height), pygame.SRCALPHA)
+
+        if button["hover"]:
+            r, g, b = button["hover_colour"]
+            alpha = 150
+        else:
+            r, g, b = button["colour"]
+            alpha = 200
+
+        pygame.draw.rect(button_surface, (r, g, b, alpha), button_surface.get_rect(), border_radius=18)
+        self.screen.blit(button_surface, button["rect"].topleft)
+
+        button_text = button_font.render(button["title"], True, white)
+        text_pos = button_text.get_rect(
+            midleft=(
+                button["rect"].left + int(self.screen_x / 24.4285714286),
+                button["rect"].top + int(self.screen_y / 36.9)
+            )
+        )
+
+        button_image = pygame.transform.scale(
+            button["image"],
+            (int(self.screen_x / 28.5), int(self.screen_y / 18.45))
+        )
+        button_image_pos = button_image.get_rect(
+            midleft=(
+                button["rect"].left + int(self.screen_x / 342),
+                button["rect"].top + int(self.screen_y / 36.9)
+            )
+        )
+
+        self.screen.blit(button_text, text_pos)
+        self.screen.blit(button_image, button_image_pos)
 
     def get_live_classification(self):
         finished_cars = []
@@ -323,21 +438,20 @@ class Simulation:
         self.speed_buttons.append({
             "name": "slow",
             "rect": slow_rect,
-            "text": "Slow",
+            "image": self.rewind_image,
             "hover": False
         })
 
         self.speed_buttons.append({
             "name": "speed",
             "rect": speed_rect,
-            "text": "",
             "hover": False
         })
 
         self.speed_buttons.append({
             "name": "fast",
             "rect": fast_rect,
-            "text": "Fast",
+            "image": self.forward_image,
             "hover": False
         })
 
@@ -377,7 +491,6 @@ class Simulation:
         self.sim_speed = 1.0
 
     def draw_speed_controls(self):
-        button_font = pygame.font.Font(font_name, int(self.screen_y / 48))
         input_font = pygame.font.Font(font_name, int(self.screen_y / 46))
 
         for button in self.speed_buttons:
@@ -398,11 +511,24 @@ class Simulation:
                     display_text = self.format_speed_text()
 
                 text_surface = input_font.render(display_text, True, white)
-            else:
-                text_surface = button_font.render(button["text"], True, white)
+                text_rect = text_surface.get_rect(center=rect.center)
+                self.screen.blit(text_surface, text_rect)
 
-            text_rect = text_surface.get_rect(center=rect.center)
-            self.screen.blit(text_surface, text_rect)
+            else:
+                image = button["image"]
+
+                image_max_width = rect.width * 0.75
+                image_max_height = rect.height * 0.75
+
+                original_width, original_height = image.get_size()
+                scale = min(image_max_width / original_width, image_max_height / original_height)
+
+                scaled_width = int(original_width * scale)
+                scaled_height = int(original_height * scale)
+
+                scaled_image = pygame.transform.smoothscale(image, (scaled_width, scaled_height))
+                image_rect = scaled_image.get_rect(center=rect.center)
+                self.screen.blit(scaled_image, image_rect)
 
     def create_graph_tab_buttons(self):
         graph_width = self.screen_x / 1.8
@@ -636,6 +762,15 @@ class Simulation:
             return f"{minutes}:{secs:02d}.{millis:03d}"
         return f"{secs}.{millis:03d}"
         
+    def format_race_time(self, seconds):
+        hours = int(seconds // 3600)
+        minutes = int((seconds % 3600) // 60)
+        secs = seconds % 60
+
+        if hours > 0:
+            return f"{hours}:{minutes:02d}:{secs:06.3f}"
+        return f"{minutes}:{secs:06.3f}"
+        
     def update_fastest_lap_events(self):
         for car in self.rm.cars:
             if not car.completed_laps:
@@ -707,20 +842,23 @@ class Simulation:
 
             # Finishers
             if not previous_finished and current_finished:
-                finished_cars = sorted(
-                    [c for c in self.rm.cars if c.lap_count >= self.rm.total_laps and not c.retired],
-                    key=lambda c: c.total_time
-                )
+                finished_cars = sorted([c for c in self.rm.cars if c.lap_count >= self.rm.total_laps and not c.retired], key=lambda c: c.total_time)
 
                 if finished_cars:
-                    if finished_cars[0].car_id == car_id and not self.winner_announced:
-                        self.add_event_message(f"WINNER: {car_id} wins the {self.rm.grandprix}")
-                        self.winner_announced = True
-
                     finish_position = finished_cars.index(car) + 1
+                    formatted_time = self.format_race_time(car.total_time)
+
+                    if finish_position == 1 and not self.winner_announced:
+                        self.add_event_message(f"WINNER: P1 {car_id} wins the {self.rm.grandprix} in {formatted_time}")
+                        self.winner_announced = True
+                        
+                    else:
+                        leader_time = finished_cars[0].total_time
+                        gap_to_winner = car.total_time - leader_time
+                        formatted_gap = f"+{gap_to_winner:.3f}s"
+                        self.add_event_message(f"FLAG: P{finish_position} {car_id} finished in {formatted_time} ({formatted_gap})")
+
                     if finish_position <= 3 and car_id not in self.podium_announced:
-                        podium_names = {1: "P1", 2: "P2", 3: "P3"}
-                        self.add_event_message(f"FLAG: {car_id} takes {podium_names[finish_position]}")
                         self.podium_announced.add(car_id)
 
             self.previous_pending_pit[car_id] = car.pending_pit
@@ -1170,12 +1308,7 @@ class Simulation:
             with open(json_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
-            self.circuit_points = [
-                (point["x"], point["y"])
-                for point in data.get("track_points", [])
-            ]
-
-            print(f"Loaded {len(self.circuit_points)} circuit points from {json_path}")
+            self.circuit_points = [(point["x"], point["y"]) for point in data.get("track_points", [])]
 
         except Exception as e:
             print(f"Failed to load circuit JSON: {e}")
@@ -1345,6 +1478,7 @@ class Simulation:
         self.draw_active_graph_panel()
         self.draw_graph_tabs()
         self.draw_event_box()
+        self.draw_top_button()
 
     def update(self):
         mouse_pos = pygame.mouse.get_pos()
@@ -1356,6 +1490,7 @@ class Simulation:
             self.create_dots()
             self.create_speed_buttons()
             self.create_graph_tab_buttons()
+            self.create_buttons()
 
         # Hover states
         for button in self.speed_buttons:
@@ -1363,6 +1498,9 @@ class Simulation:
             
         for button in self.graph_tab_buttons:
             button["hover"] = button["rect"].collidepoint(mouse_pos)
+            
+        if not self.race_started or self.sim_finished:
+            self.update_top_buttons(mouse_pos)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -1371,6 +1509,16 @@ class Simulation:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 clicked_speed_button = False
                 clicked_graph_tab = False
+                
+                if not self.race_started:
+                    start_button = self.button[0]
+                    if start_button["rect"].collidepoint(mouse_pos):
+                        self.race_started = True
+
+                elif self.sim_finished:
+                    return_button = self.button[1]
+                    if return_button["rect"].collidepoint(mouse_pos):
+                        self.s_Mode = return_button["mode"]
 
                 for button in self.graph_tab_buttons:
                     if button["rect"].collidepoint(mouse_pos):
@@ -1404,7 +1552,7 @@ class Simulation:
                     if self.custom_speed_input != "":
                         try:
                             entered_value = float(self.custom_speed_input)
-                            if 0.5 <= entered_value <= 100:
+                            if 0.5 <= entered_value <= 1000:
                                 self.sim_speed = entered_value
                         except ValueError:
                             pass
@@ -1420,8 +1568,9 @@ class Simulation:
                     elif event.unicode == "." and "." not in self.custom_speed_input:
                         self.custom_speed_input += "."
 
-        # Step simulation
-        if not self.rm.race_finished:
+        # Step simulation only after race has started
+        # Step simulation only after race has started
+        if self.race_started and not self.sim_finished:
             sim_dt = self.rm.dt * self.sim_speed
             self.rm.step_tick(sim_dt)
             self.update_position_history()
@@ -1432,12 +1581,13 @@ class Simulation:
                 self.update_tyre_graph_order()
                 self.last_timing_update = self.rm.sim_time
 
-        elif not self.sim_finished:
-            self.sim_finished = True
-            self.rm.log_final_classification()
-            self.cached_classification = self.get_live_classification()
-            self.update_race_event_messages()
-            self.update_tyre_graph_order()
+            # only mark finished AFTER a tick has happened and the race manager says it is finished
+            if self.rm.race_finished:
+                self.sim_finished = True
+                self.rm.log_final_classification()
+                self.cached_classification = self.get_live_classification()
+                self.update_race_event_messages()
+                self.update_tyre_graph_order()
 
         self.render()
         pygame.display.flip()
