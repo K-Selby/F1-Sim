@@ -2,26 +2,33 @@
 
 from src.UI.API.imports import *
 
+
 class Home:
     def __init__(self, s_Mode, screen):
+        # ===== CORE STATE =====
         self.s_Mode = s_Mode
         self.screen = screen
         self.screen_x, self.screen_y = screen.get_size()
+        # ===== SCREEN TEXT =====
         self.logo_text = "Formula 1"
         self.home_title_text = "F1 Simulations"
         self.home_subtitle_text = "Choose Your Race Simulator"
+        # ===== IMAGES =====
         self.logo_image = pygame.image.load("data/UI/Images/F1_Logo.png")
         self.race_image = pygame.image.load("data/UI/Images/race.png")
         self.replay_image = pygame.image.load("data/UI/Images/replay_circle.png")
         self.seed_image = pygame.image.load("data/UI/Images/globe_circle.png")
+        # ===== CARD DATA =====
         self.cards = []
-        self.create_cards()
+        # ===== BACKGROUND =====
         self.dots = []
         self.dot_spacing = 40
         self.influence_radius = 150
+        # ===== INITIAL UI BUILD =====
+        self.create_cards()
         self.create_dots()
 
-    # Create 3 option cards
+    # ===== CARD SETUP =====
     def create_cards(self):
         self.cards.clear()
 
@@ -53,7 +60,7 @@ class Home:
         colours = [red, blue, purple]
 
         for i in range(3):
-            base_rect = pygame.Rect(start_x + i * (card_width + spacing), y, card_width, card_height    )
+            base_rect = pygame.Rect(start_x + i * (card_width + spacing),y,card_width,card_height)
 
             self.cards.append({
                 "base_rect": base_rect,
@@ -67,16 +74,14 @@ class Home:
                 "scale": 1.0
             })
 
+    # ===== BACKGROUND =====
     def create_dots(self):
         self.dots.clear()
 
         for x in range(0, int(self.screen_x), self.dot_spacing):
             for y in range(0, int(self.screen_y), self.dot_spacing):
-                self.dots.append({
-                    "pos": (x, y),
-                    "radius": 3
-                })
-             
+                self.dots.append({"pos": (x, y)})
+
     def update_dots(self):
         mouse_x, mouse_y = pygame.mouse.get_pos()
 
@@ -92,114 +97,112 @@ class Home:
                 g = int(grey_2[1] + (red[1] - grey_2[1]) * intensity)
                 b = int(grey_2[2] + (red[2] - grey_2[2]) * intensity)
                 color = (r, g, b)
-
                 radius = 3 + (6 * intensity)
+
             else:
                 color = grey_2
                 radius = 3
-            
+
             pygame.draw.circle(self.screen, color, (dot_x, dot_y), int(radius))
 
-    # Render Home Screen
-    def render(self):
-        self.screen.fill(background_colour)
-        
-        self.update_dots()
-
-        # Top-left Logo
-        logo_font = pygame.font.Font(font_name, int(self.screen_y/22.14))
-        logo_text = logo_font.render(self.logo_text, True, white)
-        
-        logo_image = pygame.transform.scale(self.logo_image, (self.screen_x/8.90625, self.screen_y/23.0625))
-        self.screen.blit(logo_image, (self.screen_x/171, self.screen_y/110.7))
-        self.screen.blit(logo_text, (self.screen_x/7.72, self.screen_y/110.7))
-
-        # Section Title (centered)
-        home_title_font = pygame.font.Font(font_name, int(self.screen_y/11.07))
-        home_title = home_title_font.render(self.home_title_text, True, red)
-        
-        home_subtitle_font = pygame.font.Font(font_name, int(self.screen_y/36.9))
-        home_subtitle = home_subtitle_font.render(self.home_subtitle_text, True, grey)
-        
-        title_rect = home_title.get_rect(center=(self.screen_x/2, self.screen_y/5.535))
-        sub_rect = home_subtitle.get_rect(center=(self.screen_x/2, self.screen_y/4.1))
-
-        self.screen.blit(home_title, title_rect)
-        self.screen.blit(home_subtitle, sub_rect)
-
-        # Draw Cards
-        card_title_font = pygame.font.Font(font_name, int(self.screen_y/39.5357142857))
-        card_text_font = pygame.font.Font(font_name, int(self.screen_y/73.8))
-        race_image = pygame.transform.scale(self.race_image, (self.screen_x/28.5, self.screen_y/18.45))
-        replay_image = pygame.transform.scale(self.replay_image, (self.screen_x/28.5, self.screen_y/18.45))
-        seed_image = pygame.transform.scale(self.seed_image, (self.screen_x/28.5, self.screen_y/18.45))
-        
-        for card in self.cards:
-            # Create transparent surface
-            card_surface = pygame.Surface((card["rect"].width, card["rect"].height),pygame.SRCALPHA)
-
-            # Semi transparent base
-            if not card["hover"]:
-                r, g, b = card["colour"]
-                alpha = 200
-                
-            else:
-                r, g, b = card["hover_colour"]
-                alpha = 150
-
-            # Draw rounded rect
-            pygame.draw.rect(card_surface, (r, g, b, alpha), card_surface.get_rect(), border_radius=18)
-
-            # Blit to screen
-            self.screen.blit(card_surface, card["rect"].topleft)
-
-            # --- TEXT ---
-            title_surface = card_title_font.render(card["title"], True, white)
-            desc_surface = card_text_font.render(card["desc"], True, (210, 210, 210))
-
-            title_rect = title_surface.get_rect(topleft=(card["rect"].left + int(self.screen_x/114), card["rect"].top + int(self.screen_y/12.3)))
-            desc_rect = desc_surface.get_rect(topleft=(card["rect"].left+ int(self.screen_x/114), card["rect"].top + int(self.screen_y/8.5153846154)))
-
-            self.screen.blit(title_surface, title_rect)
-            self.screen.blit(desc_surface, desc_rect)
-
-        self.screen.blit(race_image, (self.screen_x/8.9763779528, self.screen_y/2.9))
-        self.screen.blit(replay_image, (self.screen_x/2.6057142857, self.screen_y/2.9))
-        self.screen.blit(seed_image, (self.screen_x/1.5244038333, self.screen_y/2.9))
-        
-    # Update Loop
-    def update(self):
-        mouse_pos = pygame.mouse.get_pos()
-        
-        # Recalculate card layout when resizing
-        new_w, new_h = self.screen.get_size()
-        if new_w != self.screen_x or new_h != self.screen_y:
-            self.screen_x, self.screen_y = new_w, new_h
-            self.create_cards()
-
-        # Smooth scaling
+    # ===== CARD HOVER / SCALE =====
+    def update_card_scaling(self, mouse_pos):
         for card in self.cards:
             card["hover"] = card["rect"].collidepoint(mouse_pos)
-            
+
             if card["hover"]:
                 target_scale = 1.1
+                
             else:
                 target_scale = 1.0
 
             # Smooth interpolation
             card["scale"] += (target_scale - card["scale"]) * 0.1
-            
+
             # Apply scale
             base = card["base_rect"]
             new_width = base.width * card["scale"]
             new_height = base.height * card["scale"]
 
-            card["rect"] = pygame.Rect(
-                base.centerx - new_width / 2,
-                base.centery - new_height / 2,
-                new_width,
-                new_height
-            )
+            card["rect"] = pygame.Rect(base.centerx - new_width / 2, base.centery - new_height / 2, new_width, new_height)
+
+    # ===== RENDER =====
+    def render(self):
+        self.screen.fill(background_colour)
+        self.update_dots()
+
+        # Top-left logo
+        logo_font = pygame.font.Font(font_name, int(self.screen_y / 22.14))
+        logo_text = logo_font.render(self.logo_text, True, white)
+
+        logo_image = pygame.transform.scale(self.logo_image, (self.screen_x / 8.90625, self.screen_y / 23.0625))
+
+        self.screen.blit(logo_image, (self.screen_x / 171, self.screen_y / 110.7))
+        self.screen.blit(logo_text, (self.screen_x / 7.72, self.screen_y / 110.7))
+
+        # Main title
+        home_title_font = pygame.font.Font(font_name, int(self.screen_y / 11.07))
+        home_title = home_title_font.render(self.home_title_text, True, red)
+
+        home_subtitle_font = pygame.font.Font(font_name, int(self.screen_y / 36.9))
+        home_subtitle = home_subtitle_font.render(self.home_subtitle_text, True, grey)
+
+        title_rect = home_title.get_rect(center=(self.screen_x / 2, self.screen_y / 5.535))
+        sub_rect = home_subtitle.get_rect(center=(self.screen_x / 2, self.screen_y / 4.1))
+
+        self.screen.blit(home_title, title_rect)
+        self.screen.blit(home_subtitle, sub_rect)
+
+        # Card fonts and icons
+        card_title_font = pygame.font.Font(font_name, int(self.screen_y / 39.5357142857))
+        card_text_font = pygame.font.Font(font_name, int(self.screen_y / 73.8))
+
+        race_image = pygame.transform.scale(self.race_image, (self.screen_x / 28.5, self.screen_y / 18.45))
+        replay_image = pygame.transform.scale(self.replay_image, (self.screen_x / 28.5, self.screen_y / 18.45))
+        seed_image = pygame.transform.scale(self.seed_image, (self.screen_x / 28.5, self.screen_y / 18.45))
+
+        # Draw menu cards
+        for card in self.cards:
+            card_surface = pygame.Surface((card["rect"].width, card["rect"].height), pygame.SRCALPHA)
+
+            if card["hover"]:
+                r, g, b = card["hover_colour"]
+                alpha = 150
+                
+            else:
+                r, g, b = card["colour"]
+                alpha = 200
+
+            pygame.draw.rect(card_surface, (r, g, b, alpha), card_surface.get_rect(), border_radius=18)
+            self.screen.blit(card_surface, card["rect"].topleft)
+
+            title_surface = card_title_font.render(card["title"], True, white)
+            desc_surface = card_text_font.render(card["desc"], True, (210, 210, 210))
+
+            title_rect = title_surface.get_rect(topleft=(card["rect"].left + int(self.screen_x / 114), card["rect"].top + int(self.screen_y / 12.3)))
+            desc_rect = desc_surface.get_rect(topleft=(card["rect"].left + int(self.screen_x / 114), card["rect"].top + int(self.screen_y / 8.5153846154)))
+
+            self.screen.blit(title_surface, title_rect)
+            self.screen.blit(desc_surface, desc_rect)
+
+        # Card icons
+        self.screen.blit(race_image, (self.screen_x / 8.9763779528, self.screen_y / 2.9))
+        self.screen.blit(replay_image, (self.screen_x / 2.6057142857, self.screen_y / 2.9))
+        self.screen.blit(seed_image, (self.screen_x / 1.5244038333, self.screen_y / 2.9))
+
+    # ===== UPDATE =====
+    def update(self):
+        mouse_pos = pygame.mouse.get_pos()
+
+        # Rebuild layout on resize
+        new_w, new_h = self.screen.get_size()
+        if new_w != self.screen_x or new_h != self.screen_y:
+            self.screen_x, self.screen_y = new_w, new_h
+            self.create_cards()
+            self.create_dots()
+
+        # Update hover / scale
+        self.update_card_scaling(mouse_pos)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -209,7 +212,7 @@ class Home:
                 for card in self.cards:
                     if card["rect"].collidepoint(mouse_pos):
                         self.s_Mode = card["mode"]
-        
+
         self.render()
         pygame.display.flip()
         fpsClock.tick(FPS)

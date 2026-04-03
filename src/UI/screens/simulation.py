@@ -1,34 +1,44 @@
 from src.UI.API.imports import *
 from src.RaceSimulator import main
 
+
 class Simulation:
     def __init__(self, s_Mode, screen, filepath):
+        # ===== CORE STATE =====
         self.s_Mode = s_Mode
         self.screen = screen
-        self.filepath = filepath
         self.screen_x, self.screen_y = screen.get_size()
+        # ===== BACKGROUND =====
         self.dots = []
         self.dot_spacing = 40
         self.influence_radius = 150
+        # ===== TOP BUTTONS =====
         self.return_text = "Return to Home"
         self.start_text = "Start Race"
         self.return_image = pygame.image.load("data/UI/Images/return.png")
         self.start_image = pygame.image.load("data/UI/Images/play_circle.png")
         self.race_started = False
         self.button = []
+        # ===== TIMING / SIMULATION =====
         self.timing_update_interval = 1.0
         self.last_timing_update = 0.0
         self.cached_classification = []
         self.sim_finished = False
-        self.speed_presets = [1.0, 2.0, 10.0]
+        # ===== SPEED CONTROLS =====
         self.sim_speed = 1.0
         self.custom_speed_input_active = False
         self.custom_speed_input = ""
         self.speed_buttons = []
         self.rewind_image = pygame.image.load("data/UI/Images/fast_rewind.png")
         self.forward_image = pygame.image.load("data/UI/Images/fast_forward.png")
+        # ===== GRAPH DATA =====
         self.position_history = {}
         self.last_position_history_lap = 0
+        self.graph_tabs = ["Driver Position", "Tyre Stints", "Lap Time", "Circuit Map"]
+        self.active_graph_tab = "Driver Position"
+        self.graph_tab_buttons = []
+        self.tyre_graph_order = []
+        # ===== EVENT BOX =====
         self.event_messages = []
         self.max_event_messages = 25
         self.fastest_lap_time = None
@@ -40,19 +50,18 @@ class Simulation:
         self.pit_entry_times = {}
         self.pit_exit_reported = set()
         self.winner_announced = False
-        self.podium_announced = set()
+        self.announced_finishers = set()
         self.final_lap_announced = False
-        self.graph_tabs = ["Driver Position", "Tyre Stints", "Lap Time", "Circuit Map"]
-        self.active_graph_tab = "Driver Position"
-        self.graph_tab_buttons = []
-        self.circuit_image = None
+        # ===== CIRCUIT MAP =====
         self.circuit_points = []
         self.circuit_lengths = []
         self.circuit_total_length = 0.0
+        # ===== UI SETUP =====
         self.create_graph_tab_buttons()
         self.create_dots()
         self.create_speed_buttons()
         self.create_buttons()
+        # ===== SIMULATOR SETUP =====
         self.rm = main(filepath)
         self.rm.write_to_log("Simulation started.")
         self.rm.broadcast_public_signals()
@@ -60,24 +69,22 @@ class Simulation:
         self.build_circuit_lengths()
         for team in self.rm.teams:
             team.decide()
-        
+        # ===== DISPLAY TEXT =====
         self.gp_title = self.rm.grandprix
         self.circuit_subtitle = f"{self.rm.circuit_name} -- {self.rm.season}"
-        self.lap_text = f"Lap {self.rm.lap_number + 1}/{self.rm.total_laps}"
+        # ===== INITIAL CACHED DATA =====
         self.cached_classification = self.get_live_classification()
         self.initialise_position_history()
         self.initialise_event_state()
         self.tyre_graph_order = [car.car_id for car in sorted(self.rm.cars, key=lambda car: self.rm.get_progress(car), reverse=True)]
-
+        
+    # ===== BACKGROUND =====
     def create_dots(self):
         self.dots.clear()
 
         for x in range(0, int(self.screen_x), self.dot_spacing):
             for y in range(0, int(self.screen_y), self.dot_spacing):
-                self.dots.append({
-                    "pos": (x, y),
-                    "radius": 3
-                })
+                self.dots.append({"pos": (x, y)})
 
     def update_dots(self):
         mouse_x, mouse_y = pygame.mouse.get_pos()
@@ -95,24 +102,26 @@ class Simulation:
                 b = int(grey_2[2] + (red[2] - grey_2[2]) * intensity)
                 color = (r, g, b)
                 radius = 3 + (6 * intensity)
+                
             else:
                 color = grey_2
                 radius = 3
 
             pygame.draw.circle(self.screen, color, (dot_x, dot_y), int(radius))
 
+    # ===== TITLE BAR =====
     def draw_title_bar(self):
         title_bar_height = self.screen_y / 8.5
         title_bar_width = self.screen_x / 1.25
         title_font = pygame.font.Font(font_name, int(self.screen_y / 18))
         subtitle_font = pygame.font.Font(font_name, int(self.screen_y / 48))
         lap_font = pygame.font.Font(font_name, int(self.screen_y / 42))
-        
+
         r, g, b = red
-        
+
         # Background bar
         bar_surface = pygame.Surface((title_bar_width, title_bar_height), pygame.SRCALPHA)
-        pygame.draw.rect(bar_surface, (r,g,b, 220), bar_surface.get_rect(), border_radius=18)
+        pygame.draw.rect(bar_surface, (r, g, b, 220), bar_surface.get_rect(), border_radius=18)
         bar_rect = bar_surface.get_rect(center=(self.screen_x / 2, title_bar_height / 1.8))
         self.screen.blit(bar_surface, bar_rect)
 
@@ -125,7 +134,7 @@ class Simulation:
         subtitle_surface = subtitle_font.render(self.circuit_subtitle, True, grey)
         subtitle_rect = subtitle_surface.get_rect(center=(self.screen_x / 2, title_bar_height / 1.45))
         self.screen.blit(subtitle_surface, subtitle_rect)
-        
+
         # Lap count
         current_lap = min(self.rm.lap_number, self.rm.total_laps)
         lap_text = f"Lap {current_lap}/{self.rm.total_laps}"
@@ -133,6 +142,7 @@ class Simulation:
         lap_rect = lap_surface.get_rect(center=(self.screen_x / 2, title_bar_height / 1.15))
         self.screen.blit(lap_surface, lap_rect)
 
+    # ===== BUTTONS =====
     def create_buttons(self):
         self.button.clear()
 
@@ -175,6 +185,7 @@ class Simulation:
 
             if button["hover"]:
                 target_scale = 1.05
+                
             else:
                 target_scale = 1.0
 
@@ -190,12 +201,13 @@ class Simulation:
                 new_width,
                 new_height
             )
-            
+
     def draw_top_button(self):
         active_button = None
 
         if not self.race_started:
             active_button = self.button[0]   # Start Race
+            
         elif self.sim_finished:
             active_button = self.button[1]   # Return to Home
 
@@ -210,6 +222,7 @@ class Simulation:
         if button["hover"]:
             r, g, b = button["hover_colour"]
             alpha = 150
+            
         else:
             r, g, b = button["colour"]
             alpha = 200
@@ -218,207 +231,15 @@ class Simulation:
         self.screen.blit(button_surface, button["rect"].topleft)
 
         button_text = button_font.render(button["title"], True, white)
-        text_pos = button_text.get_rect(
-            midleft=(
-                button["rect"].left + int(self.screen_x / 24.4285714286),
-                button["rect"].top + int(self.screen_y / 36.9)
-            )
-        )
+        text_pos = button_text.get_rect(midleft=(button["rect"].left + int(self.screen_x / 24.4285714286), button["rect"].top + int(self.screen_y / 36.9)))
 
-        button_image = pygame.transform.scale(
-            button["image"],
-            (int(self.screen_x / 28.5), int(self.screen_y / 18.45))
-        )
-        button_image_pos = button_image.get_rect(
-            midleft=(
-                button["rect"].left + int(self.screen_x / 342),
-                button["rect"].top + int(self.screen_y / 36.9)
-            )
-        )
+        button_image = pygame.transform.scale(button["image"], (int(self.screen_x / 28.5), int(self.screen_y / 18.45)))
+        button_image_pos = button_image.get_rect(midleft=(button["rect"].left + int(self.screen_x / 342), button["rect"].top + int(self.screen_y / 36.9)))
 
         self.screen.blit(button_text, text_pos)
         self.screen.blit(button_image, button_image_pos)
 
-    def get_live_classification(self):
-        finished_cars = []
-        running_cars = []
-        pit_cars = []
-        dnf_cars = []
-
-        for car in self.rm.cars:
-            if car.retired:
-                dnf_cars.append(car)
-            elif car.lap_count >= self.rm.total_laps:
-                finished_cars.append(car)
-            elif car.in_pit_lane:
-                pit_cars.append(car)
-            else:
-                running_cars.append(car)
-
-        # Finished cars must be ordered by total race time
-        finished_cars.sort(key=lambda car: car.total_time)
-
-        # Running and pit cars are still ordered by race progress
-        running_cars.sort(key=lambda car: self.rm.get_progress(car), reverse=True)
-        pit_cars.sort(key=lambda car: self.rm.get_progress(car), reverse=True)
-
-        classification = []
-
-        # -----------------------------
-        # Finished cars
-        # -----------------------------
-        winner_time = finished_cars[0].total_time if finished_cars else None
-
-        for car in finished_cars:
-            if winner_time is not None and car == finished_cars[0]:
-                gap_ahead = "LEADER"
-            elif winner_time is not None:
-                gap_ahead = f"+{(car.total_time - winner_time):.3f}"
-            else:
-                gap_ahead = "FIN"
-
-            classification.append({
-                "position": len(classification) + 1,
-                "driver": car.car_id,
-                "team": car.team_id,
-                "gap_ahead": gap_ahead,
-                "status": "finished"
-            })
-
-        # -----------------------------
-        # Running cars
-        # -----------------------------
-        for index, car in enumerate(running_cars):
-            if index == 0 and not finished_cars:
-                gap_ahead = "LEADER"
-            elif index == 0 and finished_cars:
-                finished_ahead = finished_cars[-1]
-                gap_ahead = f"+{max(0.0, (car.total_time + car.current_lap_time) - finished_ahead.total_time):.3f}"
-            else:
-                ahead_car = running_cars[index - 1]
-                gap_distance = max(0.0, self.rm.get_progress(ahead_car) - self.rm.get_progress(car))
-                ref_speed = max(car.last_speed_mps, 1.0)
-                time_gap = gap_distance / ref_speed
-                gap_ahead = f"+{time_gap:.3f}"
-
-            classification.append({
-                "position": len(classification) + 1,
-                "driver": car.car_id,
-                "team": car.team_id,
-                "gap_ahead": gap_ahead,
-                "status": "running"
-            })
-
-        # -----------------------------
-        # Pit cars
-        # -----------------------------
-        for car in pit_cars:
-            classification.append({
-                "position": len(classification) + 1,
-                "driver": car.car_id,
-                "team": car.team_id,
-                "gap_ahead": "IN PIT",
-                "status": "pit"
-            })
-
-        # -----------------------------
-        # DNF cars
-        # -----------------------------
-        for car in dnf_cars:
-            classification.append({
-                "position": len(classification) + 1,
-                "driver": car.car_id,
-                "team": car.team_id,
-                "gap_ahead": "DNF",
-                "status": "dnf"
-            })
-
-        return classification
-
-    def draw_timing_tower(self):
-        title_font = pygame.font.Font(font_name, int(self.screen_y / 40))
-        header_font = pygame.font.Font(font_name, int(self.screen_y / 55))
-        row_font = pygame.font.Font(font_name, int(self.screen_y / 62))
-
-        tower_width = self.screen_x / 7
-        tower_height = self.screen_y / 1.225
-        tower_x = self.screen_x / 13
-        tower_y = self.screen_y / 1.8
-        
-        r, g, b, = box_colour_2
-
-        # Background
-        tower_surface = pygame.Surface((tower_width, tower_height), pygame.SRCALPHA)
-        pygame.draw.rect(tower_surface, (r, g, b, 210), tower_surface.get_rect(), border_radius=18)
-        tower_rect = tower_surface.get_rect(center=(tower_x, tower_y))
-        self.screen.blit(tower_surface, tower_rect)
-
-        # Title
-        title_surface = title_font.render("Live Timing", True, white)
-        title_surface_2 = title_font.render("Tower", True, white)
-        title_rect = title_surface.get_rect(center=(tower_x, (tower_y + tower_height / 2) / 5.8))
-        title_rect_2 = title_surface_2.get_rect(center=(tower_x, (tower_y + tower_height / 2) / 5.8 + int(self.screen_y/40)))
-        self.screen.blit(title_surface, title_rect)
-        self.screen.blit(title_surface_2, title_rect_2)
-
-        # Headers
-        header_y = (tower_y + tower_height / 2) / 4.25
-        pos_x = tower_x - tower_width / 2.75
-        drv_x = tower_x - tower_width / 20
-        gap_x = tower_x + tower_width / 3
-        pos_header = header_font.render("POS", True, grey)
-        drv_header = header_font.render("DRIVER", True, grey)
-        gap_header = header_font.render("GAP", True, grey)
-        
-        pos_rect = pos_header.get_rect(center=(pos_x, header_y))
-        drv_rect = drv_header.get_rect(center=(drv_x, header_y))
-        gap_rect = gap_header.get_rect(center=(gap_x, header_y))
-
-        self.screen.blit(pos_header, pos_rect)
-        self.screen.blit(drv_header, drv_rect)
-        self.screen.blit(gap_header, gap_rect)
-
-        # Rows
-        classification = self.cached_classification
-
-        row_start_y = (tower_y + tower_height / 2) / 3.8
-        row_height = tower_height / 23
-
-        for index, entry in enumerate(classification):
-            row_y = row_start_y + (index * row_height)
-
-            if row_y > tower_y + tower_height - row_height:
-                break
-            
-            r, g, b = red_2
-            # Separator line
-            pygame.draw.line(self.screen, (r,g,b, 5), (tower_x - tower_width / 2, row_y + row_height / 2), (tower_x + tower_width / 2, row_y + row_height / 2), 1)
-
-            if entry["status"] == "dnf":
-                text_colour = grey
-                gap_colour = grey
-            elif entry["status"] == "pit":
-                text_colour = white
-                gap_colour = yellow
-            elif entry["gap_ahead"] == "LEADER":
-                text_colour = white
-                gap_colour = green
-            else:
-                text_colour = white
-                gap_colour = white
-
-            pos_surface = row_font.render(str(entry["position"]), True, text_colour)
-            driver_surface = row_font.render(entry["driver"], True, text_colour)
-            gap_surface = row_font.render(entry["gap_ahead"], True, gap_colour)
-            
-            pos_surface_rect = pos_surface.get_rect(center=(tower_x - tower_width / 2.75, row_y))
-            driver_surface_rect = driver_surface.get_rect(center=(tower_x - tower_width / 20, row_y))
-            gap_surface_rect = gap_surface.get_rect(center=(tower_x + tower_width / 3, row_y))
-
-            self.screen.blit(pos_surface, pos_surface_rect)
-            self.screen.blit(driver_surface, driver_surface_rect)
-            self.screen.blit(gap_surface, gap_surface_rect)
-
+    # ===== SPEED CONTROLS =====
     def create_speed_buttons(self):
         self.speed_buttons.clear()
 
@@ -458,6 +279,7 @@ class Simulation:
     def format_speed_text(self):
         if float(self.sim_speed).is_integer():
             return f"{int(self.sim_speed)}x"
+        
         return f"{self.sim_speed:.1f}x"
 
     def increase_speed(self):
@@ -530,6 +352,406 @@ class Simulation:
                 image_rect = scaled_image.get_rect(center=rect.center)
                 self.screen.blit(scaled_image, image_rect)
 
+    # ===== TIMING TOWER =====
+    def get_live_classification(self):
+        finished_cars = []
+        running_cars = []
+        pit_cars = []
+        dnf_cars = []
+
+        for car in self.rm.cars:
+            if car.retired:
+                dnf_cars.append(car)
+                
+            elif car.lap_count >= self.rm.total_laps:
+                finished_cars.append(car)
+                
+            elif car.in_pit_lane:
+                pit_cars.append(car)
+                
+            else:
+                running_cars.append(car)
+
+        # Finished cars must be ordered by total race time
+        finished_cars.sort(key=lambda car: car.total_time)
+
+        # Running and pit cars are still ordered by race progress
+        running_cars.sort(key=lambda car: self.rm.get_progress(car), reverse=True)
+        pit_cars.sort(key=lambda car: self.rm.get_progress(car), reverse=True)
+
+        classification = []
+
+        # Finished cars
+        winner_time = finished_cars[0].total_time if finished_cars else None
+
+        for car in finished_cars:
+            if winner_time is not None and car == finished_cars[0]:
+                gap_ahead = "LEADER"
+                
+            elif winner_time is not None:
+                gap_ahead = f"+{(car.total_time - winner_time):.3f}"
+                
+            else:
+                gap_ahead = "FIN"
+
+            classification.append({
+                "position": len(classification) + 1,
+                "driver": car.car_id,
+                "team": car.team_id,
+                "gap_ahead": gap_ahead,
+                "status": "finished"
+            })
+
+        # Running cars
+        for index, car in enumerate(running_cars):
+            if index == 0 and not finished_cars:
+                gap_ahead = "LEADER"
+                
+            elif index == 0 and finished_cars:
+                finished_ahead = finished_cars[-1]
+                gap_ahead = f"+{max(0.0, (car.total_time + car.current_lap_time) - finished_ahead.total_time):.3f}"
+                
+            else:
+                ahead_car = running_cars[index - 1]
+                gap_distance = max(0.0, self.rm.get_progress(ahead_car) - self.rm.get_progress(car))
+                ref_speed = max(car.last_speed_mps, 1.0)
+                time_gap = gap_distance / ref_speed
+                gap_ahead = f"+{time_gap:.3f}"
+
+            classification.append({
+                "position": len(classification) + 1,
+                "driver": car.car_id,
+                "team": car.team_id,
+                "gap_ahead": gap_ahead,
+                "status": "running"
+            })
+
+        # Pit cars
+        for car in pit_cars:
+            classification.append({
+                "position": len(classification) + 1,
+                "driver": car.car_id,
+                "team": car.team_id,
+                "gap_ahead": "IN PIT",
+                "status": "pit"
+            })
+
+        # DNF cars
+        for car in dnf_cars:
+            classification.append({
+                "position": len(classification) + 1,
+                "driver": car.car_id,
+                "team": car.team_id,
+                "gap_ahead": "DNF",
+                "status": "dnf"
+            })
+
+        return classification
+
+    def draw_timing_tower(self):
+        title_font = pygame.font.Font(font_name, int(self.screen_y / 40))
+        header_font = pygame.font.Font(font_name, int(self.screen_y / 55))
+        row_font = pygame.font.Font(font_name, int(self.screen_y / 62))
+
+        tower_width = self.screen_x / 7
+        tower_height = self.screen_y / 1.225
+        tower_x = self.screen_x / 13
+        tower_y = self.screen_y / 1.8
+
+        r, g, b = box_colour_2
+
+        # Background
+        tower_surface = pygame.Surface((tower_width, tower_height), pygame.SRCALPHA)
+        pygame.draw.rect(tower_surface, (r, g, b, 210), tower_surface.get_rect(), border_radius=18)
+        tower_rect = tower_surface.get_rect(center=(tower_x, tower_y))
+        self.screen.blit(tower_surface, tower_rect)
+
+        # Title
+        title_surface = title_font.render("Live Timing", True, white)
+        title_surface_2 = title_font.render("Tower", True, white)
+        title_rect = title_surface.get_rect(center=(tower_x, (tower_y + tower_height / 2) / 5.8))
+        title_rect_2 = title_surface_2.get_rect(center=(tower_x, (tower_y + tower_height / 2) / 5.8 + int(self.screen_y / 40)))
+        
+        self.screen.blit(title_surface, title_rect)
+        self.screen.blit(title_surface_2, title_rect_2)
+
+        # Headers
+        header_y = (tower_y + tower_height / 2) / 4.25
+        pos_x = tower_x - tower_width / 2.75
+        drv_x = tower_x - tower_width / 20
+        gap_x = tower_x + tower_width / 3
+        pos_header = header_font.render("POS", True, grey)
+        drv_header = header_font.render("DRIVER", True, grey)
+        gap_header = header_font.render("GAP", True, grey)
+
+        pos_rect = pos_header.get_rect(center=(pos_x, header_y))
+        drv_rect = drv_header.get_rect(center=(drv_x, header_y))
+        gap_rect = gap_header.get_rect(center=(gap_x, header_y))
+
+        self.screen.blit(pos_header, pos_rect)
+        self.screen.blit(drv_header, drv_rect)
+        self.screen.blit(gap_header, gap_rect)
+
+        # Rows
+        classification = self.cached_classification
+
+        row_start_y = (tower_y + tower_height / 2) / 3.8
+        row_height = tower_height / 23
+
+        for index, entry in enumerate(classification):
+            row_y = row_start_y + (index * row_height)
+
+            if row_y > tower_y + tower_height - row_height:
+                break
+
+            r, g, b = red_2
+            pygame.draw.line(self.screen, (r, g, b, 5),( tower_x - tower_width / 2, row_y + row_height / 2), (tower_x + tower_width / 2, row_y + row_height / 2), 1)
+
+            if entry["status"] == "dnf":
+                text_colour = grey
+                gap_colour = grey
+                
+            elif entry["status"] == "pit":
+                text_colour = white
+                gap_colour = yellow
+                
+            elif entry["gap_ahead"] == "LEADER":
+                text_colour = white
+                gap_colour = green
+                
+            else:
+                text_colour = white
+                gap_colour = white
+
+            pos_surface = row_font.render(str(entry["position"]), True, text_colour)
+            driver_surface = row_font.render(entry["driver"], True, text_colour)
+            gap_surface = row_font.render(entry["gap_ahead"], True, gap_colour)
+
+            pos_surface_rect = pos_surface.get_rect(center=(tower_x - tower_width / 2.75, row_y))
+            driver_surface_rect = driver_surface.get_rect(center=(tower_x - tower_width / 20, row_y))
+            gap_surface_rect = gap_surface.get_rect(center=(tower_x + tower_width / 3, row_y))
+
+            self.screen.blit(pos_surface, pos_surface_rect)
+            self.screen.blit(driver_surface, driver_surface_rect)
+            self.screen.blit(gap_surface, gap_surface_rect)
+
+    # ===== EVENT BOX =====
+    def initialise_event_state(self):
+        # Store previous car state so event changes can be detected
+        for car in self.rm.cars:
+            self.previous_pending_pit[car.car_id] = car.pending_pit
+            self.previous_in_pit_lane[car.car_id] = car.in_pit_lane
+            self.previous_retired[car.car_id] = car.retired
+            self.previous_finished[car.car_id] = (car.lap_count >= self.rm.total_laps)
+
+    def add_event_message(self, text):
+        # Keep only the newest event messages
+        self.event_messages.append(text)
+        self.event_messages = self.event_messages[-self.max_event_messages:]
+
+    def wrap_event_text(self, text, font, max_width):
+        words = text.split()
+        if not words:
+            return [""]
+
+        lines = []
+        current_line = words[0]
+
+        for word in words[1:]:
+            test_line = current_line + " " + word
+            if font.size(test_line)[0] <= max_width:
+                current_line = test_line
+                
+            else:
+                lines.append(current_line)
+                current_line = word
+
+        lines.append(current_line)
+        return lines
+
+    def format_lap_time(self, seconds):
+        # Format a single lap time
+        minutes = int(seconds // 60)
+        secs = int(seconds % 60)
+        millis = int((seconds - int(seconds)) * 1000)
+
+        if minutes > 0:
+            return f"{minutes}:{secs:02d}.{millis:03d}"
+        
+        return f"{secs}.{millis:03d}"
+
+    def format_race_time(self, seconds):
+        # Format a full race time
+        hours = int(seconds // 3600)
+        minutes = int((seconds % 3600) // 60)
+        secs = seconds % 60
+
+        if hours > 0:
+            return f"{hours}:{minutes:02d}:{secs:06.3f}"
+        
+        return f"{minutes}:{secs:06.3f}"
+
+    def update_fastest_lap_events(self):
+        # Detect fastest lap changes
+        for car in self.rm.cars:
+            if not car.completed_laps:
+                continue
+
+            latest_lap = car.completed_laps[-1]
+            lap_time = latest_lap["lap_time"]
+            lap_number = latest_lap["lap"]
+
+            if self.fastest_lap_time is None or lap_time < self.fastest_lap_time:
+                if (self.fastest_lap_time is None or car.car_id != self.fastest_lap_driver or abs(lap_time - self.fastest_lap_time) > 0.001):
+                    self.fastest_lap_time = lap_time
+                    self.fastest_lap_driver = car.car_id
+                    formatted_lap_time = self.format_lap_time(lap_time)
+                    self.add_event_message(f"FASTEST LAP: {car.car_id} set a {formatted_lap_time} on Lap {lap_number}")
+
+    def update_race_event_messages(self):
+        # Update fastest lap event
+        self.update_fastest_lap_events()
+
+        # Announce final lap once
+        if not self.final_lap_announced and self.rm.lap_number >= self.rm.total_laps:
+            self.add_event_message("FINAL LAP")
+            self.final_lap_announced = True
+
+        newly_finished = []
+
+        for car in self.rm.cars:
+            car_id = car.car_id
+
+            previous_pending = self.previous_pending_pit.get(car_id, False)
+            previous_in_pit = self.previous_in_pit_lane.get(car_id, False)
+            previous_retired = self.previous_retired.get(car_id, False)
+            previous_finished = self.previous_finished.get(car_id, False)
+
+            current_finished = (car.lap_count >= self.rm.total_laps)
+
+            # Detect new pit call
+            if not previous_pending and car.pending_pit:
+                compound_text = car.pit_compound if car.pit_compound is not None else "UNKNOWN"
+                self.add_event_message(f"PIT CALL: {car_id} instructed to pit for {compound_text}")
+
+            # Detect pit entry
+            if not previous_in_pit and car.in_pit_lane:
+                self.pit_entry_times[car_id] = self.rm.sim_time
+                self.pit_exit_reported.discard(car_id)
+                self.add_event_message(f"PIT ENTRY: {car_id} has entered the pits")
+
+            # Detect pit exit
+            if previous_in_pit and not car.in_pit_lane and car_id not in self.pit_exit_reported:
+                pit_entry_time = self.pit_entry_times.get(car_id)
+                total_pit_time = None
+
+                if pit_entry_time is not None:
+                    total_pit_time = self.rm.sim_time - pit_entry_time
+                    car.last_pit_total_time_s = total_pit_time
+
+                stationary_time = car.last_pit_service_time_s
+
+                if total_pit_time is not None:
+                    self.add_event_message(f"PIT EXIT: {car_id} exited pits | stop {stationary_time:.2f}s | lane time {total_pit_time:.2f}s")
+                    
+                else:
+                    self.add_event_message(f"PIT EXIT: {car_id} exited pits | stop {stationary_time:.2f}s")
+
+                self.pit_exit_reported.add(car_id)
+                self.pit_entry_times.pop(car_id, None)
+
+            # Detect retirement
+            if not previous_retired and car.retired:
+                self.add_event_message(f"DNF: {car_id} is out of the race")
+
+            # Collect newly finished cars
+            if not previous_finished and current_finished and not car.retired:
+                newly_finished.append(car)
+
+            self.previous_pending_pit[car_id] = car.pending_pit
+            self.previous_in_pit_lane[car_id] = car.in_pit_lane
+            self.previous_retired[car_id] = car.retired
+            self.previous_finished[car_id] = current_finished
+
+        # Announce finishers in classification order
+        if newly_finished:
+            finished_cars = sorted([c for c in self.rm.cars if c.lap_count >= self.rm.total_laps and not c.retired], key=lambda c: c.total_time)
+
+            for car in sorted(newly_finished, key=lambda c: c.total_time):
+                if car.car_id in self.announced_finishers:
+                    continue
+
+                finish_position = finished_cars.index(car) + 1
+                formatted_time = self.format_race_time(car.total_time)
+
+                if finish_position == 1 and not self.winner_announced:
+                    self.add_event_message(f"WINNER: P1 {car.car_id} wins the {self.rm.grandprix} in {formatted_time}")
+                    self.winner_announced = True
+                    
+                else:
+                    leader_time = finished_cars[0].total_time
+                    gap_to_winner = car.total_time - leader_time
+                    formatted_gap = f"+{gap_to_winner:.3f}s"
+                    self.add_event_message(f"FLAG: P{finish_position} {car.car_id} finished in {formatted_time} ({formatted_gap})")
+
+                self.announced_finishers.add(car.car_id)
+
+    def draw_event_box(self):
+        box_width = self.screen_x / 4.25
+        box_height = self.screen_y / 1.225
+        box_x = self.screen_x / 1.14
+        box_y = self.screen_y / 1.8
+
+        title_font = pygame.font.Font(font_name, int(self.screen_y / 40))
+        row_font = pygame.font.Font(font_name, int(self.screen_y / 80))
+
+        r, g, b = box_colour_2
+
+        # Background
+        box_surface = pygame.Surface((box_width, box_height), pygame.SRCALPHA)
+        pygame.draw.rect(box_surface, (r, g, b, 210), box_surface.get_rect(), border_radius=18)
+        box_rect = box_surface.get_rect(center=(box_x, box_y))
+        self.screen.blit(box_surface, box_rect)
+
+        # Title
+        title_surface = title_font.render("Race Events", True, white)
+        title_rect = title_surface.get_rect(center=(box_x, box_y - box_height / 2 + box_height / 25))
+        self.screen.blit(title_surface, title_rect)
+
+        padding_x = box_width * 0.05
+        padding_bottom = box_height * 0.02
+        content_top = box_y - box_height / 2 + box_height * 0.08
+        content_bottom = box_y + box_height / 2 - padding_bottom
+        text_left = box_x - box_width / 2 + padding_x
+        text_right = box_x + box_width / 2 - padding_x
+        max_text_width = text_right - text_left
+
+        line_height = row_font.get_height() + 2
+        message_gap = 8
+        current_y = content_bottom
+
+        # Draw newest messages at the bottom
+        for message in reversed(self.event_messages):
+            wrapped_lines = self.wrap_event_text(message, row_font, max_text_width)
+
+            message_height = len(wrapped_lines) * line_height
+            separator_y = current_y - message_height - 4
+
+            if separator_y < content_top:
+                break
+
+            pygame.draw.line(self.screen, grey_2, (text_left, separator_y), (text_right, separator_y), 1)
+
+            line_y = separator_y + 6
+            for wrapped_line in wrapped_lines:
+                message_surface = row_font.render(wrapped_line, True, red_2)
+                message_rect = message_surface.get_rect(topleft=(text_left, line_y))
+                self.screen.blit(message_surface, message_rect)
+                line_y += line_height
+
+            current_y = separator_y - message_gap
+
+    # ===== TABBED WINDOW DISPLAY =====
     def create_graph_tab_buttons(self):
         graph_width = self.screen_x / 1.8
         graph_height = self.screen_y / 1.5
@@ -557,25 +779,26 @@ class Simulation:
             })
 
     def get_shared_graph_area(self):
-        # all graphs use this same box
+        # Shared graph panel size and position
         graph_width = self.screen_x / 1.8
         graph_height = self.screen_y / 1.5
         graph_x = self.screen_x / 2.2
         graph_y = self.screen_y / 1.8
 
         return graph_x, graph_y, graph_width, graph_height
-    
+
     def draw_graph_tabs(self):
         tab_font = pygame.font.Font(font_name, int(self.screen_y / 62))
 
         for button in self.graph_tab_buttons:
             rect = button["rect"]
 
-            # simple tab colours
             if button["name"] == self.active_graph_tab:
                 colour = red_2
+                
             elif button["hover"]:
                 colour = box_hover_2
+                
             else:
                 colour = box_colour_2
 
@@ -585,20 +808,21 @@ class Simulation:
             text_surface = tab_font.render(button["name"], True, white)
             text_rect = text_surface.get_rect(center=rect.center)
             self.screen.blit(text_surface, text_rect)
-            
+
     def draw_active_graph_panel(self):
         if self.active_graph_tab == "Driver Position":
             self.draw_position_graph()
-
+            
         elif self.active_graph_tab == "Tyre Stints":
             self.draw_tyre_stint_graph()
-
+            
         elif self.active_graph_tab == "Lap Time":
             self.draw_lap_time_graph()
-
+            
         elif self.active_graph_tab == "Circuit Map":
             self.draw_circuit_map_graph()
-            
+
+    # ===== POSITION LINE GRAPH =====
     def initialise_position_history(self):
         self.position_history.clear()
 
@@ -607,12 +831,12 @@ class Simulation:
 
         self.last_position_history_lap = 0
 
-        # Save initial starting order as lap 0
+        # Save initial starting order
         starting_order = sorted(self.rm.cars, key=lambda car: self.rm.get_progress(car), reverse=True)
 
         for position, car in enumerate(starting_order, start=1):
             self.position_history[car.car_id].append((1.0, position))
-        
+
     def update_position_history(self):
         latest_logged_lap = self.rm.last_logged_completed_lap
 
@@ -635,21 +859,22 @@ class Simulation:
                 self.position_history[car.car_id].append((float(lap_to_store), position))
 
             self.last_position_history_lap = lap_to_store
-           
+
     def draw_position_graph(self):
-        # all graphs use the same panel
         graph_x, graph_y, graph_width, graph_height = self.get_shared_graph_area()
-        
+
         axis_font = pygame.font.Font(font_name, int(self.screen_y / 58))
         label_font = pygame.font.Font(font_name, int(self.screen_y / 70))
 
         r, g, b = box_colour_2
 
+        # Draw panel background
         graph_surface = pygame.Surface((graph_width, graph_height), pygame.SRCALPHA)
         pygame.draw.rect(graph_surface, (r, g, b, 210), graph_surface.get_rect(), border_radius=18)
         graph_rect = graph_surface.get_rect(center=(graph_x, graph_y))
         self.screen.blit(graph_surface, graph_rect)
 
+        # Define plot area
         padding_left = graph_width * 0.05
         padding_right = graph_width * 0.025
         padding_top = graph_height * 0.125
@@ -663,14 +888,14 @@ class Simulation:
         plot_width = plot_right - plot_left
         plot_height = plot_bottom - plot_top
 
-        # axes
+        # Draw axes
         pygame.draw.line(self.screen, white, (plot_left, plot_top), (plot_left, plot_bottom), 2)
         pygame.draw.line(self.screen, white, (plot_left, plot_bottom), (plot_right, plot_bottom), 2)
 
         min_lap = 1
         max_lap = max(min_lap, self.rm.total_laps)
 
-        # y-axis labels
+        # Draw y-axis labels
         display_slots = len(self.rm.cars) + 1
 
         for pos in range(1, len(self.rm.cars) + 1):
@@ -682,7 +907,7 @@ class Simulation:
             label_rect = label_surface.get_rect(midright=(plot_left - 8, y))
             self.screen.blit(label_surface, label_rect)
 
-        # x-axis labels
+        # Draw x-axis labels
         lap_step = 5
         for lap in range(min_lap, max_lap + 1, lap_step):
             x = plot_left + ((lap - min_lap) / max(1, (max_lap - min_lap))) * plot_width
@@ -693,7 +918,7 @@ class Simulation:
             label_rect = label_surface.get_rect(midtop=(x, plot_bottom + 6))
             self.screen.blit(label_surface, label_rect)
 
-        # plot driver lines / points
+        # Plot driver lines
         for car in self.rm.cars:
             colour = team_colours.get(car.team_id, white)
             history = self.position_history.get(car.car_id, [])
@@ -722,215 +947,16 @@ class Simulation:
             label_rect = label_surface.get_rect(midleft=(points[-1][0] + 6, points[-1][1]))
             self.screen.blit(label_surface, label_rect)
 
-    def initialise_event_state(self):
-        for car in self.rm.cars:
-            self.previous_pending_pit[car.car_id] = car.pending_pit
-            self.previous_in_pit_lane[car.car_id] = car.in_pit_lane
-            self.previous_retired[car.car_id] = car.retired
-            self.previous_finished[car.car_id] = (car.lap_count >= self.rm.total_laps)
-
-    def add_event_message(self, text):
-        self.event_messages.append(text)
-        self.event_messages = self.event_messages[-self.max_event_messages:]
-        
-    def wrap_event_text(self, text, font, max_width):
-        words = text.split()
-        if not words:
-            return [""]
-
-        lines = []
-        current_line = words[0]
-
-        for word in words[1:]:
-            test_line = current_line + " " + word
-            if font.size(test_line)[0] <= max_width:
-                current_line = test_line
-            else:
-                lines.append(current_line)
-                current_line = word
-
-        lines.append(current_line)
-        return lines
-        
-    def format_lap_time(self, seconds):
-        # this is for lap times, so no hours
-        minutes = int(seconds // 60)
-        secs = int(seconds % 60)
-        millis = int((seconds - int(seconds)) * 1000)
-
-        if minutes > 0:
-            return f"{minutes}:{secs:02d}.{millis:03d}"
-        return f"{secs}.{millis:03d}"
-        
-    def format_race_time(self, seconds):
-        hours = int(seconds // 3600)
-        minutes = int((seconds % 3600) // 60)
-        secs = seconds % 60
-
-        if hours > 0:
-            return f"{hours}:{minutes:02d}:{secs:06.3f}"
-        return f"{minutes}:{secs:06.3f}"
-        
-    def update_fastest_lap_events(self):
-        for car in self.rm.cars:
-            if not car.completed_laps:
-                continue
-
-            latest_lap = car.completed_laps[-1]
-            lap_time = latest_lap["lap_time"]
-            lap_number = latest_lap["lap"]
-
-            if self.fastest_lap_time is None or lap_time < self.fastest_lap_time:
-                if self.fastest_lap_time is None or car.car_id != self.fastest_lap_driver or abs(lap_time - self.fastest_lap_time) > 0.001:
-                    self.fastest_lap_time = lap_time
-                    self.fastest_lap_driver = car.car_id
-                    # use lap time format here instead of full race time format
-                    formatted_lap_time = self.format_lap_time(lap_time)
-                    self.add_event_message(f"FASTEST LAP: {car.car_id} set a {formatted_lap_time} on Lap {lap_number}")
-                    
-    def update_race_event_messages(self):
-        self.update_fastest_lap_events()
-
-        if not self.final_lap_announced and self.rm.lap_number >= self.rm.total_laps:
-            self.add_event_message("FINAL LAP")
-            self.final_lap_announced = True
-
-        for car in self.rm.cars:
-            car_id = car.car_id
-
-            previous_pending = self.previous_pending_pit.get(car_id, False)
-            previous_in_pit = self.previous_in_pit_lane.get(car_id, False)
-            previous_retired = self.previous_retired.get(car_id, False)
-            previous_finished = self.previous_finished.get(car_id, False)
-
-            current_finished = (car.lap_count >= self.rm.total_laps)
-
-            # Pit call issued
-            if not previous_pending and car.pending_pit:
-                compound_text = car.pit_compound if car.pit_compound is not None else "UNKNOWN"
-                self.add_event_message(f"PIT CALL: {car_id} instructed to pit for {compound_text}")
-
-            # Pit entry
-            if not previous_in_pit and car.in_pit_lane:
-                self.pit_entry_times[car_id] = self.rm.sim_time
-                self.pit_exit_reported.discard(car_id)
-                self.add_event_message(f"PIT ENTRY: {car_id} has entered the pits")
-
-            # Pit exit
-            if previous_in_pit and not car.in_pit_lane and car_id not in self.pit_exit_reported:
-                pit_entry_time = self.pit_entry_times.get(car_id)
-                total_pit_time = None
-
-                if pit_entry_time is not None:
-                    total_pit_time = self.rm.sim_time - pit_entry_time
-                    car.last_pit_total_time_s = total_pit_time
-
-                stationary_time = car.last_pit_service_time_s
-
-                if total_pit_time is not None:
-                    self.add_event_message(f"PIT EXIT: {car_id} exited pits | stop {stationary_time:.2f}s | lane time {total_pit_time:.2f}s")
-                    
-                else:
-                    self.add_event_message(f"PIT EXIT: {car_id} exited pits | stop {stationary_time:.2f}s")
-
-                self.pit_exit_reported.add(car_id)
-                self.pit_entry_times.pop(car_id, None)
-
-            # DNF
-            if not previous_retired and car.retired:
-                self.add_event_message(f"DNF: {car_id} is out of the race")
-
-            # Finishers
-            if not previous_finished and current_finished:
-                finished_cars = sorted([c for c in self.rm.cars if c.lap_count >= self.rm.total_laps and not c.retired], key=lambda c: c.total_time)
-
-                if finished_cars:
-                    finish_position = finished_cars.index(car) + 1
-                    formatted_time = self.format_race_time(car.total_time)
-
-                    if finish_position == 1 and not self.winner_announced:
-                        self.add_event_message(f"WINNER: P1 {car_id} wins the {self.rm.grandprix} in {formatted_time}")
-                        self.winner_announced = True
-                        
-                    else:
-                        leader_time = finished_cars[0].total_time
-                        gap_to_winner = car.total_time - leader_time
-                        formatted_gap = f"+{gap_to_winner:.3f}s"
-                        self.add_event_message(f"FLAG: P{finish_position} {car_id} finished in {formatted_time} ({formatted_gap})")
-
-                    if finish_position <= 3 and car_id not in self.podium_announced:
-                        self.podium_announced.add(car_id)
-
-            self.previous_pending_pit[car_id] = car.pending_pit
-            self.previous_in_pit_lane[car_id] = car.in_pit_lane
-            self.previous_retired[car_id] = car.retired
-            self.previous_finished[car_id] = current_finished
-
-    def draw_event_box(self):
-        box_width = self.screen_x / 4.25
-        box_height = self.screen_y / 1.225
-        box_x = self.screen_x / 1.14
-        box_y = self.screen_y / 1.8
-
-        title_font = pygame.font.Font(font_name, int(self.screen_y / 40))
-        row_font = pygame.font.Font(font_name, int(self.screen_y / 80))
-
-        r, g, b = box_colour_2
-
-        box_surface = pygame.Surface((box_width, box_height), pygame.SRCALPHA)
-        pygame.draw.rect(box_surface, (r, g, b, 210), box_surface.get_rect(), border_radius=18)
-        box_rect = box_surface.get_rect(center=(box_x, box_y))
-        self.screen.blit(box_surface, box_rect)
-
-        # Title
-        title_surface = title_font.render("Race Events", True, white)
-        title_rect = title_surface.get_rect(center=(box_x, box_y - box_height / 2 + box_height / 25))
-        self.screen.blit(title_surface, title_rect)
-
-        padding_x = box_width * 0.05
-        padding_bottom = box_height * 0.05
-        content_top = box_y - box_height / 2 + box_height * 0.15
-        content_bottom = box_y + box_height / 2 - padding_bottom
-        text_left = box_x - box_width / 2 + padding_x
-        text_right = box_x + box_width / 2 - padding_x
-        max_text_width = text_right - text_left
-
-        line_height = row_font.get_height() + 2
-        message_gap = 8
-
-        current_y = content_bottom
-
-        # draw newest messages at the bottom, older ones above
-        for message in reversed(self.event_messages):
-            wrapped_lines = self.wrap_event_text(message, row_font, max_text_width)
-
-            message_height = len(wrapped_lines) * line_height
-            separator_y = current_y - message_height - 4
-
-            # stop if there is no more room
-            if separator_y < content_top:
-                break
-
-            # separator line above the message block
-            pygame.draw.line(self.screen, grey_2, (text_left, separator_y), (text_right, separator_y), 1)
-
-            line_y = separator_y + 6
-
-            for wrapped_line in wrapped_lines:
-                message_surface = row_font.render(wrapped_line, True, red_2)
-                message_rect = message_surface.get_rect(topleft=(text_left, line_y))
-                self.screen.blit(message_surface, message_rect)
-                line_y += line_height
-
-            current_y = separator_y - message_gap
-
+    # ===== TYRE STINT GRAPH =====
     def get_compound_colour(self, compound):
         compound_upper = str(compound).upper()
 
         if compound_upper == str(self.rm.compound_map["SOFT"]).upper():
             return red_3
+        
         elif compound_upper == str(self.rm.compound_map["MEDIUM"]).upper():
             return yellow
+        
         elif compound_upper == str(self.rm.compound_map["HARD"]).upper():
             return white
 
@@ -984,26 +1010,15 @@ class Simulation:
         })
 
         return stints
-    
-    def update_tyre_graph_order(self):
-        # keep tyre graph driver order matched to current race order
-        self.tyre_graph_order = [
-            entry["driver"]
-            for entry in self.cached_classification
-            if entry["status"] != "dnf"
-        ]
 
-        # add any DNF cars at the bottom
-        dnf_drivers = [
-            entry["driver"]
-            for entry in self.cached_classification
-            if entry["status"] == "dnf"
-        ]
+    def update_tyre_graph_order(self):
+        # Keep tyre graph order matched to live classification
+        self.tyre_graph_order = [entry["driver"] for entry in self.cached_classification if entry["status"] != "dnf"]
+        dnf_drivers = [entry["driver"] for entry in self.cached_classification if entry["status"] == "dnf"]
 
         self.tyre_graph_order.extend(dnf_drivers)
-    
+
     def draw_tyre_stint_graph(self):
-        # all graphs use the same panel
         graph_x, graph_y, graph_width, graph_height = self.get_shared_graph_area()
 
         axis_font = pygame.font.Font(font_name, int(self.screen_y / 70))
@@ -1012,11 +1027,13 @@ class Simulation:
 
         r, g, b = box_colour_2
 
+        # Draw panel background
         graph_surface = pygame.Surface((graph_width, graph_height), pygame.SRCALPHA)
         pygame.draw.rect(graph_surface, (r, g, b, 210), graph_surface.get_rect(), border_radius=18)
         graph_rect = graph_surface.get_rect(center=(graph_x, graph_y))
         self.screen.blit(graph_surface, graph_rect)
 
+        # Define plot area
         padding_left = graph_width * 0.065
         padding_right = graph_width * 0.025
         padding_top = graph_height * 0.125
@@ -1033,16 +1050,10 @@ class Simulation:
         pygame.draw.line(self.screen, white, (plot_left, plot_top), (plot_left, plot_bottom), 2)
         pygame.draw.line(self.screen, white, (plot_left, plot_bottom), (plot_right, plot_bottom), 2)
 
-        # only grow when a lap is actually completed
         current_axis_lap = max(1, self.rm.last_logged_completed_lap)
 
-        # keep lap 1 visible at the start
-        if current_axis_lap == 0:
-            current_axis_lap = 1
-
-        # just show the current lap on the right
+        # Show current lap marker on the right
         x = plot_right
-
         pygame.draw.line(self.screen, grey_2, (x, plot_top), (x, plot_bottom), 1)
 
         label_surface = axis_font.render(str(current_axis_lap), True, grey)
@@ -1076,20 +1087,14 @@ class Simulation:
                 stint_length = stint["length"]
                 compound = stint["compound"]
 
-                # work out the bar start and end using the full race distance
-                # lap 1 fills the whole graph
                 if current_axis_lap == 1:
                     bar_x = plot_left
                     bar_width = plot_width
                     
                 else:
-                    # start and end of the bar
                     bar_x = plot_left + ((start_lap - 1) / current_axis_lap) * plot_width
                     bar_end_x = plot_left + (end_lap / current_axis_lap) * plot_width
-
-                    # keep bar inside the graph
                     bar_end_x = min(bar_end_x, plot_right)
-
                     bar_width = max(12, bar_end_x - bar_x)
 
                 bar_rect = pygame.Rect(bar_x, row_y - bar_height / 2, bar_width, bar_height)
@@ -1106,29 +1111,17 @@ class Simulation:
                     text_rect = text_surface.get_rect(center=bar_rect.center)
                     self.screen.blit(text_surface, text_rect)
 
-    def get_lap_time_axis_max(self):
-        # start the y axis ceiling at 1:30
-        axis_max = 90.0
-
-        # if any slower lap exists, grow the axis
-        for car in self.rm.cars:
-            for lap_record in car.completed_laps:
-                axis_max = max(axis_max, lap_record["lap_time"])
-
-        # round up to the next 5 second block
-        step = 5.0
-        axis_max = math.ceil(axis_max / step) * step
-
-        return axis_max
-
+    # ===== LAP TIME GRAPH =====
     def get_lap_axis_step(self, max_lap):
-        # small number of laps = show every lap
         if max_lap <= 10:
             return 1
+        
         elif max_lap <= 20:
             return 2
+        
         elif max_lap <= 40:
             return 5
+        
         return 10
 
     def get_lap_time_axis_range(self):
@@ -1158,11 +1151,13 @@ class Simulation:
 
         r, g, b = box_colour_2
 
+        # Draw panel background
         graph_surface = pygame.Surface((graph_width, graph_height), pygame.SRCALPHA)
         pygame.draw.rect(graph_surface, (r, g, b, 210), graph_surface.get_rect(), border_radius=18)
         graph_rect = graph_surface.get_rect(center=(graph_x, graph_y))
         self.screen.blit(graph_surface, graph_rect)
 
+        # Define plot area
         padding_left = graph_width * 0.11
         padding_right = graph_width * 0.025
         padding_top = graph_height * 0.125
@@ -1179,14 +1174,13 @@ class Simulation:
         pygame.draw.line(self.screen, white, (plot_left, plot_top), (plot_left, plot_bottom), 2)
         pygame.draw.line(self.screen, white, (plot_left, plot_bottom), (plot_right, plot_bottom), 2)
 
-        # display laps starting at 1
         raw_max_lap = self.rm.last_logged_completed_lap
         max_lap = max(1, raw_max_lap - 1)
 
         y_axis_min, y_axis_max = self.get_lap_time_axis_range()
         y_step = 0.5
 
-        # y-axis labels and grid
+        # Draw y-axis labels and grid
         y_value = y_axis_min
         while y_value <= y_axis_max:
             y = plot_bottom - ((y_value - y_axis_min) / max(1.0, (y_axis_max - y_axis_min))) * plot_height
@@ -1199,12 +1193,13 @@ class Simulation:
 
             y_value += y_step
 
-        # x-axis labels and grid
+        # Draw x-axis labels and grid
         lap_step = self.get_lap_axis_step(max_lap)
 
         for lap in range(1, max_lap + 1, lap_step):
             if max_lap == 1:
                 x = plot_left
+                
             else:
                 x = plot_left + ((lap - 1) / max(1, (max_lap - 1))) * plot_width
 
@@ -1214,7 +1209,7 @@ class Simulation:
             label_rect = label_surface.get_rect(midtop=(x, plot_bottom + 6))
             self.screen.blit(label_surface, label_rect)
 
-        # always show latest display lap on the right
+        # Always show latest lap marker
         if max_lap > 1 and max_lap % lap_step != 0:
             x = plot_right
             pygame.draw.line(self.screen, grey_2, (x, plot_top), (x, plot_bottom), 1)
@@ -1223,7 +1218,7 @@ class Simulation:
             label_rect = label_surface.get_rect(midtop=(x, plot_bottom + 6))
             self.screen.blit(label_surface, label_rect)
 
-        # draw each driver's lap time line
+        # Plot driver lap times
         for car in self.rm.cars:
             colour = team_colours.get(car.team_id, white)
             points = []
@@ -1232,16 +1227,17 @@ class Simulation:
                 raw_lap_number = lap_record["lap"]
                 lap_time = lap_record["lap_time"]
 
-                # convert raw lap numbering to display lap numbering
                 display_lap_number = raw_lap_number - 1
 
                 if display_lap_number < 1:
                     continue
+                
                 if display_lap_number > max_lap:
                     continue
 
                 if max_lap == 1:
                     x = plot_left
+                    
                 else:
                     x = plot_left + ((display_lap_number - 1) / max(1, (max_lap - 1))) * plot_width
 
@@ -1258,6 +1254,7 @@ class Simulation:
                 label_rect = label_surface.get_rect(midleft=(points[-1][0] + 6, points[-1][1]))
                 self.screen.blit(label_surface, label_rect)
 
+    # ===== CIRCUIT DISPLAY =====
     def load_circuit_points(self):
         gp_name = self.rm.grandprix.strip()
 
@@ -1364,7 +1361,7 @@ class Simulation:
             self.circuit_total_length += seg_len
             self.circuit_lengths.append(self.circuit_total_length)
 
-        # close the loop
+        # Close the loop
         x1, y1 = self.circuit_points[-1]
         x2, y2 = self.circuit_points[0]
         self.circuit_total_length += math.hypot(x2 - x1, y2 - y1)
@@ -1372,19 +1369,16 @@ class Simulation:
     def get_car_track_fraction(self, car):
         progress = float(self.rm.get_progress(car))
 
-        # case 1: progress is already lap-based
+        # Progress already lap-based
         if progress <= (self.rm.total_laps + 1):
-            fraction = progress % 1.0
-            return fraction
+            return progress % 1.0
 
-        # case 2: simulator exposes track length
+        # Progress based on track length
         if hasattr(self.rm, "track_length") and self.rm.track_length:
-            fraction = (progress % self.rm.track_length) / self.rm.track_length
-            return fraction
+            return (progress % self.rm.track_length) / self.rm.track_length
 
-        # fallback
-        fraction = progress % 1.0
-        return fraction
+        # Fallback
+        return progress % 1.0
 
     def get_point_on_circuit(self, fraction, scaled_points):
         if not scaled_points or self.circuit_total_length <= 0:
@@ -1409,7 +1403,7 @@ class Simulation:
                 py = y1 + (y2 - y1) * t
                 return (px, py)
 
-        # closing segment
+        # Closing segment
         prev_len = self.circuit_lengths[-1]
         x1, y1 = scaled_points[-1]
         x2, y2 = scaled_points[0]
@@ -1429,11 +1423,13 @@ class Simulation:
         car_font = pygame.font.Font(font_name, int(self.screen_y / 60))
         r, g, b = box_colour_2
 
+        # Draw panel background
         graph_surface = pygame.Surface((graph_width, graph_height), pygame.SRCALPHA)
         pygame.draw.rect(graph_surface, (r, g, b, 210), graph_surface.get_rect(), border_radius=18)
         graph_rect = graph_surface.get_rect(center=(graph_x, graph_y))
         self.screen.blit(graph_surface, graph_rect)
 
+        # Show fallback text if no circuit data exists
         if not self.circuit_points:
             info_surface = text_font.render("Circuit data not found", True, grey)
             info_rect = info_surface.get_rect(center=(graph_x, graph_y))
@@ -1443,12 +1439,14 @@ class Simulation:
         scaled_points = self.get_scaled_circuit_points()
 
         if len(scaled_points) >= 2:
+            # Draw circuit outline
             pygame.draw.lines(self.screen, white, True, scaled_points, 4)
 
+            # Draw start marker
             start_x, start_y = scaled_points[0]
             pygame.draw.circle(self.screen, green, (int(start_x), int(start_y)), 6)
 
-            # draw cars
+            # Draw cars on track
             for car in self.rm.cars:
                 if car.retired:
                     continue
@@ -1468,7 +1466,8 @@ class Simulation:
                 label_surface = car_font.render(car.car_id, True, red_3)
                 label_rect = label_surface.get_rect(midleft=(px + 10, py))
                 self.screen.blit(label_surface, label_rect)
-        
+
+    # ===== RENDER =====
     def render(self):
         self.screen.fill(background_colour)
         self.update_dots()
@@ -1480,6 +1479,7 @@ class Simulation:
         self.draw_event_box()
         self.draw_top_button()
 
+    # ===== UPDATE =====
     def update(self):
         mouse_pos = pygame.mouse.get_pos()
 
@@ -1495,10 +1495,10 @@ class Simulation:
         # Hover states
         for button in self.speed_buttons:
             button["hover"] = button["rect"].collidepoint(mouse_pos)
-            
+
         for button in self.graph_tab_buttons:
             button["hover"] = button["rect"].collidepoint(mouse_pos)
-            
+
         if not self.race_started or self.sim_finished:
             self.update_top_buttons(mouse_pos)
 
@@ -1508,8 +1508,7 @@ class Simulation:
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 clicked_speed_button = False
-                clicked_graph_tab = False
-                
+
                 if not self.race_started:
                     start_button = self.button[0]
                     if start_button["rect"].collidepoint(mouse_pos):
@@ -1520,12 +1519,13 @@ class Simulation:
                     if return_button["rect"].collidepoint(mouse_pos):
                         self.s_Mode = return_button["mode"]
 
+                # Handle graph tab clicks
                 for button in self.graph_tab_buttons:
                     if button["rect"].collidepoint(mouse_pos):
                         self.active_graph_tab = button["name"]
-                        clicked_graph_tab = True
                         break
 
+                # Handle speed control clicks
                 for button in self.speed_buttons:
                     if button["rect"].collidepoint(mouse_pos):
                         clicked_speed_button = True
@@ -1547,6 +1547,7 @@ class Simulation:
                 if not clicked_speed_button:
                     self.custom_speed_input_active = False
 
+            # Handle typed custom speed input
             if event.type == pygame.KEYDOWN and self.custom_speed_input_active:
                 if event.key == pygame.K_RETURN:
                     if self.custom_speed_input != "":
@@ -1554,6 +1555,7 @@ class Simulation:
                             entered_value = float(self.custom_speed_input)
                             if 0.5 <= entered_value <= 1000:
                                 self.sim_speed = entered_value
+                                
                         except ValueError:
                             pass
 
@@ -1565,10 +1567,11 @@ class Simulation:
                 else:
                     if event.unicode.isdigit():
                         self.custom_speed_input += event.unicode
+                        
                     elif event.unicode == "." and "." not in self.custom_speed_input:
                         self.custom_speed_input += "."
 
-        # Step simulation only after race has started
+        # Step simulation after race has started
         if self.race_started and not self.sim_finished:
             whole_steps = int(self.sim_speed)
             fractional_step = self.sim_speed - whole_steps
@@ -1578,7 +1581,7 @@ class Simulation:
 
             if fractional_step > 0:
                 self.rm.step_tick(self.rm.dt * fractional_step)
-                
+
             self.update_position_history()
             self.update_race_event_messages()
 
@@ -1587,7 +1590,7 @@ class Simulation:
                 self.update_tyre_graph_order()
                 self.last_timing_update = self.rm.sim_time
 
-            # only mark finished AFTER a tick has happened and the race manager says it is finished
+            # Mark race finished only after final tick
             if self.rm.race_finished:
                 self.sim_finished = True
                 self.rm.log_final_classification()
