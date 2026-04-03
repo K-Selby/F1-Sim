@@ -87,9 +87,9 @@
     },
     "characteristics": {
       "traction": 2,
-      "asphalt_grip": 2,
+      "asphalt_grip": 3,
       "asphalt_abrasion": 2,
-      "track_evolution": 3,
+      "track_evolution": 4,
       "tyre_stress": 3,
       "braking": 2,
       "lateral": 3,
