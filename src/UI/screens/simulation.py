@@ -30,7 +30,7 @@ class Simulation:
         self.position_history = {}
         self.last_position_history_lap = 0
         self.event_messages = []
-        self.max_event_messages = 11
+        self.max_event_messages = 25
         self.fastest_lap_time = None
         self.fastest_lap_driver = None
         self.previous_pending_pit = {}
@@ -939,7 +939,6 @@ class Simulation:
     def build_tyre_stint_data(self, car):
         stints = []
 
-        # start on 1 because of the formation lap
         if not car.completed_laps:
             stints.append({
                 "compound": car.tyre_state.compound,
@@ -950,13 +949,18 @@ class Simulation:
             return stints
 
         current_compound = car.completed_laps[0]["compound"]
+        current_stint_id = car.completed_laps[0].get("stint_id", 1)
         stint_start_lap = 1
 
         for lap_record in car.completed_laps[1:]:
             lap_number = lap_record["lap"]
             lap_compound = lap_record["compound"]
+            lap_stint_id = lap_record.get("stint_id", current_stint_id)
 
-            if str(lap_compound).upper() != str(current_compound).upper():
+            compound_changed = str(lap_compound).upper() != str(current_compound).upper()
+            stint_changed = lap_stint_id != current_stint_id
+
+            if compound_changed or stint_changed:
                 previous_lap = lap_number - 1
 
                 stints.append({
@@ -967,14 +971,10 @@ class Simulation:
                 })
 
                 current_compound = lap_compound
+                current_stint_id = lap_stint_id
                 stint_start_lap = lap_number
 
-        # this keeps the current stint on the current displayed lap
         current_display_lap = max(1, self.rm.last_logged_completed_lap)
-
-        # before lap 1 is completed, still show the opening stint as lap 1
-        if current_display_lap == 0:
-            current_display_lap = 1
 
         stints.append({
             "compound": current_compound,
@@ -1569,10 +1569,16 @@ class Simulation:
                         self.custom_speed_input += "."
 
         # Step simulation only after race has started
-        # Step simulation only after race has started
         if self.race_started and not self.sim_finished:
-            sim_dt = self.rm.dt * self.sim_speed
-            self.rm.step_tick(sim_dt)
+            whole_steps = int(self.sim_speed)
+            fractional_step = self.sim_speed - whole_steps
+
+            for _ in range(whole_steps):
+                self.rm.step_tick(self.rm.dt)
+
+            if fractional_step > 0:
+                self.rm.step_tick(self.rm.dt * fractional_step)
+                
             self.update_position_history()
             self.update_race_event_messages()
 
