@@ -47,7 +47,6 @@ class Simulation:
         self.previous_in_pit_lane = {}
         self.previous_retired = {}
         self.previous_finished = {}
-        self.pit_entry_times = {}
         self.pit_exit_reported = set()
         self.winner_announced = False
         self.announced_finishers = set()
@@ -636,29 +635,16 @@ class Simulation:
 
             # Detect pit entry
             if not previous_in_pit and car.in_pit_lane:
-                self.pit_entry_times[car_id] = self.rm.sim_time
                 self.pit_exit_reported.discard(car_id)
                 self.add_event_message(f"PIT ENTRY: {car_id} has entered the pits")
 
             # Detect pit exit
             if previous_in_pit and not car.in_pit_lane and car_id not in self.pit_exit_reported:
-                pit_entry_time = self.pit_entry_times.get(car_id)
-                total_pit_time = None
-
-                if pit_entry_time is not None:
-                    total_pit_time = self.rm.sim_time - pit_entry_time
-                    car.last_pit_total_time_s = total_pit_time
-
+                total_pit_time = car.last_pit_total_time_s
                 stationary_time = car.last_pit_service_time_s
-
-                if total_pit_time is not None:
-                    self.add_event_message(f"PIT EXIT: {car_id} exited pits | stop {stationary_time:.2f}s | lane time {total_pit_time:.2f}s")
-                    
-                else:
-                    self.add_event_message(f"PIT EXIT: {car_id} exited pits | stop {stationary_time:.2f}s")
+                self.add_event_message(f"PIT EXIT: {car_id} exited pits | stop {stationary_time:.2f}s | lane time {total_pit_time:.2f}s")
 
                 self.pit_exit_reported.add(car_id)
-                self.pit_entry_times.pop(car_id, None)
 
             # Detect retirement
             if not previous_retired and car.retired:
@@ -675,7 +661,10 @@ class Simulation:
 
         # Announce finishers in classification order
         if newly_finished:
-            finished_cars = sorted([c for c in self.rm.cars if c.lap_count >= self.rm.total_laps and not c.retired], key=lambda c: c.total_time)
+            finished_cars = sorted(
+                [c for c in self.rm.cars if c.lap_count >= self.rm.total_laps and not c.retired],
+                key=lambda c: c.total_time
+            )
 
             for car in sorted(newly_finished, key=lambda c: c.total_time):
                 if car.car_id in self.announced_finishers:
@@ -687,7 +676,7 @@ class Simulation:
                 if finish_position == 1 and not self.winner_announced:
                     self.add_event_message(f"WINNER: P1 {car.car_id} wins the {self.rm.grandprix} in {formatted_time}")
                     self.winner_announced = True
-                    
+
                 else:
                     leader_time = finished_cars[0].total_time
                     gap_to_winner = car.total_time - leader_time

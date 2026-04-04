@@ -1,10 +1,7 @@
 from __future__ import annotations
-import random
 from dataclasses import dataclass
 from typing import Optional
-
 from src.models.TyreModel import TyreModel, TyreState
-
 
 @dataclass
 class CarCalibration:
@@ -14,20 +11,26 @@ class CarCalibration:
 
 
 class CarAgent:
-    def __init__(self, car_id: str, team_id: str, calibration: CarCalibration, tyre_state: TyreState, tyre_model: TyreModel, rng):        
+    def __init__(self, car_id: str, team_id: str, calibration: CarCalibration, tyre_state: TyreState, tyre_model: TyreModel, rng):
+        # ===== CAR IDENTITY =====
         self.car_id = car_id
         self.team_id = team_id
         self.calibration = calibration
         self.car_length = 5.5
+        # ===== TYRE MODEL =====
         self.tyre_state = tyre_state
         self.tyre_model = tyre_model
+        # ===== RANDOMNESS / EXECUTION =====
         self.rng = rng
         self.instruction: Optional[str] = None
+        self.lap_execution_noise: float = 0.0
+        self.last_lap_for_noise: int = -1
+        # ===== TIMING STATE =====
         self.total_time: float = 0.0
         self.current_lap_time: float = 0.0
+        self.last_speed_mps: float = 0.0
         self.retired: bool = False
-
-        # Pit / strategy flags
+        # ===== PIT / STRATEGY FLAGS =====
         self.pending_pit: bool = False
         self.pit_compound: Optional[str] = None
         self.next_compound: Optional[str] = None
@@ -35,30 +38,24 @@ class CarAgent:
         self.in_pit_lane: bool = False
         self.pit_stops_made: int = 0
         self.current_stint_id: int = 1
-
-        # Tyre set inventory for the race weekend allocation used in the sim.
-        # This includes the starting tyre, so the starting set is removed when assigned.
+        # ===== TYRE SET INVENTORY =====
+        # This includes the starting tyre, so the starting set is removed once assigned.
         self.tyre_set_inventory: dict[str, int] = {
             "SOFT": 1,
             "MEDIUM": 2,
             "HARD": 2,
         }
-
-        # Stint plan / pit review window
+        # ===== STINT PLAN / REVIEW WINDOW =====
         self.strategy_plan_stint_id: int = 0
         self.stint_min_review_age: float = 0.0
         self.stint_target_age: float = 0.0
         self.stint_max_age: float = 0.0
         self.last_strategy_call_lap: int = -1
-        
-        
-
-        # Dry compound legality tracking
+        # ===== DRY COMPOUND LEGALITY =====
         self.used_dry_compounds: set[str] = set()
         if self.tyre_state.compound not in {"INTERMEDIATE", "WET"}:
             self.used_dry_compounds.add(self.tyre_state.compound)
-
-        # Separate pit-lane spatial state
+        # ===== PIT LANE SPATIAL STATE =====
         self.pit_lane_position_m: float = 0.0
         self.pit_lane_total_m: float = 0.0
         self.pit_box_position_m: float = 0.0
@@ -67,12 +64,13 @@ class CarAgent:
         self.pit_line_crossed: bool = False
         self.pit_service_remaining_s: float = 0.0
         self.pit_phase: str = "none"
-
-        # Traffic effects
+        self.current_pit_entry_sim_time: float | None = None
+        self.last_pit_service_time_s: float = 0.0
+        self.last_pit_total_time_s: float = 0.0
+        # ===== TRAFFIC / RACECRAFT =====
         self.traffic_penalty = 0.0
         self.slipstream_bonus = 0.0
         self.following_intensity = 0.0
-        self.last_speed_mps: float = 0.0
         self.side_by_side_with: Optional[CarAgent] = None
         self.side_by_side_ticks: int = 0
         self.overtake_cooldown: float = 0.0
@@ -80,102 +78,82 @@ class CarAgent:
         self.car_behind: Optional[CarAgent] = None
         self.gap_ahead: float = float("inf")
         self.gap_behind: float = float("inf")
-
-        # DRS
+        # ===== DRS =====
         self.drs_eligible_lap: dict[int, int] = {}
         self.drs_active: bool = False
-
-        # Spatial state
+        # ===== TRACK POSITION =====
         self.track_position: float = 0.0
+        self.prev_track_position: float = 0.0
         self.lap_count: int = 0
         self.completed_laps: list[dict] = []
         self.has_taken_race_start = False
 
-        # Variance
-        self.lap_execution_noise: float = 0.0
-        self.last_lap_for_noise: int = -1
-
-    # ==========================================================
-    # SPATIAL HELPERS
-    # ==========================================================
+    # ===== SPATIAL HELPERS =====
     def set_grid_position(self, grid_offset_m: float, track_length: float) -> None:
-        self.track_position = grid_offset_m % track_length
+        # Place the car on the grid and reset lap-based state.
+        safe_track_length = max(1e-6, float(track_length))
+
+        self.track_position = float(grid_offset_m) % safe_track_length
+        self.prev_track_position = self.track_position
         self.lap_count = 0
         self.has_taken_race_start = False
         self.drs_eligible_lap = {}
         self.drs_active = False
-        self.prev_track_position: float = self.track_position
 
     def advance_position(self, distance_m: float, track_length: float) -> tuple[bool, float]:
+        # Move the car forward and detect whether the start / finish line was crossed.
+        safe_track_length = max(1e-6, float(track_length))
+        distance_m = max(0.0, float(distance_m))
+
         self.prev_track_position = self.track_position
 
         old_pos = self.track_position
         new_pos = old_pos + distance_m
-        crossed_line = new_pos >= track_length
-        self.track_position = new_pos % track_length
+        crossed_line = new_pos >= safe_track_length
+        self.track_position = new_pos % safe_track_length
 
         crossing_ratio = 1.0
         if crossed_line:
-            distance_to_line = max(0.0, track_length - old_pos)
+            distance_to_line = max(0.0, safe_track_length - old_pos)
             crossing_ratio = min(max(distance_to_line / max(distance_m, 1e-9), 0.0), 1.0)
             self.lap_count += 1
 
         return crossed_line, crossing_ratio
 
-    # ==========================================================
-    # SPEED / PACE MODEL
-    # ==========================================================
-    def compute_speed(
-        self,
-        segment: dict,
-        track_length: float,
-        base_lap_time: float,
-        lap_time_std: float,
-        evolution_level: float,
-        track_deg_multiplier: float,
-        drs_available: bool,
-        total_laps: int,
-        track_state: str = "GREEN",
-    ) -> float:
+    # ===== SPEED / PACE MODEL =====
+    def compute_speed(self, segment: dict, track_length: float, base_lap_time: float, lap_time_std: float, evolution_level: float, track_deg_multiplier: float, drs_available: bool, total_laps: int, track_state: str = "GREEN") -> float:
+        # Convert the current tyre, fuel, traffic and segment context into a speed.
         if self.retired:
             return 0.0
 
-        std_scale = max(lap_time_std, 1e-6)
+        safe_track_length = max(1e-6, float(track_length))
+        safe_total_laps = max(1, int(total_laps))
+        std_scale = max(float(lap_time_std), 1e-6)
 
         if self.lap_count != self.last_lap_for_noise:
             self.lap_execution_noise = self.rng.gauss(0.0, 0.16 * std_scale)
             self.last_lap_for_noise = self.lap_count
 
-        tyre_delta = self.tyre_model.lap_delta(
-            tyre_state=self.tyre_state,
-            track_deg_multiplier=track_deg_multiplier,
-            team_deg_factor=self.calibration.k_team,
-        )
+        tyre_delta = self.tyre_model.lap_delta(tyre_state=self.tyre_state, track_deg_multiplier=track_deg_multiplier, team_deg_factor=self.calibration.k_team)
+        race_fraction = min(1.0, max(0.0, self.lap_count / safe_total_laps))
 
-        race_fraction = min(1.0, max(0.0, self.lap_count / max(1, total_laps)))
-
-        # Reduced slightly so fuel burn does not hide tyre degradation too much.
+        # Fuel load fades away during the race so cars gradually get quicker.
         fuel_penalty = 1.70 * (1.0 - race_fraction)
 
-        effective_lap_time = (
-            base_lap_time
-            + self.calibration.mu_team
-            + tyre_delta
-            + fuel_penalty
-        )
-
-        effective_lap_time *= (1.0 - (0.0055 * evolution_level))
+        effective_lap_time = base_lap_time + self.calibration.mu_team + tyre_delta + fuel_penalty
+        effective_lap_time *= (1.0 - (0.0055 * float(evolution_level)))
 
         if track_state == "VSC":
             effective_lap_time *= 1.28
+            
         elif track_state == "SC":
             effective_lap_time *= 1.55
 
-        base_speed = track_length / max(effective_lap_time, 1e-6)
+        base_speed = safe_track_length / max(effective_lap_time, 1e-6)
 
-        seg_len = float(segment.get("length", track_length))
+        seg_len = float(segment.get("length", safe_track_length))
         seg_len = max(seg_len, 1e-6)
-        seg_frac = seg_len / max(track_length, 1e-6)
+        seg_frac = seg_len / safe_track_length
         seg_time = seg_len / max(base_speed, 1e-6)
 
         seg_time += self.lap_execution_noise * seg_frac
@@ -189,9 +167,11 @@ class CarAgent:
         if seg_type == "braking":
             sigma_frac = 0.017
             sigma = seg_time * sigma_frac * (0.65 + 0.70 * severity) * std_scale
+            
         elif seg_type == "corner":
             sigma_frac = 0.013
             sigma = seg_time * sigma_frac * (0.65 + 0.65 * severity) * std_scale
+            
         else:
             sigma_frac = 0.008
             sigma = seg_time * sigma_frac * std_scale
@@ -200,6 +180,7 @@ class CarAgent:
 
         if self.instruction == "PUSH":
             seg_time *= 0.997
+            
         elif self.instruction == "SAVE":
             seg_time *= 1.004
 
@@ -212,44 +193,43 @@ class CarAgent:
         speed += self.defend_position()
 
         return max(0.0, speed)
-    # ==========================================================
-    # TYRES
-    # ==========================================================
+
+    # ===== TYRES =====
     def update_tyre_wear(self, track_deg_multiplier: float) -> None:
+        # Age the tyre using track stress, traffic and pace mode.
         base_wear = min(max(float(track_deg_multiplier), 0.92), 1.22)
-
-        # Traffic should hurt tyres more than before.
         traffic_wear = 1.0 + (0.16 * self.following_intensity)
-
         wear_step = base_wear * traffic_wear
 
         if self.instruction == "PUSH":
             wear_step *= 1.07
+            
         elif self.instruction == "SAVE":
             wear_step *= 0.96
 
         self.tyre_model.advance(self.tyre_state, laps=wear_step)
 
     def set_tyre_inventory(self, inventory: dict[str, int]) -> None:
-        self.tyre_set_inventory = {k: int(v) for k, v in inventory.items()}
+        # Store the available weekend tyre sets and remove the starting set.
+        self.tyre_set_inventory = {key: max(0, int(value)) for key, value in inventory.items()}
 
         start_role = self.tyre_state.weekend_role
         if start_role in self.tyre_set_inventory:
             self.tyre_set_inventory[start_role] = max(0, self.tyre_set_inventory[start_role] - 1)
 
     def set_stint_plan(self, min_review_age: float, target_age: float, max_age: float) -> None:
-        self.stint_min_review_age = float(min_review_age)
-        self.stint_target_age = float(target_age)
-        self.stint_max_age = float(max_age)
+        # Store the strategy review window for the current stint.
+        self.stint_min_review_age = max(0.0, float(min_review_age))
+        self.stint_target_age = max(self.stint_min_review_age, float(target_age))
+        self.stint_max_age = max(self.stint_target_age, float(max_age))
         self.strategy_plan_stint_id = self.current_stint_id
 
     def get_remaining_sets(self, role: str) -> int:
         return int(self.tyre_set_inventory.get(role, 0))
-    
-    # ==========================================================
-    # PIT & TEAM INTERACTION
-    # ==========================================================
+
+    # ===== PIT / TEAM INTERACTION =====
     def pit(self, new_compound: str, new_role: Optional[str] = None) -> None:
+        # Mark the car to pit at the next valid pit entry point.
         if self.retired or self.in_pit_lane or self.pending_pit:
             return
 
@@ -258,16 +238,11 @@ class CarAgent:
         self.next_role = new_role
 
     def apply_team_instruction(self, instruction: str) -> None:
+        # Store the team pace instruction for use in the speed model.
         self.instruction = instruction
 
-    def start_pit_stop(
-        self,
-        pit_lane_total_m: float,
-        pit_box_position_m: float,
-        pit_exit_track_pos: float,
-        pit_service_time_s: float,
-        pit_line_position_m: float | None,
-    ) -> None:
+    def start_pit_stop(self, pit_lane_total_m: float, pit_box_position_m: float, pit_exit_track_pos: float, pit_service_time_s: float, pit_line_position_m: float | None) -> None:
+        # Move the car into pit-lane mode and initialise pit travel state.
         self.in_pit_lane = True
 
         self.pit_lane_position_m = 0.0
@@ -285,13 +260,9 @@ class CarAgent:
         self.current_pit_entry_sim_time = None
         self.last_pit_total_time_s = 0.0
 
-    # ==========================================================
-    # RACECRAFT
-    # ==========================================================
-    def adjust_for_traffic(self, lap_time: float) -> float:
-        return lap_time
-
+    # ===== RACECRAFT =====
     def attempt_overtake(self, segment: dict, drs_available: bool, overtake_difficulty: float) -> bool:
+        # Decide whether the car should begin an overtake attempt.
         if self.retired or self.car_ahead is None:
             return False
 
@@ -309,7 +280,6 @@ class CarAgent:
         attacker_pace = self.calibration.mu_team
         defender_pace = self.car_ahead.calibration.mu_team
         pace_delta = defender_pace - attacker_pace
-
         tyre_advantage = (self.car_ahead.tyre_state.age_laps - self.tyre_state.age_laps) * 0.015
 
         base_probability = 0.05
@@ -319,7 +289,7 @@ class CarAgent:
         if drs_available and seg_type == "straight":
             base_probability += 0.08
 
-        base_probability /= max(0.75, min(overtake_difficulty, 1.5))
+        base_probability /= max(0.75, min(float(overtake_difficulty), 1.5))
         base_probability = min(max(base_probability, 0.015), 0.35)
 
         success = self.rng.random() < base_probability
@@ -329,15 +299,18 @@ class CarAgent:
         return success
 
     def defend_position(self) -> float:
-        if self.car_behind and self.gap_behind < (1.5 * self.car_length):
+        # Tiny defensive speed effect when the car behind is very close.
+        if self.car_behind is not None and self.gap_behind < (1.5 * self.car_length):
             return -0.5
         return 0.0
 
     def tick_cooldowns(self, dt: float) -> None:
+        # Reduce temporary timers that should fade away over time.
         if self.overtake_cooldown > 0:
-            self.overtake_cooldown = max(0.0, self.overtake_cooldown - dt)
+            self.overtake_cooldown = max(0.0, self.overtake_cooldown - float(dt))
 
     def update_pit_lane_tick(self, dt: float, pit_lane_speed_mps: float) -> bool:
+        # Run one pit-lane movement step and report if the pit line was crossed.
         self.current_lap_time += dt
         crossed_pit_line = False
 
@@ -348,19 +321,25 @@ class CarAgent:
 
         if self.pit_phase == "to_box":
             prev_pos = self.pit_lane_position_m
-            move_dist = pit_lane_speed_mps * dt
+            move_dist = max(0.0, pit_lane_speed_mps) * dt
             self.pit_lane_position_m = min(self.pit_box_position_m, self.pit_lane_position_m + move_dist)
-            self.last_speed_mps = pit_lane_speed_mps
+            self.last_speed_mps = max(0.0, pit_lane_speed_mps)
 
             if check_pit_line(prev_pos, self.pit_lane_position_m):
                 self.pit_line_crossed = True
                 crossed_pit_line = True
 
             if self.pit_lane_position_m >= self.pit_box_position_m:
-                self.pit_phase = "service"
+                # The car has reached the team box area and now waits for service permission.
+                self.pit_phase = "queue"
                 self.last_speed_mps = 0.0
 
             return crossed_pit_line
+
+        if self.pit_phase == "queue":
+            # The car is stationary waiting for the team box to become free.
+            self.last_speed_mps = 0.0
+            return False
 
         if self.pit_phase == "service":
             self.pit_service_remaining_s = max(0.0, self.pit_service_remaining_s - dt)
@@ -373,9 +352,9 @@ class CarAgent:
 
         if self.pit_phase == "to_exit":
             prev_pos = self.pit_lane_position_m
-            move_dist = pit_lane_speed_mps * dt
+            move_dist = max(0.0, pit_lane_speed_mps) * dt
             self.pit_lane_position_m = min(self.pit_lane_total_m, self.pit_lane_position_m + move_dist)
-            self.last_speed_mps = pit_lane_speed_mps
+            self.last_speed_mps = max(0.0, pit_lane_speed_mps)
 
             if check_pit_line(prev_pos, self.pit_lane_position_m):
                 self.pit_line_crossed = True
@@ -387,6 +366,7 @@ class CarAgent:
         return False
 
     def complete_pit_if_done(self) -> bool:
+        # Finish the stop once the car has fully reached pit exit.
         if self.pit_phase != "to_exit":
             return False
 
@@ -426,7 +406,9 @@ class CarAgent:
 
         return True
 
+    # ===== DRS =====
     def update_drs_active(self, drs_enabled: bool, segment_type: str, track_position: float, drs_zones: list[dict], in_window_fn) -> None:
+        # Turn DRS on only when the car is in a valid activation zone.
         self.drs_active = False
         if not drs_enabled or segment_type != "straight":
             return
@@ -445,17 +427,8 @@ class CarAgent:
                 self.drs_active = True
                 return
 
-    def update_drs_eligibility(
-        self,
-        drs_enabled: bool,
-        has_car_ahead: bool,
-        gap_ahead_m: float,
-        last_speed_mps: float,
-        drs_zones: list[dict],
-        did_cross_marker_fn,
-        prev_pos: float,
-        curr_pos: float,
-    ) -> None:
+    def update_drs_eligibility(self, drs_enabled: bool, has_car_ahead: bool, gap_ahead_m: float, last_speed_mps: float, drs_zones: list[dict], did_cross_marker_fn, prev_pos: float, curr_pos: float) -> None:
+        # Update whether the car has earned DRS at each detection point.
         if not drs_enabled or not has_car_ahead:
             return
 
@@ -472,10 +445,10 @@ class CarAgent:
                 else:
                     self.drs_eligible_lap.pop(znum, None)
 
-    # ==========================================================
-    # RELIABILITY
-    # ==========================================================
+    # ===== RELIABILITY =====
     def check_reliability_failure(self) -> bool:
+        # Roll once to see if the car suffers a reliability failure.
         if self.calibration.reliability_prob <= 0.0:
             return False
+
         return self.rng.random() < self.calibration.reliability_prob

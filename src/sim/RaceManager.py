@@ -1,48 +1,31 @@
 from __future__ import annotations
 import json
-from typing import List
-import random
 import os
+import random
 from datetime import datetime
+from typing import List
+
 from src.sim.RaceState import RaceState, CarSnapshot
 from src.agents.TeamAgent import TeamAgent
 from src.agents.CarAgent import CarAgent, CarCalibration
 from src.models.TyreModel import TyreModel, TyreState
 
-
 class RaceManager:
-    def __init__(
-        self,
-        season: str,
-        grandprix: str,
-        circuit: str,
-        total_laps: int,
-        base_lap_time: float,
-        lap_time_std: float,
-        pit_loss: float,
-        pit_speed: float,
-        starting_grid: list | None = None,
-        circuit_characteristics: dict | None = None,
-        seed: int | None = None,
-        config_filepath: str | None = None,
-    ):
-        self.seed = seed if seed is not None else 0
+    def __init__(self, season: str, grandprix: str, circuit: str, total_laps: int, base_lap_time: float, lap_time_std: float, pit_loss: float, pit_speed: float, starting_grid: list | None = None, circuit_characteristics: dict | None = None, seed: int | None = None, config_filepath: str | None = None):
+        # ===== CORE RACE SETUP =====
+        self.seed = 0 if seed is None else int(seed)
         self.rng = random.Random(self.seed)
-
         self.season = season
         self.grandprix = grandprix
         self.circuit_name = circuit
-        self.total_laps = total_laps
-        self.base_lap_time = base_lap_time
-        self.lap_time_std = lap_time_std
-        self.pit_loss = pit_loss
-        self.pit_speed = pit_speed
-        self.seed = seed
+        self.total_laps = max(1, int(total_laps))
+        self.base_lap_time = max(0.0, float(base_lap_time))
+        self.lap_time_std = max(0.0, float(lap_time_std))
+        self.pit_loss = max(0.0, float(pit_loss))
+        self.pit_speed = max(0.0, float(pit_speed))
         self.config_filepath = config_filepath
-
         self.custom_starting_grid = starting_grid if starting_grid is not None else []
-        self.custom_circuit_characteristics = circuit_characteristics if circuit_characteristics is not None else {}
-
+        # ===== LIVE RACE STATE =====
         self.sim_time: float = 0.0
         self.dt: float = 1 / 120
         self.lap_number = 0
@@ -54,31 +37,28 @@ class RaceManager:
         self.cars_pitting_this_lap: int = 0
         self.race_state = RaceState()
         self.last_logged_completed_lap = 0
-
+        # ===== TYRE COMPOUND MAP =====
         with open("configs/tyre_compounds.json") as f:
             compound_data = json.load(f)
-
         self.compound_map = compound_data["season"][self.season][self.grandprix]["compounds"]
-
+        # ===== CIRCUIT DATA =====
         with open("configs/circuits.json") as f:
             circuits_data = json.load(f)
-
         circuit_data = circuits_data[self.grandprix]
-        self.track_length = circuit_data["track_model"]["track_length"]
+        self.track_length = float(circuit_data["track_model"]["track_length"])
         self.raw_segments = circuit_data["track_model"]["segments"]
         self.drs_zones = circuit_data.get("drs_zones", [])
-
+        # ===== CIRCUIT CHARACTERISTICS =====
         self.characteristics = circuit_data.get("characteristics", {}).copy()
-
-        for name, value in self.custom_circuit_characteristics.items():
-            if value != "Default":
-                self.characteristics[name] = value
-
+        if circuit_characteristics is not None:
+            for name, value in circuit_characteristics.items():
+                if value != "Default":
+                    self.characteristics[name] = value
         abrasion = float(self.characteristics.get("asphalt_abrasion", 3))
         tyre_stress = float(self.characteristics.get("tyre_stress", 3))
         self.track_deg_multiplier = 1.0 + 0.03 * (abrasion - 3.0) + 0.03 * (tyre_stress - 3.0)
         self.track_deg_multiplier = min(max(self.track_deg_multiplier, 0.80), 1.25)
-
+        # ===== PIT LANE MODEL =====
         pit_cfg = circuit_data.get("pit_lane", {}) or {}
         self.pit_enabled = bool(pit_cfg.get("enabled", False))
         self.pit_entry_point = float(pit_cfg.get("pit_entry_point", 0.0))
@@ -88,31 +68,24 @@ class RaceManager:
         self.pit_service_time_mean = float(pit_cfg.get("service_time_mean", 2.5))
         self.pit_service_time_std = float(pit_cfg.get("service_time_std", 0.3))
         self.pit_box_position_m = float(pit_cfg.get("pit_box_position_m", self.pit_lane_distance * 0.45))
-
-        self.pit_lane_min_gap = 8.0
-        self.pit_stack_hold_gap = 6.0
         self.team_box_busy: dict[str, CarAgent] = {}
-
-        self.pit_crosses_finish = self.pit_entry_point > self.pit_exit_point
-
-        if self.pit_crosses_finish:
+        crosses_finish = self.pit_entry_point > self.pit_exit_point
+        if crosses_finish:
             self.pit_line_position_m = self.track_length - self.pit_entry_point
             if self.pit_line_position_m > self.pit_lane_distance:
                 self.pit_line_position_m = None
         else:
             self.pit_line_position_m = None
-
+        # ===== TRACK MODEL HELPERS =====
         self.segment_boundaries = self.build_segment_boundaries()
         self.normalise_drs_zones()
-
+        # ===== GRID + LOGGING =====
         self.teams, self.cars = self.build_grid()
         self.log_filepath = self.create_log_file()
         self.write_log_header()
 
-    # ==========================================================
-    # GRID BUILD
-    # ==========================================================
-    def build_grid(self):
+    # ===== GRID BUILD =====
+    def build_grid(self) -> tuple[List[TeamAgent], List[CarAgent]]:
         with open("configs/teams.json") as f:
             teams_json = json.load(f)[self.season]
 
@@ -123,16 +96,14 @@ class RaceManager:
 
         teams: List[TeamAgent] = []
         cars: List[CarAgent] = []
+        cars_by_config_id: dict[str, CarAgent] = {}
 
         start_compound = self.compound_map["HARD"]
-
-        cars_by_config_id = {}
 
         for team_name, team_data in teams_json.items():
             perf = team_data["performance"]
             drivers = team_data["drivers"][:2]
-
-            car_objects = []
+            car_objects: List[CarAgent] = []
 
             for driver in drivers:
                 calibration = CarCalibration(
@@ -155,7 +126,7 @@ class RaceManager:
                     tyre_model=self.tyre_model,
                     rng=self.rng,
                 )
-                
+
                 car.set_tyre_inventory({
                     "SOFT": 1,
                     "MEDIUM": 2,
@@ -187,7 +158,7 @@ class RaceManager:
 
         if self.custom_starting_grid:
             ordered_grid = sorted(self.custom_starting_grid, key=lambda item: item["position"])
-            assigned_cars = []
+            assigned_cars: list[CarAgent] = []
 
             for index, slot in enumerate(ordered_grid):
                 driver_id = slot["driver_id"]
@@ -211,9 +182,7 @@ class RaceManager:
 
         return teams, cars
 
-    # ==========================================================
-    # HELPER METHODS
-    # ==========================================================
+    # ===== BASIC HELPERS =====
     def is_drs_enabled(self) -> bool:
         return (self.lap_number >= 2) and (self.track_state == "GREEN") and (self.weather_state == "DRY")
 
@@ -228,6 +197,85 @@ class RaceManager:
             return start <= pos <= end
         return pos >= start or pos <= end
 
+    def set_car_progress(self, car: CarAgent, progress_m: float) -> None:
+        progress_m = max(0.0, progress_m)
+        car.lap_count = int(progress_m // self.track_length)
+        car.track_position = progress_m % self.track_length
+        car.prev_track_position = car.track_position
+
+    def format_time(self, seconds: float) -> str:
+        hours = int(seconds // 3600)
+        minutes = int((seconds % 3600) // 60)
+        secs = int(seconds % 60)
+        millis = int((seconds - int(seconds)) * 1000)
+        return f"{hours:02d}:{minutes:02d}:{secs:02d}.{millis:03d}"
+
+    def get_expected_pit_time(self, service_time: float | None = None) -> float:
+        # Build expected pit time from the same physical model the cars actually use.
+        if not self.pit_enabled:
+            return 0.0
+
+        if self.pit_speed <= 0.0:
+            return 0.0
+
+        if service_time is None:
+            service_time = self.pit_service_time_mean
+
+        travel_time = self.pit_lane_distance / self.pit_speed
+        total_time = travel_time + max(0.0, float(service_time))
+        return total_time
+
+    # ===== SEGMENT BOUNDARIES =====
+    def build_segment_boundaries(self) -> list[dict]:
+        # Turn the raw segment list into start / end ranges so position lookups are simple.
+        boundaries = []
+        current_start = 0.0
+
+        for seg in self.raw_segments:
+            start = current_start
+            end = start + float(seg["length"])
+
+            boundaries.append({
+                "start": start,
+                "end": end,
+                "data": seg,
+            })
+
+            current_start = end
+
+        if abs(current_start - self.track_length) > 0.01:
+            raise ValueError(f"Segment lengths ({current_start}) do not match track_length ({self.track_length})")
+
+        return boundaries
+
+    def get_segment_for_position(self, position: float) -> dict:
+        for seg in self.segment_boundaries:
+            if seg["start"] <= position < seg["end"]:
+                return seg["data"]
+
+        return self.segment_boundaries[-1]["data"]
+
+    def get_progress(self, car: CarAgent) -> float:
+        # Convert both track running and pit-lane running into one comparable progress value.
+        base_progress = car.lap_count * self.track_length
+
+        if not car.in_pit_lane:
+            return base_progress + car.track_position
+
+        pit_frac = 0.0
+        if car.pit_lane_total_m > 0:
+            pit_frac = car.pit_lane_position_m / car.pit_lane_total_m
+
+        if self.pit_exit_point >= self.pit_entry_point:
+            race_distance_entry_to_exit = self.pit_exit_point - self.pit_entry_point
+            
+        else:
+            race_distance_entry_to_exit = (self.track_length - self.pit_entry_point) + self.pit_exit_point
+
+        equivalent_track_pos = (self.pit_entry_point + (pit_frac * race_distance_entry_to_exit)) % self.track_length
+        return base_progress + equivalent_track_pos
+
+    # ===== CAR TICK FLOW =====
     def step_car_tick(self, car: CarAgent, dt: float, drs_enabled: bool) -> None:
         car.tick_cooldowns(dt)
 
@@ -236,10 +284,13 @@ class RaceManager:
 
         if car.in_pit_lane:
             self.handle_pit_lane_tick(car, dt)
+            
         else:
             self.handle_on_track_tick(car, dt, drs_enabled)
 
     def handle_pit_lane_tick(self, car: CarAgent, dt: float) -> None:
+        # Move the car through the pit lane and manage the team box if needed.
+        previous_phase = car.pit_phase
         crossed_line = car.update_pit_lane_tick(dt, self.pit_speed)
 
         if crossed_line:
@@ -248,27 +299,33 @@ class RaceManager:
             if not car.has_taken_race_start:
                 car.has_taken_race_start = True
                 car.current_lap_time = 0.0
+                
             else:
-                self.finalise_lap_if_crossed(
-                    car,
-                    crossed_line=True,
-                    apply_tyre_wear=False,
-                )
+                self.finalise_lap_if_crossed(car, crossed_line=True, apply_tyre_wear=False)
 
-        car.complete_pit_if_done()
+        if car.pit_phase == "queue":
+            occupying_car = self.team_box_busy.get(car.team_id)
+
+            if occupying_car is None:
+                self.team_box_busy[car.team_id] = car
+                car.pit_phase = "service"
+
+        if previous_phase == "service" and car.pit_phase == "to_exit":
+            if self.team_box_busy.get(car.team_id) is car:
+                self.team_box_busy.pop(car.team_id, None)
+
+        pit_completed = car.complete_pit_if_done()
+
+        if pit_completed and car.current_pit_entry_sim_time is not None:
+            car.last_pit_total_time_s = self.sim_time - car.current_pit_entry_sim_time
+            car.current_pit_entry_sim_time = None
 
     def handle_on_track_tick(self, car: CarAgent, dt: float, drs_enabled: bool) -> None:
+        # Run one normal on-track movement step for the car.
         segment = self.get_segment_for_position(car.track_position)
         seg_type = segment.get("type", "straight")
 
-        car.update_drs_active(
-            drs_enabled=drs_enabled,
-            segment_type=seg_type,
-            track_position=car.track_position,
-            drs_zones=self.drs_zones,
-            in_window_fn=self.is_pos_in_circular_window,
-        )
-
+        car.update_drs_active(drs_enabled=drs_enabled, segment_type=seg_type, track_position=car.track_position, drs_zones=self.drs_zones, in_window_fn=self.is_pos_in_circular_window)
         self.maybe_trigger_overtake(car, segment)
 
         speed = car.compute_speed(
@@ -307,6 +364,7 @@ class RaceManager:
             if not car.has_taken_race_start:
                 car.has_taken_race_start = True
                 car.current_lap_time = overflow_dt
+                
             else:
                 completed_lap_time = car.current_lap_time + crossing_dt
                 self.finalise_lap_if_crossed(
@@ -316,17 +374,12 @@ class RaceManager:
                     completed_lap_time=completed_lap_time,
                     next_lap_carry_time=overflow_dt,
                 )
+                
         else:
             car.current_lap_time += dt
 
-    def finalise_lap_if_crossed(
-        self,
-        car: CarAgent,
-        crossed_line: bool,
-        apply_tyre_wear: bool,
-        completed_lap_time: float | None = None,
-        next_lap_carry_time: float = 0.0,
-    ) -> None:
+    def finalise_lap_if_crossed(self, car: CarAgent, crossed_line: bool, apply_tyre_wear: bool, completed_lap_time: float | None = None, next_lap_carry_time: float = 0.0) -> None:
+        # Finalise one lap and store the lap record.
         if not crossed_line:
             return
 
@@ -353,10 +406,13 @@ class RaceManager:
             self.winner_finish_time = car.total_time
 
     def maybe_enter_pit_lane(self, car: CarAgent) -> None:
+        # Send the car into the pit lane once it reaches the entry point.
         if not self.pit_enabled:
             return
+
         if not car.pending_pit:
             return
+
         if car.in_pit_lane or car.retired:
             return
 
@@ -365,75 +421,9 @@ class RaceManager:
 
         self.apply_pit_stop(car)
 
-    def set_car_progress(self, car: CarAgent, progress_m: float) -> None:
-        progress_m = max(0.0, progress_m)
-        car.lap_count = int(progress_m // self.track_length)
-        car.track_position = progress_m % self.track_length
-        car.prev_track_position = car.track_position
-
-    def format_time(self, seconds: float) -> str:
-        hours = int(seconds // 3600)
-        minutes = int((seconds % 3600) // 60)
-        secs = int(seconds % 60)
-        millis = int((seconds - int(seconds)) * 1000)
-        return f"{hours:02d}:{minutes:02d}:{secs:02d}.{millis:03d}"
-
-    # ==========================================================
-    # SEGMENT BOUNDARIES
-    # ==========================================================
-    def build_segment_boundaries(self):
-        boundaries = []
-        current_start = 0.0
-
-        for seg in self.raw_segments:
-            start = current_start
-            end = start + seg["length"]
-
-            boundaries.append({
-                "start": start,
-                "end": end,
-                "data": seg
-            })
-
-            current_start = end
-
-        if abs(current_start - self.track_length) > 0.01:
-            raise ValueError(f"Segment lengths ({current_start}) do not match track_length ({self.track_length})")
-
-        return boundaries
-
-    def get_segment_for_position(self, position: float):
-        for seg in self.segment_boundaries:
-            if seg["start"] <= position < seg["end"]:
-                return seg["data"]
-
-        return self.segment_boundaries[-1]["data"]
-
-    def get_progress(self, car: CarAgent) -> float:
-        base_progress = car.lap_count * self.track_length
-
-        if not car.in_pit_lane:
-            return base_progress + car.track_position
-
-        pit_frac = 0.0
-        if car.pit_lane_total_m > 0:
-            pit_frac = car.pit_lane_position_m / car.pit_lane_total_m
-
-        if self.pit_exit_point >= self.pit_entry_point:
-            race_distance_entry_to_exit = self.pit_exit_point - self.pit_entry_point
-        else:
-            race_distance_entry_to_exit = (self.track_length - self.pit_entry_point) + self.pit_exit_point
-
-        equivalent_track_pos = (
-            self.pit_entry_point + (pit_frac * race_distance_entry_to_exit)
-        ) % self.track_length
-
-        return base_progress + equivalent_track_pos
-
-    # ==========================================================
-    # PUBLIC STATE + BROADCAST
-    # ==========================================================
+    # ===== PUBLIC STATE + BROADCAST =====
     def build_car_snapshots(self) -> List[CarSnapshot]:
+        # Build the public race view that the team agents can see.
         snapshots: List[CarSnapshot] = []
 
         active_cars = [car for car in self.cars if not car.retired]
@@ -455,6 +445,7 @@ class RaceManager:
         return snapshots
 
     def broadcast_public_signals(self) -> None:
+        # Push the latest race view into RaceState and all team agents.
         snapshots = self.build_car_snapshots()
         current_lap = self.lap_number + 1
 
@@ -475,31 +466,35 @@ class RaceManager:
                 tyre_model=self.tyre_model,
                 total_laps=self.total_laps,
                 track_deg_multiplier=self.track_deg_multiplier,
+                pit_lane_distance=self.pit_lane_distance,
+                pit_speed=self.pit_speed,
+                pit_box_position_m=self.pit_box_position_m,
+                pit_service_time_mean=self.pit_service_time_mean,
             )
 
     def update_global_lap_and_events(self) -> None:
-        leader = max(
-            [c for c in self.cars if not c.retired],
-            key=lambda c: (c.lap_count, c.track_position),
-            default=None,
-        )
+        # Update the global lap counter, logging, and finish state.
+        active_cars = [car for car in self.cars if not car.retired]
+        if not active_cars:
+            self.race_finished = True
+            return
 
-        if leader is not None:
-            new_global_lap = leader.lap_count
-            if new_global_lap > self.lap_number:
-                self.lap_number = new_global_lap
-                self.on_new_lap()
+        leader = max(active_cars, key=lambda c: (c.lap_count, c.track_position))
+
+        new_global_lap = leader.lap_count
+        if new_global_lap > self.lap_number:
+            self.lap_number = new_global_lap
+            self.on_new_lap()
 
         self.log_completed_laps_if_ready()
 
         if self.winner_finish_time is not None:
-            if all(c.lap_count >= self.total_laps or c.retired for c in self.cars):
+            if all(car.lap_count >= self.total_laps or car.retired for car in self.cars):
                 self.race_finished = True
 
-    # ==========================================================
-    # TICK STEP
-    # ==========================================================
-    def step_tick(self, dt: float):
+    # ===== MAIN TICK STEP =====
+    def step_tick(self, dt: float) -> None:
+        # Run one whole simulation tick.
         self.apply_spatial_dirty_air()
 
         self.sim_time += dt
@@ -508,21 +503,21 @@ class RaceManager:
         for car in self.cars:
             if car.retired:
                 continue
+
             self.step_car_tick(car, dt, drs_enabled)
 
         self.resolve_side_by_side_battles()
         self.update_global_lap_and_events()
 
-    # ==========================================================
-    # LAP EVENTS
-    # ==========================================================
-    def on_new_lap(self):
+    # ===== LAP EVENTS =====
+    def on_new_lap(self) -> None:
+        # Run all once-per-lap events after the leader starts a new lap.
         for car in self.cars:
-            d = getattr(car, "drs_eligible_lap", None)
-            if isinstance(d, dict):
-                for znum, stamp in list(d.items()):
+            drs_map = getattr(car, "drs_eligible_lap", None)
+            if isinstance(drs_map, dict):
+                for znum, stamp in list(drs_map.items()):
                     if stamp < (self.lap_number - 1):
-                        d.pop(znum, None)
+                        drs_map.pop(znum, None)
 
         for car in self.cars:
             if not car.retired and car.check_reliability_failure():
@@ -544,10 +539,8 @@ class RaceManager:
                 return record
         return None
 
-    # ==========================================================
-    # OUTPUT / LOGS
-    # ==========================================================
-    def create_log_file(self):
+    # ===== OUTPUT / LOGS =====
+    def create_log_file(self) -> str:
         folder_path = "data/RaceData/LoggedData"
         os.makedirs(folder_path, exist_ok=True)
 
@@ -560,11 +553,11 @@ class RaceManager:
 
         return file_path
 
-    def write_to_log(self, text: str):
+    def write_to_log(self, text: str) -> None:
         with open(self.log_filepath, "a", encoding="utf-8") as file:
             file.write(text + "\n")
 
-    def write_log_header(self):
+    def write_log_header(self) -> None:
         self.write_to_log("F1 SIMULATION LOG:\n\n")
         self.write_to_log(f"Grand Prix: {self.grandprix}")
         self.write_to_log(f"Circuit: {self.circuit_name}")
@@ -586,17 +579,27 @@ class RaceManager:
 
         self.write_to_log("\n\nRACE EVENTS\n\n")
 
-    def log_final_classification(self):
+    def log_final_classification(self) -> None:
         self.write_to_log("\n\nFINAL CLASSIFICATION\n\n")
 
-        classified = sorted([c for c in self.cars if not c.retired], key=lambda c: c.total_time)
-        retired = [c for c in self.cars if c.retired]
+        classified = sorted([car for car in self.cars if not car.retired], key=lambda car: car.total_time)
+        retired = [car for car in self.cars if car.retired]
+
+        if not classified:
+            for position, car in enumerate(retired, start=1):
+                self.write_to_log(
+                    f"P{position:02d} | "
+                    f"{car.car_id:<12} | "
+                    f"{car.team_id:<18} | DNF"
+                )
+            return
 
         winner_time = classified[0].total_time
         position = 1
 
         for car in classified:
             final_time = car.total_time
+
             if position == 1:
                 gap_str = self.format_time(final_time)
             else:
@@ -621,7 +624,7 @@ class RaceManager:
             )
             position += 1
 
-    def log_completed_laps_if_ready(self):
+    def log_completed_laps_if_ready(self) -> None:
         active_cars = [car for car in self.cars if not car.retired]
 
         if not active_cars:
@@ -634,7 +637,7 @@ class RaceManager:
             self.log_lap_summary(lap_to_log)
             self.last_logged_completed_lap = lap_to_log
 
-    def log_lap_summary(self, lap_number: int):
+    def log_lap_summary(self, lap_number: int) -> None:
         self.write_to_log(f"--- LAP {lap_number} COMPLETE ---")
 
         lap_rows = []
@@ -647,7 +650,7 @@ class RaceManager:
                     "lap_time": lap_record["lap_time"],
                     "total_time": lap_record["total_time"],
                     "compound": lap_record["compound"],
-                    "tyre_age": lap_record["tyre_age"]
+                    "tyre_age": lap_record["tyre_age"],
                 })
 
         lap_rows.sort(key=lambda item: item["total_time"])
@@ -666,12 +669,10 @@ class RaceManager:
 
         self.write_to_log("")
 
-    # ==========================================================
-    # PIT STOP APPLICATION
-    # ==========================================================
+    # ===== PIT STOP APPLICATION =====
     def apply_pit_stop(self, car: CarAgent) -> None:
+        # Move the car into the pit lane and record the stop start.
         self.cars_pitting_this_lap += 1
-
         service_time = max(0.0, self.rng.gauss(self.pit_service_time_mean, self.pit_service_time_std))
 
         car.start_pit_stop(
@@ -682,8 +683,10 @@ class RaceManager:
             pit_line_position_m=self.pit_line_position_m,
         )
 
+        car.current_pit_entry_sim_time = self.sim_time
+
         self.write_to_log(
-            f"[Lap {self.lap_number+1}] {car.team_id} | {car.car_id} ENTER PIT "
+            f"[Lap {self.lap_number + 1}] {car.team_id} | {car.car_id} ENTER PIT "
             f"| service={service_time:.2f}s lane={self.pit_lane_distance:.0f}m"
         )
 
@@ -691,12 +694,11 @@ class RaceManager:
         car.pit_compound = None
         car.pending_pit = False
 
-    # ==========================================================
-    # TRAFFIC LOGIC
-    # ==========================================================
-    def apply_spatial_dirty_air(self):
-        active_cars = [c for c in self.cars if not c.retired and not c.in_pit_lane]
-        active_cars.sort(key=lambda c: self.get_progress(c), reverse=True)
+    # ===== TRAFFIC LOGIC =====
+    def apply_spatial_dirty_air(self) -> None:
+        # Update who is near who so slipstream, dirty air, and pressure all make sense.
+        active_cars = [car for car in self.cars if not car.retired and not car.in_pit_lane]
+        active_cars.sort(key=lambda car: self.get_progress(car), reverse=True)
 
         for car in active_cars:
             car.traffic_penalty = 0.0
@@ -707,45 +709,45 @@ class RaceManager:
             car.gap_ahead = float("inf")
             car.gap_behind = float("inf")
 
-        for i in range(len(active_cars)):
-            car = active_cars[i]
-            car_ahead = active_cars[i - 1] if i > 0 else None
-            car_behind = active_cars[i + 1] if i < len(active_cars) - 1 else None
-
+        for index, car in enumerate(active_cars):
+            car_ahead = active_cars[index - 1] if index > 0 else None
+            car_behind = active_cars[index + 1] if index < len(active_cars) - 1 else None
             car_progress = self.get_progress(car)
 
-            if car_ahead:
+            if car_ahead is not None:
                 ahead_progress = self.get_progress(car_ahead)
                 gap = ahead_progress - car_progress
                 car.car_ahead = car_ahead
                 car.gap_ahead = max(0.0, gap)
 
-            if car_behind:
+            if car_behind is not None:
                 behind_progress = self.get_progress(car_behind)
-                gap_b = car_progress - behind_progress
+                gap_behind = car_progress - behind_progress
                 car.car_behind = car_behind
-                car.gap_behind = max(0.0, gap_b)
+                car.gap_behind = max(0.0, gap_behind)
 
             if car.gap_ahead < 10.0:
                 car.traffic_penalty = 0.16
                 car.slipstream_bonus = 0.10
                 car.following_intensity = 0.75
+
             elif car.gap_ahead < 25.0:
                 car.traffic_penalty = 0.07
                 car.slipstream_bonus = 0.05
                 car.following_intensity = 0.35
 
-    def start_side_by_side(self, attacker: CarAgent, defender: CarAgent):
+    def start_side_by_side(self, attacker: CarAgent, defender: CarAgent) -> None:
+        # Mark two cars as fighting side by side for a short period.
         if attacker.side_by_side_with is not None:
             return
 
         attacker.side_by_side_with = defender
         defender.side_by_side_with = attacker
-
         attacker.side_by_side_ticks = 5
         defender.side_by_side_ticks = 5
 
     def resolve_side_by_side_battles(self) -> None:
+        # Resolve ongoing side-by-side fights and decide who comes out ahead.
         processed_pairs = set()
 
         for car in self.cars:
@@ -754,8 +756,10 @@ class RaceManager:
 
             opponent = car.side_by_side_with
             pair_id = tuple(sorted([car.car_id, opponent.car_id]))
+
             if pair_id in processed_pairs:
                 continue
+
             processed_pairs.add(pair_id)
 
             car.side_by_side_ticks -= 1
@@ -777,6 +781,7 @@ class RaceManager:
                 total_laps=self.total_laps,
                 track_state=self.track_state,
             )
+            
             speed_opponent = opponent.compute_speed(
                 segment=segment,
                 track_length=self.track_length,
@@ -824,7 +829,9 @@ class RaceManager:
             winner.side_by_side_ticks = 0
             loser.side_by_side_ticks = 0
 
+    # ===== DRS ZONE NORMALISATION =====
     def normalise_drs_zones(self) -> None:
+        # Clamp DRS activation windows so they sit on straights only.
         if not self.drs_zones:
             return
 
@@ -846,6 +853,7 @@ class RaceManager:
             return [(start, float(self.track_length)), (0.0, end)]
 
         new_zones = []
+
         for zone in self.drs_zones:
             try:
                 a0 = float(zone["activation_start"])
@@ -859,34 +867,41 @@ class RaceManager:
                 continue
 
             best = None
+
             for wa0, wa1 in window_to_intervals(a0, a1):
                 for s0, s1 in straight_intervals:
-                    ol = overlap_len(wa0, wa1, s0, s1)
-                    if ol > 0:
-                        ns = max(wa0, s0)
-                        ne = min(wa1, s1)
-                        if best is None or ol > best[0]:
-                            best = (ol, ns, ne)
+                    overlap = overlap_len(wa0, wa1, s0, s1)
+                    if overlap > 0:
+                        new_start = max(wa0, s0)
+                        new_end = min(wa1, s1)
+
+                        if best is None or overlap > best[0]:
+                            best = (overlap, new_start, new_end)
 
             if best is None:
                 new_zones.append(zone)
                 continue
 
-            _, ns, ne = best
-            z = dict(zone)
-            z["activation_start"] = ns
-            z["activation_end"] = ne
-            new_zones.append(z)
+            _, new_start, new_end = best
+            updated_zone = dict(zone)
+            updated_zone["activation_start"] = new_start
+            updated_zone["activation_end"] = new_end
+            new_zones.append(updated_zone)
 
         self.drs_zones = new_zones
 
+    # ===== OVERTAKING =====
     def maybe_trigger_overtake(self, car: CarAgent, segment: dict) -> None:
+        # Decide if a car should start a side-by-side attack.
         if self.track_state != "GREEN":
             return
+
         if car.retired or car.in_pit_lane:
             return
+
         if car.car_ahead is None:
             return
+
         if car.side_by_side_with is not None or car.car_ahead.side_by_side_with is not None:
             return
 
@@ -898,9 +913,5 @@ class RaceManager:
         downforce = float(self.characteristics.get("downforce", 3))
         overtake_difficulty = 1.0 + 0.05 * (3.0 - min(traction, downforce))
 
-        if car.attempt_overtake(
-            segment=segment,
-            drs_available=car.drs_active,
-            overtake_difficulty=overtake_difficulty
-        ):
+        if car.attempt_overtake(segment=segment, drs_available=car.drs_active, overtake_difficulty=overtake_difficulty):
             self.start_side_by_side(car, car.car_ahead)
