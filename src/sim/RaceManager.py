@@ -107,31 +107,27 @@ class RaceManager:
 
             for driver in drivers:
                 calibration = CarCalibration(
-                    mu_team=float(perf["pace_offset"]),
-                    k_team=float(perf["degradation_factor"]),
-                    reliability_prob=0.00008,
+                    mu_team = float(perf["pace_offset"]),
+                    k_team = float(perf["degradation_factor"]),
+                    reliability_prob = 0.00008,
                 )
 
                 tyre_state = TyreState(
-                    compound=start_compound,
-                    age_laps=0.0,
-                    weekend_role="MEDIUM",
+                    compound = start_compound,
+                    age_laps = 0.0,
+                    weekend_role = "MEDIUM",
                 )
 
                 car = CarAgent(
-                    car_id=driver["name"],
-                    team_id=team_name,
-                    calibration=calibration,
-                    tyre_state=tyre_state,
-                    tyre_model=self.tyre_model,
-                    rng=self.rng,
+                    car_id = driver["name"],
+                    team_id = team_name,
+                    calibration = calibration,
+                    tyre_state = tyre_state,
+                    tyre_model = self.tyre_model,
+                    rng = self.rng,
                 )
 
-                car.set_tyre_inventory({
-                    "SOFT": 1,
-                    "MEDIUM": 2,
-                    "HARD": 2,
-                })
+                car.set_tyre_inventory({"SOFT": 1, "MEDIUM": 2, "HARD": 2,})
 
                 if not hasattr(car, "drs_eligible_lap"):
                     car.drs_eligible_lap = {}
@@ -143,12 +139,12 @@ class RaceManager:
                 cars_by_config_id[config_driver_id] = car
 
             team_agent = TeamAgent(
-                team_id=team_name,
-                car_a=car_objects[0],
-                car_b=car_objects[1],
-                mu_team=float(perf["pace_offset"]),
-                k_team=float(perf["degradation_factor"]),
-                compound_map=self.compound_map,
+                team_id = team_name,
+                car_a = car_objects[0],
+                car_b = car_objects[1],
+                mu_team = float(perf["pace_offset"]),
+                k_team = float(perf["degradation_factor"]),
+                compound_map = self.compound_map,
             )
 
             teams.append(team_agent)

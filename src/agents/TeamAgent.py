@@ -49,7 +49,9 @@ class TeamAgent:
         self._code_to_label: dict[str, str] = {}
 
     # ===== OBSERVATION =====
-    def observe(self, race_view: List[CarSnapshot], lap: int, track_state: str, pit_loss: float, base_lap_time: float, tyre_model: TyreModel, total_laps: int, track_deg_multiplier: float, pit_lane_distance: float, pit_speed: float, pit_box_position_m: float, pit_service_time_mean: float) -> None:
+    def observe(self, race_view: List[CarSnapshot], lap: int, track_state: str, pit_loss: float, base_lap_time: float,
+                tyre_model: TyreModel, total_laps: int, track_deg_multiplier: float, pit_lane_distance: float,
+                pit_speed: float, pit_box_position_m: float, pit_service_time_mean: float) -> None:
         # Store the latest public race view the team can use for decisions.
         self.race_view = list(race_view)
         self.current_lap = max(0, int(lap))

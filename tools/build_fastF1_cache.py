@@ -14,8 +14,8 @@ fastf1.Cache.enable_cache(CACHE_DIR)
 # -------------------------------
 SEASONS = [2021, 2022, 2023, 2024]
 
-# Session types to cache
-SESSION_TYPES = ["R"]  # Race only (change to ["FP1","FP2","FP3","Q","R"] if needed)
+# Caching Race sessions only
+SESSION_TYPES = ["R"]  
 
 print(f"FastF1 cache directory: {CACHE_DIR.resolve()}")
 print("Starting cache build...\n")

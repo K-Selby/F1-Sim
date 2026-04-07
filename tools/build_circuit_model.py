@@ -14,15 +14,11 @@ MIN_SC_LAPS = 2          # minimum laps to count as real SC/VSC
 MAX_LAP_OUTLIER_Z = 3.0  # remove extreme lap time outliers
 PIT_LOSS_FALLBACK = 22.0
 
-# -------------------------------------------
-
 fastf1.Cache.enable_cache(str(CACHE_DIR))
-
 
 def safe_mean(values):
     vals = [v for v in values if v is not None and not np.isnan(v)]
     return float(np.mean(vals)) if vals else None
-
 
 def zscore_filter(series, z=3.0):
     series = series.dropna()
@@ -34,25 +30,14 @@ def zscore_filter(series, z=3.0):
         return series
     return series[np.abs((series - mean) / std) <= z]
 
-
 def count_status_laps(laps, code_char: str) -> int:
-    """
-    TrackStatus is stored per driver-lap.
-    This counts UNIQUE LapNumbers where ANY driver saw the status.
-    """
+    # counts UNIQUE LapNumbers where any driver saw the status
     ts = laps["TrackStatus"].astype(str)
     per_lap = ts.str.contains(code_char).groupby(laps["LapNumber"]).any()
     return int(per_lap.sum())
 
-
 def build_pit_loss(laps, baseline_lap_time: float):
-    """
-    Approx pit loss using in-lap + out-lap penalty compared to two baseline laps.
-
-    For each driver:
-    - in-lap is where PitInTime exists
-    - out-lap is next lap where PitOutTime exists
-    """
+    # build apporx pit loss using in lap (PitInTime) and out lap (PitOutTime)
     if baseline_lap_time is None or np.isnan(baseline_lap_time):
         return None
 
@@ -89,7 +74,6 @@ def build_pit_loss(laps, baseline_lap_time: float):
 
     return safe_mean(pit_losses)
 
-
 def build_circuits():
     circuits = {}
 
@@ -112,7 +96,6 @@ def build_circuits():
                 continue
 
             # ------------------ BASIC METRICS ------------------
-
             total_laps = int(laps["LapNumber"].max())
 
             # green-ish racing laps only (per row)
@@ -136,11 +119,9 @@ def build_circuits():
             lap_time_std = float(np.std(lap_times))
 
             # ------------------ PIT LOSS (circuit specific) ------------------
-
             pit_loss = build_pit_loss(laps, base_lap_time)
 
             # ------------------ SAFETY CAR / VSC ------------------
-
             sc_laps = count_status_laps(laps, "4")   # unique lap numbers with SC
             vsc_laps = count_status_laps(laps, "6")  # unique lap numbers with VSC
 
@@ -148,7 +129,6 @@ def build_circuits():
             has_vsc = vsc_laps >= MIN_SC_LAPS
 
             # ------------------ OVERTAKING METRIC ------------------
-
             pos = laps[["Driver", "LapNumber", "Position"]].dropna()
             pos["Position"] = pos["Position"].astype(int)
             pos["pos_change"] = pos.groupby("Driver")["Position"].diff().abs()
@@ -157,11 +137,9 @@ def build_circuits():
             overtake_difficulty = 1.0 - min((avg_pos_change or 0.0) / 2.5, 1.0)
 
             # ------------------ TRACK DEGRADATION ------------------
-
             track_deg_multiplier = 1.0  # aligned with tyre model
 
             # ------------------ AGGREGATE ------------------
-
             if race_name not in circuits:
                 circuits[race_name] = {
                     "total_laps": [],
@@ -194,7 +172,6 @@ def build_circuits():
                 c["sc_duration"].append(sc_laps)
 
     # ------------------ FINALISE JSON ------------------
-
     final = {}
 
     for race, c in circuits.items():
@@ -217,7 +194,6 @@ def build_circuits():
         json.dump(final, f, indent=2)
 
     print(f"\n Circuit model written to {OUTPUT_PATH}")
-
 
 if __name__ == "__main__":
     build_circuits()
