@@ -39,10 +39,10 @@ class Home:
         start_x = (self.screen_x - total_width) / 2
         y = self.screen_y / 3
 
-        titles = [
+        titles = [ 
             "New Race Simulator",
-            "Race Replays",
-            "Seeded Simulation"
+            "Race Replays (TBD)",
+            "Seeded Simulation (TBD)"
         ]
 
         descriptions = [

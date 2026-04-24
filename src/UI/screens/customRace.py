@@ -3,7 +3,7 @@
 from src.UI.API.imports import *
 
 
-class CustomeRace:
+class CustomRace:
     def __init__(self, s_Mode, screen):
         # ===== CORE STATE =====
         self.s_Mode = s_Mode

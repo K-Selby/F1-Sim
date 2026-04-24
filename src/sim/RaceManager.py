@@ -98,7 +98,7 @@ class RaceManager:
         cars: List[CarAgent] = []
         cars_by_config_id: dict[str, CarAgent] = {}
 
-        start_compound = self.compound_map["HARD"]
+        start_compound = self.compound_map["MEDIUM"]
 
         for team_name, team_data in teams_json.items():
             perf = team_data["performance"]

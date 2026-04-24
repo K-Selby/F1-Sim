@@ -3,7 +3,7 @@
 from src.UI.API.imports import *
 from src.UI.screens.welcome import Title
 from src.UI.screens.home import Home
-from src.UI.screens.customRace import CustomeRace
+from src.UI.screens.customRace import CustomRace
 from src.UI.screens.simulation import Simulation
 
 
@@ -32,7 +32,7 @@ def main(s_Mode, screen, filepath):
             s_Mode, screen = home_screen.update()
 
         # ===== CUSTOM RACE SCREEN =====
-        custom_race_screen = CustomeRace(s_Mode, screen)
+        custom_race_screen = CustomRace(s_Mode, screen)
         while s_Mode == "CustomRace":
             s_Mode, screen, filepath = custom_race_screen.update()
 
@@ -51,7 +51,7 @@ def main(s_Mode, screen, filepath):
 
 if __name__ == "__main__":
     # ===== STARTUP STATE =====
-    s_Mode = "Title"
+    s_Mode = "Home"
     filepath = ""
 
     main(s_Mode, screen, filepath)

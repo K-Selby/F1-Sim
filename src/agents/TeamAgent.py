@@ -290,7 +290,7 @@ class TeamAgent:
         pit_cost = self.estimate_physical_pit_time()
 
         live_snap = self.get_snapshot(car)
-        _, behind_snap = self.get_neighbours(car)
+        ahead_snap, behind_snap = self.get_neighbours(car)
 
         # Rejoining into traffic makes the effective stop more expensive.
         if live_snap is not None and behind_snap is not None:
@@ -832,7 +832,7 @@ class TeamAgent:
             if age >= max_age + forced_stop_tolerance:
                 if self.remaining_laps <= 6 and self.can_current_tyre_reach_finish(car, extra_margin=3.0):
                     pass
-                
+                    
                 else:
                     best_role = None
                     best_score = float("-inf")
@@ -850,7 +850,6 @@ class TeamAgent:
                         self.pit_candidates.append((car, best_role))
                         self.candidate_scores[car.car_id] = best_score + 12.0
                         car.last_strategy_call_lap = self.current_lap
-                        continue
 
             best_role = None
             best_score = float("-inf")
@@ -895,13 +894,6 @@ class TeamAgent:
 
             if filtered_candidates:
                 stack_delay = self.estimate_teammate_stack_delay(car)
-
-                # The second car needs a better reason to stop if a stack delay is expected.
-                threshold += 0.20 + (0.18 * stack_delay)
-
-                # If the second stop is not urgent yet, skip it.
-                if car.tyre_state.age_laps < car.stint_max_age and stack_delay > 0.5:
-                    continue
 
             if score > threshold:
                 filtered_candidates.append((car, role))

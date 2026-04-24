@@ -65,7 +65,7 @@ def main(sim_filepath):
         pit_speed = circuit_params["pit_lane"]["pit_speed_limit_mps"],
         starting_grid = starting_grid,
         circuit_characteristics = final_characteristics,
-        seed = None,
+        seed = 300,
         config_filepath = sim_filepath
     )
 

@@ -1542,7 +1542,7 @@ class Simulation:
                     if self.custom_speed_input != "":
                         try:
                             entered_value = float(self.custom_speed_input)
-                            if 0.5 <= entered_value <= 1000:
+                            if 0.5 <= entered_value <= 100:
                                 self.sim_speed = entered_value
                                 
                         except ValueError:
